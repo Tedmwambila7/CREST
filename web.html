@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin — EduLibrary</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Poppins', sans-serif; background: #0a0a0f; color: #e0e0e0; min-height: 100vh; }
+    .login-wrap { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .login-box { background: linear-gradient(135deg, #111127, #0d1535); border: 1px solid rgba(79,195,247,0.2); border-radius: 20px; padding: 50px 40px; width: 400px; text-align: center; }
+    .login-box .icon { font-size: 60px; margin-bottom: 16px; }
+    .login-box h2 { color: #4fc3f7; font-size: 24px; margin-bottom: 8px; }
+    .login-box p { color: #546e7a; font-size: 13px; margin-bottom: 30px; }
+    .login-box input { width: 100%; padding: 14px 18px; background: rgba(255,255,255,0.05); border: 1px solid rgba(79,195,247,0.2); border-radius: 10px; color: #e0e0e0; font-size: 15px; font-family: 'Poppins', sans-serif; margin-bottom: 16px; outline: none; }
+    .login-box input:focus { border-color: #4fc3f7; }
+    .login-box button { width: 100%; padding: 14px; background: linear-gradient(135deg, #0288d1, #4fc3f7); color: #000; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; font-family: 'Poppins', sans-serif; transition: all 0.3s; }
+    .login-box button:hover { transform: scale(1.02); }
+    .error { color: #ef5350; font-size: 13px; margin-top: 12px; }
+    .admin-wrap { display: none; max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+    .admin-header { display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #111127, #0d1535); border: 1px solid rgba(79,195,247,0.2); border-radius: 16px; padding: 24px 30px; margin-bottom: 30px; }
+    .admin-header h1 { font-size: 22px; color: #fff; }
+    .admin-header p { color: #546e7a; font-size: 13px; }
+    .logout-btn { background: rgba(239,83,80,0.15); color: #ef5350; border: 1px solid rgba(239,83,80,0.3); padding: 10px 20px; border-radius: 10px; cursor: pointer; font-family: 'Poppins', sans-serif; font-weight: 600; transition: all 0.3s; }
+    .logout-btn:hover { background: rgba(239,83,80,0.3); }
+    .form-box { background: linear-gradient(135deg, #111127, #0d1535); border: 1px solid rgba(79,195,247,0.15); border-radius: 16px; padding: 30px; margin-bottom: 30px; }
+    .form-box h2 { color: #4fc3f7; margin-bottom: 24px; font-size: 18px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-box input, .form-box select { width: 100%; padding: 13px 16px; background: rgba(255,255,255,0.04); border: 1px solid rgba(79,195,247,0.15); border-radius: 10px; color: #e0e0e0; font-size: 14px; font-family: 'Poppins', sans-serif; outline: none; }
+    .form-box input:focus, .form-box select:focus { border-color: #4fc3f7; }
+    .form-box select option { background: #111127; }
+    .full { grid-column: 1 / -1; }
+    .add-btn { width: 100%; padding: 14px; margin-top: 20px; background: linear-gradient(135deg, #0288d1, #4fc3f7); color: #000; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; font-family: 'Poppins', sans-serif; transition: all 0.3s; }
+    .add-btn:hover { transform: scale(1.01); box-shadow: 0 6px 30px rgba(79,195,247,0.3); }
+    .books-box { background: linear-gradient(135deg, #111127, #0d1535); border: 1px solid rgba(79,195,247,0.15); border-radius: 16px; padding: 30px; }
+    .books-box h2 { color: #4fc3f7; margin-bottom: 20px; font-size: 18px; }
+    .book-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 16px 20px; margin-bottom: 12px; }
+    .book-item-info h4 { font-size: 14px; color: #fff; margin-bottom: 4px; }
+    .book-item-info p { font-size: 12px; color: #546e7a; }
+    .del-btn { background: rgba(239,83,80,0.15); color: #ef5350; border: 1px solid rgba(239,83,80,0.3); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 600; transition: all 0.3s; white-space: nowrap; }
+    .del-btn:hover { background: rgba(239,83,80,0.3); }
+    .success { color: #66bb6a; font-size: 13px; margin-top: 12px; text-align: center; }
+    .back-link { display: inline-block; margin-bottom: 20px; color: #4fc3f7; text-decoration: none; font-size: 14px; }
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN -->
+  <div class="login-wrap" id="loginWrap">
+    <div class="login-box">
+      <div class="icon">🔐</div>
+      <h2>Admin Access</h2>
+      <p>Only authorized users can manage EduLibrary</p>
+      <input type="password" id="passwordInput" placeholder="Enter your password" onkeydown="if(event.key==='Enter') login()" />
+      <button onclick="login()">🔓 Login to Admin Panel</button>
+      <p class="error" id="loginError"></p>
+    </div>
+  </div>
+
+  <!-- ADMIN PANEL -->
+  <div class="admin-wrap" id="adminWrap">
+    <a href="index.html" class="back-link">← Back to EduLibrary</a>
+
+    <div class="admin-header">
+      <div>
+        <h1>📚 Admin Panel</h1>
+        <p>Manage all books and past papers</p>
+      </div>
+      <button class="logout-btn" onclick="logout()">🚪 Logout</button>
+    </div>
+
+    <!-- ADD FORM -->
+    <div class="form-box">
+      <h2>➕ Add New Resource</h2>
+      <div class="form-grid">
+
+        <input type="text" id="title" placeholder="Title (e.g. Math Past Paper 2023)" />
+        <input type="text" id="subject" placeholder="Subject (e.g. Mathematics)" />
+
+        <select id="level" onchange="updateClasses()">
+          <option value="primary">📗 Primary School</option>
+          <option value="secondary">📘 Secondary School</option>
+          <option value="tertiary">📙 Tertiary / College</option>
+        </select>
+
+        <select id="className">
+          <option value="Standard 1">Standard 1</option>
+          <option value="Standard 2">Standard 2</option>
+          <option value="Standard 3">Standard 3</option>
+          <option value="Standard 4">Standard 4</option>
+          <option value="Standard 5">Standard 5</option>
+          <option value="Standard 6">Standard 6</option>
+          <option value="Standard 7">Standard 7</option>
+          <option value="Standard 8">Standard 8</option>
+        </select>
+
+        <select id="type">
+          <option value="Past Paper">📝 Past Paper</option>
+          <option value="Book">📖 Book</option>
+          <option value="Notes">📓 Notes</option>
+        </select>
+
+        <input type="text" id="link" placeholder="Download link (Google Drive, Dropbox...)" />
+
+      </div>
+      <button class="add-btn" onclick="addBook()">✅ Add to Library</button>
+      <p class="success" id="successMsg"></p>
+    </div>
+
+    <!-- BOOK LIST -->
+    <div class="books-box">
+      <h2>📋 All Resources</h2>
+      <div id="bookList"></div>
+    </div>
+  </div>
+
+  <script>
+    // 🔑 YOUR KEYS
+    const API_KEY = "$2a$10$q1K8WzlWXgpkdX5BYcLBfuiYIdv7ZrDcy2OjEiGlXdWC2Y5/CB7e6";
+    const BIN_ID = "6a31c287da38895dfecc87b4";
+    const BASE_URL = "https://api.jsonbin.io/v3/b/" + BIN_ID;
+    const ADMIN_PASSWORD = "edulib123"; // 🔒 Change this!
+
+    // ✅ UPDATE CLASSES WHEN LEVEL CHANGES
+    function updateClasses() {
+      const level = document.getElementById('level').value;
+      const classSelect = document.getElementById('className');
+      const classes = {
+        primary: ['Standard 1','Standard 2','Standard 3','Standard 4','Standard 5','Standard 6','Standard 7','Standard 8'],
+        secondary: ['Form 1','Form 2','Form 3','Form 4'],
+        tertiary: ['Year 1','Year 2','Year 3','Year 4','Year 5']
+      };
+      classSelect.innerHTML = classes[level].map(c =>
+        `<option value="${c}">${c}</option>`
+      ).join('');
+    }
+
+    // ✅ GET BOOKS
+    async function getBooks() {
+      const res = await fetch(BASE_URL + "/latest", {
+        headers: { "X-Master-Key": API_KEY }
+      });
+      const data = await res.json();
+      return data.record.books || [];
+    }
+
+    // ✅ SAVE BOOKS
+    async function saveBooks(books) {
+      await fetch(BASE_URL, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Master-Key": API_KEY
+        },
+        body: JSON.stringify({ books })
+      });
+    }
+
+    // ✅ LOGIN
+    function login() {
+      const pass = document.getElementById('passwordInput').value;
+      if (pass === ADMIN_PASSWORD) {
+        document.getElementById('loginWrap').style.display = 'none';
+        document.getElementById('adminWrap').style.display = 'block';
+        loadBookList();
+      } else {
+        document.getElementById('loginError').textContent = '❌ Wrong password!';
+      }
+    }
+
+    // ✅ LOGOUT
+    function logout() {
+      document.getElementById('loginWrap').style.display = 'flex';
+      document.getElementById('adminWrap').style.display = 'none';
+      document.getElementById('passwordInput').value = '';
+    }
+
+    // ✅ ADD BOOK
+    async function addBook() {
+      const title = document.getElementById('title').value.trim();
+      const subject = document.getElementById('subject').value.trim();
+      const level = document.getElementById('level').value;
+      const className = document.getElementById('className').value;
+      const type = document.getElementById('type').value;
+      const link = document.getElementById('link').value.trim();
+
+      if (!title || !subject || !link) {
+        alert('⚠️ Please fill in all fields!');
+        return;
+      }
+
+      const books = await getBooks();
+      books.push({ title, subject, level, className, type, link });
+      await saveBooks(books);
+
+      document.getElementById('title').value = '';
+      document.getElementById('subject').value = '';
+      document.getElementById('link').value = '';
+
+      const msg = document.getElementById('successMsg');
+      msg.textContent = '✅ Resource added successfully!';
+      setTimeout(() => msg.textContent = '', 3000);
+
+      loadBookList();
+    }
+
+    // ✅ DELETE BOOK
+    async function deleteBook(index) {
+      if (!confirm('Are you sure you want to delete this resource?')) return;
+      const books = await getBooks();
+      books.splice(index, 1);
+      await saveBooks(books);
+      loadBookList();
+    }
+
+    // ✅ LOAD BOOK LIST
+    async function loadBookList() {
+      const books = await getBooks();
+      const list = document.getElementById('bookList');
+      if (books.length === 0) {
+        list.innerHTML = '<p style="color:#37474f;font-style:italic;">No resources added yet.</p>';
+        return;
+      }
+      list.innerHTML = books.map((b, i) => `
+        <div class="book-item">
+          <div class="book-item-info">
+            <h4>${b.title}</h4>
+            <p>${b.subject} — ${b.type} — ${b.level} — ${b.className}</p>
+          </div>
+          <button class="del-btn" onclick="deleteBook(${i})">🗑 Delete</button>
+        </div>
+      `).join('');
+    }
+  </script>
+</body>
+</html>

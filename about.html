@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>About — Crest Academy</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    .page-hero { background: linear-gradient(135deg, #0a0a1a, #0d1b3e); padding: 100px 40px 60px; text-align: center; }
+    .page-hero h1 { font-size: 42px; color: #fff; margin-bottom: 16px; }
+    .page-hero p { color: #90a4ae; font-size: 16px; max-width: 600px; margin: 0 auto; }
+    .about-section { max-width: 900px; margin: 0 auto; padding: 60px 40px; }
+    
+    /* Premium Decorated Paragraph Card */
+    .decorated-profile-card {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.05), rgba(99, 102, 241, 0.05));
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 24px;
+      padding: 40px;
+      margin-bottom: 60px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    .decorated-profile-card::before {
+      content: '🛡️';
+      position: absolute;
+      right: -20px;
+      bottom: -20px;
+      font-size: 140px;
+      opacity: 0.05;
+    }
+    .decorated-profile-card h2 {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, #fff, #38bdf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .decorated-profile-card p {
+      color: #94a3b8;
+      font-size: 16px;
+      line-height: 1.8;
+      margin-bottom: 20px;
+    }
+    .decorated-profile-card .highlight-text {
+      color: #38bdf8;
+      font-weight: 700;
+    }
+    .admin-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-top: 25px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .meta-badge {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 8px 16px;
+      border-radius: 30px;
+      font-size: 13px;
+      color: #f1f5f9;
+    }
+
+    .values { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; margin-top: 40px; }
+    .value-card { background: #12183a; border: 1px solid rgba(79,195,247,0.15); border-radius: 16px; padding: 30px 24px; text-align: center; }
+    .value-card .icon { font-size: 40px; margin-bottom: 16px; }
+    .value-card h3 { color: #fff; margin-bottom: 8px; }
+    .value-card p { color: #94a3b8; font-size: 13px; line-height: 1.7; }
+    @media(max-width:768px){ .page-hero{padding:80px 20px 40px;} .about-section{padding:40px 20px;} }
+  </style>
+</head>
+<body>
+
+  <header id="navbar">
+    <div class="logo">🛡️ Academy <span>Portal</span></div>
+    <nav>
+      <a href="index.html"><i class="fas fa-home"></i> Home</a>
+      <a href="about.html" class="active"><i class="fas fa-info-circle"></i> About Academy</a>
+      <a href="contact.html"><i class="fas fa-envelope"></i> Contact Us</a>
+      <a href="admin.html" style="border: 1px solid #38bdf8; padding: 5px 12px; border-radius: 8px; color: #38bdf8;"><i class="fas fa-lock"></i> Staff Login</a>
+    </nav>
+  </header>
+
+  <div class="page-hero">
+    <h1>About <span style="background:linear-gradient(135deg,#4fc3f7,#0288d1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Our Crest</span></h1>
+    <p>Guiding principles and curriculum standards of our premium learning sanctuary.</p>
+  </div>
+
+  <div class="about-section">
+    <!-- Beautiful Decorated Paragraph -->
+    <div class="decorated-profile-card">
+      <h2>Welcome to Crest Academy</h2>
+      <p>
+        Nestled in the heart of <span class="highlight-text">Mzuzu, Malawi</span>, Crest Academy stands as a premier beacon of academic brilliance under the dedicated supervision of <span class="highlight-text">Sir Taydayo</span>. We are deeply committed to shattering educational boundaries by delivering world-class syllabus modules, verified exam papers, and high-impact video lessons directly to our scholars. Merging local excellence with global standards, our modern environment proudly provisions the comprehensive National Curriculum alongside the globally esteemed <span class="highlight-text">Cambridge Assessment International Education Syllabus</span>, equipping every modern student with the master credentials required to thrive anywhere on Earth.
+      </p>
+      
+      <div class="admin-meta">
+        <div class="meta-badge"><i class="fas fa-school" style="color:#38bdf8; margin-right:6px;"></i> Campus: Mzuzu, Malawi</div>
+        <div class="meta-badge"><i class="fas fa-graduation-cap" style="color:#a855f7; margin-right:6px;"></i> Curriculum: MANEB & Cambridge</div>
+        <div class="meta-badge"><i class="fas fa-envelope" style="color:#f43f5e; margin-right:6px;"></i> crestacadamy05@gmail.com</div>
+        <div class="meta-badge"><i class="fas fa-user-shield" style="color:#22c55e; margin-right:6px;"></i> Admin: taydayoluna@gmail.com</div>
+      </div>
+    </div>
+
+    <h2 style="color:#38bdf8; text-align:center; margin-bottom:30px;">Our Core Framework</h2>
+    <div class="values">
+      <div class="value-card">
+        <div class="icon">📚</div>
+        <h3>Dual Tracks</h3>
+        <p>Seamless learning resources covering both local and foreign Cambridge streams.</p>
+      </div>
+      <div class="value-card">
+        <div class="icon">🌍</div>
+        <h3>Accessibility</h3>
+        <p>Optimized interface access for mobile or computer, running cleanly 24/7.</p>
+      </div>
+      <div class="value-card">
+        <div class="icon">📺</div>
+        <h3>Video Lessons</h3>
+        <p>Immersive, streaming video walkthroughs engineered directly by top staff tier.</p>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div style="padding:30px; text-align:center; border-top:1px solid rgba(79, 195, 247, 0.15);">
+      <p>© 2026 Crest Academy • Secure Repository Project</p>
+    </div>
+  </footer>
+</body>
+</html>

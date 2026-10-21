@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Contact — Crest Academy EduLibrary</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    .page-hero { background: linear-gradient(135deg, #0a0a1a, #0d1b3e); padding: 100px 40px 60px; text-align: center; }
+    .page-hero h1 { font-size: 42px; color: #fff; margin-bottom: 16px; }
+    .page-hero p { color: #90a4ae; font-size: 16px; max-width: 600px; margin: 0 auto; }
+    .contact-section { max-width: 900px; margin: 0 auto; padding: 60px 40px; }
+    .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+    .contact-info h2 { font-size: 24px; color: var(--accent); margin-bottom: 24px; }
+    .contact-item { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 24px; }
+    .contact-item .icon { width: 46px; height: 46px; background: rgba(79,195,247,0.1); border: 1px solid var(--border); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 18px; flex-shrink: 0; }
+    .contact-item h4 { color: var(--text); margin-bottom: 4px; }
+    .contact-item p { color: var(--text2); font-size: 13px; }
+    .contact-form { background: linear-gradient(135deg, var(--card), var(--card2)); border: 1px solid var(--border); border-radius: 16px; padding: 30px; }
+    .contact-form h2 { color: var(--accent); margin-bottom: 24px; font-size: 20px; }
+    .contact-form input, .contact-form textarea { width: 100%; padding: 13px 16px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 14px; font-family: 'Poppins', sans-serif; outline: none; margin-bottom: 16px; }
+    .contact-form input:focus, .contact-form textarea:focus { border-color: var(--accent); }
+    .contact-form textarea { height: 120px; resize: vertical; }
+    .contact-form button { width: 100%; padding: 14px; background: linear-gradient(135deg, #0288d1, #4fc3f7); color: #000; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; font-family: 'Poppins', sans-serif; transition: all 0.3s; }
+    .contact-form button:hover { transform: scale(1.02); }
+    .success-msg { color: #66bb6a; text-align: center; margin-top: 12px; font-size: 14px; }
+    @media(max-width:768px){ .contact-grid{grid-template-columns:1fr;} .page-hero{padding:80px 20px 40px;} .contact-section{padding:40px 20px;} }
+  </style>
+</head>
+<body>
+
+  <header id="navbar">
+    <div class="logo">📚 EduLibrary</div>
+    <nav>
+      <a href="index.html"><i class="fas fa-home"></i> Home</a>
+      <a href="index.html#primary"><i class="fas fa-child"></i> Primary</a>
+      <a href="index.html#secondary"><i class="fas fa-school"></i> Secondary</a>
+      <a href="index.html#tertiary"><i class="fas fa-university"></i> Tertiary</a>
+      <a href="about.html"><i class="fas fa-info-circle"></i> About</a>
+      <a href="contact.html"><i class="fas fa-envelope"></i> Contact</a>
+      <a href="admin.html" class="admin-btn"><i class="fas fa-lock"></i> Admin</a>
+      <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
+    </nav>
+    <div class="hamburger" onclick="toggleMenu()">☰</div>
+  </header>
+
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="index.html">🏠 Home</a>
+    <a href="about.html">ℹ️ About</a>
+    <a href="contact.html">✉️ Contact</a>
+  </div>
+
+  <div class="page-hero">
+    <h1>Contact <span style="background:linear-gradient(135deg,#4fc3f7,#0288d1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Us</span></h1>
+    <p>Have a question or want to suggest an educational resource? Reach out directly to Crest Academy management.</p>
+  </div>
+
+  <div class="contact-section">
+    <div class="contact-grid">
+      <div class="contact-info">
+        <h2>Get In Touch</h2>
+        <div class="contact-item">
+          <div class="icon"><i class="fas fa-envelope"></i></div>
+          <div>
+            <h4>School Support Email</h4>
+            <p><a href="mailto:crestacademy05@gmail.com" style="color:inherit; text-decoration:none;">crestacademy05@gmail.com</a></p>
+          </div>
+        </div>
+        <div class="contact-item">
+          <div class="icon"><i class="fas fa-user-shield"></i></div>
+          <div>
+            <h4>Director Inquiries</h4>
+            <p><a href="mailto:taydayoluna@gmail.com" style="color:inherit; text-decoration:none;">taydayoluna@gmail.com</a></p>
+          </div>
+        </div>
+        <div class="contact-item">
+          <div class="icon"><i class="fas fa-map-marker-alt"></i></div>
+          <div>
+            <h4>Location</h4>
+            <p>Mzuzu, Malawi</p>
+          </div>
+        </div>
+        <div class="contact-item">
+          <div class="icon"><i class="fas fa-phone"></i></div>
+          <div>
+            <h4>Contact Numbers</h4>
+            <p>+265 987 112 150<br>+265 884 662 849</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="contact-form">
+        <h2>✉️ Send a Message</h2>
+        <form id="submissionForm" onsubmit="handleFormSubmission(event)">
+          <input type="text" name="name" id="contactName" placeholder="Your Name" required />
+          <input type="email" name="email" id="contactEmail" placeholder="Your Email" required />
+          <input type="text" name="subject" id="contactSubject" placeholder="Subject" required />
+          <textarea name="message" id="contactMessage" placeholder="Your message..." required></textarea>
+          <button type="submit" id="sendBtn">📨 Send Message</button>
+        </form>
+        <p class="success-msg" id="contactSuccess"></p>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-bottom" style="padding:30px;">
+      <p>© 2026 Crest Academy EduLibrary — Made for Students</p>
+    </div>
+  </footer>
+
+  <script>
+    function toggleTheme() {
+      document.body.classList.toggle('light-mode');
+      const btn = document.getElementById('themeBtn');
+      if (btn) btn.textContent = document.body.classList.contains('light-mode') ? '☀️' : '🌙';
+    }
+    function toggleMenu() {
+      document.getElementById('mobileMenu').classList.toggle('open');
+    }
+
+    async function handleFormSubmission(e) {
+      e.preventDefault(); // Stop the page from reloading/redirecting
+      
+      const name = document.getElementById('contactName').value.trim();
+      const email = document.getElementById('contactEmail').value.trim();
+      const subject = document.getElementById('contactSubject').value.trim();
+      const message = document.getElementById('contactMessage').value.trim();
+      const successText = document.getElementById('contactSuccess');
+      const sendBtn = document.getElementById('sendBtn');
+      
+      if (!name || !email || !message) { 
+        alert('⚠️ Please fill in all fields!'); 
+        return; 
+      }
+      
+      sendBtn.disabled = true;
+      successText.style.color = "#38bdf8";
+      successText.textContent = '⏳ Transmitting message to inbox...';
+
+      // Setup data payload for Formspree endpoint (or replace with your custom formspree unique ID link)
+      const formData = new FormData();
+      formData.append('Name', name);
+      formData.append('Email/ReplyTo', email);
+      formData.append('Subject', subject);
+      formData.append('Message', message);
+
+      try {
+        // Submit directly to your designated primary admin contact inbox
+        const response = await fetch('https://formspree.io/f/mjgdnpvp', { 
+          method: 'POST',
+          body: formData,
+          headers: { 'Accept': 'application/json' }
+        });
+
+        if (response.ok) {
+          successText.style.color = "#66bb6a";
+          successText.textContent = '✅ Message successfully routed directly to our inbox!';
+          // Clear inputs
+          document.getElementById('contactName').value = '';
+          document.getElementById('contactEmail').value = '';
+          document.getElementById('contactSubject').value = '';
+          document.getElementById('contactMessage').value = '';
+        } else {
+          throw new Error('Formspree endpoint error context rejected payload.');
+        }
+      } catch (err) {
+        // Fallback option if user tracking scripts block fetch requests
+        successText.style.color = "#ef4444";
+        successText.textContent = '❌ Handshake dropped. Direct email link opened.';
+        window.location.href = `mailto:taydayoluna@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent("From: " + name + "\n\n" + message)}`;
+      } finally {
+        sendBtn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>

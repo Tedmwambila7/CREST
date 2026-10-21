@@ -1,0 +1,1702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Executive Control Console — Crest Academy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-main: #060814;
+      --bg-card: #0b112c;
+      --bg-input: #12193d;
+      --accent-primary: #38bdf8;
+      --accent-hover: #0288d1;
+      --text-main: #f1f5f9;
+      --text-muted: #64748b;
+      --border-color: rgba(56, 189, 248, 0.15);
+      --success: #10b981;
+      --danger: #ef4444;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+    body { background-color: var(--bg-main); color: var(--text-main); padding: 40px 5%; }
+
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; }
+    h1 { font-size: 26px; font-weight: 800; }
+    h1 span { color: var(--accent-primary); }
+
+    .back-btn { text-decoration: none; color: var(--text-muted); font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: color 0.2s; }
+    .back-btn:hover { color: var(--accent-primary); }
+
+    .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+    @media (max-width: 900px) { .admin-grid { grid-template-columns: 1fr; } }
+
+    .panel-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
+    .panel-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; color: #fff; }
+
+    .form-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+    .form-group label { font-size: 12px; font-weight: 600; color: var(--accent-primary); text-transform: uppercase; letter-spacing: 0.05em; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 14px 16px; background: var(--bg-input); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; color: #fff; font-size: 14px; outline: none; transition: all 0.3s; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent-primary); background: #16204d; }
+
+    .upload-box { border: 2px dashed var(--border-color); border-radius: 14px; padding: 30px; text-align: center; background: rgba(56,189,248,0.02); cursor: pointer; transition: all 0.2s; margin-bottom: 20px; }
+    .upload-box:hover { border-color: var(--accent-primary); background: rgba(56,189,248,0.05); }
+    .upload-box i { font-size: 36px; color: var(--text-muted); margin-bottom: 12px; }
+    .upload-box p { font-size: 13px; color: var(--text-muted); }
+    .upload-box .file-indicator { margin-top: 10px; font-weight: 600; color: var(--success); display: none; }
+
+    .action-btn { width: 100%; padding: 16px; background: linear-gradient(135deg, var(--accent-hover), var(--accent-primary)); color: #040714; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 20px rgba(56,189,248,0.25); }
+    .action-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(56,189,248,0.35); }
+    .action-btn:disabled { background: var(--bg-input); color: var(--text-muted); cursor: not-allowed; box-shadow: none; transform: none; }
+
+    .status-msg { margin-top: 15px; padding: 12px; border-radius: 10px; font-size: 13px; font-weight: 500; display: none; }
+    .status-msg.success { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); color: var(--success); }
+    .status-msg.danger { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: var(--danger); }
+
+    .catalog-list { max-height: 650px; overflow-y: auto; padding-right: 5px; }
+    .folder-node { margin-bottom: 12px; background: rgba(255,255,255,0.01); border-radius: 12px; border: 1px solid rgba(255,255,255,0.03); overflow: hidden; }
+    .folder-header { background: #0e1435; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; transition: background 0.2s; }
+    .folder-header:hover { background: #131b46; }
+    .folder-title-area { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; color: #fff; }
+    .folder-title-area i { color: #f59e0b; font-size: 16px; }
+    .folder-meta-count { font-size: 11px; color: var(--accent-primary); background: rgba(56,189,248,0.1); padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+    .folder-contents { padding: 12px 12px 12px 25px; display: none; border-top: 1px solid rgba(255,255,255,0.03); background: #090e24; }
+    
+    .sub-folder { margin-bottom: 8px; border-left: 2px dashed rgba(56,189,248,0.2); padding-left: 10px; }
+    
+    .book-item { background: #111842; border: 1px solid rgba(255,255,255,0.02); border-radius: 10px; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; gap: 15px; margin-bottom: 8px; }
+    .book-item-info h4 { font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+    .book-meta { display: flex; gap: 10px; font-size: 11px; color: var(--text-muted); }
+    .meta-tag i { color: var(--accent-primary); font-size: 10px; }
+    
+    .del-btn { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: var(--danger); width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
+    .del-btn:hover { background: var(--danger); color: #fff; }
+
+    .catalog-section { margin-top: 50px; }
+    .catalog-title { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    /* RICH MEDIA CHAT ATTACHMENT MENU STYLES */
+    .chat-control-wrapper { display: flex; flex-direction: column; width: 100%; position: relative; }
+    .chat-action-bar { display: flex; gap: 12px; align-items: center; width: 100%; }
+    .attachment-container { position: relative; display: flex; align-items: center; }
+    
+    .attach-trigger-btn { background: var(--bg-input); border: 1px solid var(--border-color); color: var(--accent-primary); width: 48px; height: 48px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: all 0.2s; }
+    .attach-trigger-btn:hover { background: rgba(56, 189, 248, 0.1); border-color: var(--accent-primary); }
+    .attach-trigger-btn.active { background: var(--accent-primary); color: #060814; transform: rotate(45deg); }
+
+    .attachment-dropdown { position: absolute; bottom: 60px; left: 0; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 8px; display: none; flex-direction: column; gap: 4px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 100; min-width: 180px; }
+    .attachment-option { display: flex; align-items: center; gap: 10px; padding: 10px 14px; font-size: 13px; color: var(--text-main); cursor: pointer; border-radius: 8px; transition: background 0.2s; text-align: left; background: none; border: none; width: 100%; }
+    .attachment-option:hover { background: rgba(56, 189, 248, 0.08); color: var(--accent-primary); }
+    .attachment-option i { width: 18px; text-align: center; }
+
+    .chat-staging-banner { display: none; background: rgba(56, 189, 248, 0.05); border: 1px dashed var(--border-color); padding: 8px 12px; border-radius: 8px; font-size: 12px; color: var(--accent-primary); align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .chat-staging-banner button { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 14px; }
+
+    /* RECORD MODAL STYLES */
+    .record-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(4, 7, 20, 0.8); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
+    .record-modal-content { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 25px; width: 100%; max-width: 500px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
+    .record-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .record-modal-header h4 { font-size: 16px; font-weight: 700; color: #fff; }
+    .record-modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
+
+    /* LIVE CAMERA / VOICE CAPTURE MODAL STYLES */
+    .capture-modal-content { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 22px; width: 100%; max-width: 480px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
+    .capture-stage { width: 100%; background: #000; border-radius: 14px; overflow: hidden; position: relative; aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center; }
+    .capture-stage video, .capture-stage img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .capture-stage.audio-stage { aspect-ratio: auto; height: 140px; background: linear-gradient(135deg, #12193d, #0b112c); }
+
+    .capture-rec-dot { position: absolute; top: 12px; left: 12px; display: none; align-items: center; gap: 6px; background: rgba(0,0,0,0.55); padding: 6px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 0.04em; }
+    .capture-rec-dot.live { display: flex; }
+    .capture-rec-dot .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--danger); animation: pulseDot 1s infinite; }
+    @keyframes pulseDot { 0%,100% { opacity: 1; } 50% { opacity: 0.25; } }
+
+    .capture-timer { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.55); padding: 6px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; color: #fff; display: none; }
+    .capture-timer.live { display: flex; }
+
+    .mic-visualizer { display: flex; align-items: center; justify-content: center; gap: 4px; height: 100%; width: 100%; }
+    .mic-visualizer .bar { width: 5px; border-radius: 4px; background: var(--accent-primary); height: 8px; transition: height 0.08s ease; }
+
+    .capture-controls { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 18px; }
+    .cap-btn { border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .cap-btn-main { width: 64px; height: 64px; background: var(--danger); color: #fff; font-size: 22px; box-shadow: 0 0 0 4px rgba(239,68,68,0.2); }
+    .cap-btn-main:hover { transform: scale(1.05); }
+    .cap-btn-main.is-recording { background: #fff; color: var(--danger); }
+    .cap-btn-secondary { width: 48px; height: 48px; background: var(--bg-input); color: var(--text-main); font-size: 16px; border: 1px solid var(--border-color); }
+    .cap-btn-secondary:hover { background: rgba(56,189,248,0.1); color: var(--accent-primary); }
+    .cap-btn-secondary:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .capture-mode-label { text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 12px; font-weight: 500; }
+    .capture-error-box { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25); color: #fca5a5; font-size: 12px; padding: 10px 12px; border-radius: 10px; margin-top: 12px; display: none; line-height: 1.5; }
+    body.locked > *:not(#adminGate) { display: none !important; }
+    #adminGate { position: fixed; inset: 0; background: var(--bg-main); display: none; align-items: center; justify-content: center; z-index: 99999; padding: 20px; }
+    body.locked #adminGate { display: flex; }
+    .gate-box { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 36px; width: 100%; max-width: 400px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
+    .gate-box h2 { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+    .gate-box p { font-size: 13px; color: var(--text-muted); margin-bottom: 22px; }
+    .mini-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; margin-bottom: 8px; font-size: 12px; }
+    .mini-row small { color: var(--text-muted); display: block; margin-top: 2px; }
+    .mini-btn { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #f87171; padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: 600; white-space: nowrap; }
+    .mini-btn.blue { background: rgba(56,189,248,0.1); border-color: rgba(56,189,248,0.3); color: var(--accent-primary); }
+    .sub-title { font-size: 12px; font-weight: 700; color: var(--accent-primary); text-transform: uppercase; letter-spacing: 0.05em; margin: 18px 0 10px; }
+
+    .modal-bg { position: fixed; inset: 0; background: rgba(2,4,14,0.8); display: none; align-items: center; justify-content: center; z-index: 9999; padding: 20px; }
+    .modal-bg.open { display: flex; }
+    .modal-box { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 30px; width: 100%; max-width: 440px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
+    .modal-box h3 { font-size: 18px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+    .add-part-btn { background: linear-gradient(135deg, var(--accent-hover), var(--accent-primary)); color: #040714; border: none; padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+    .ghost-btn { background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); padding: 12px; border-radius: 12px; cursor: pointer; font-weight: 600; width: 100%; margin-top: 10px; }
+  </style>
+</head>
+<body class="locked">
+  <script>if (sessionStorage.getItem('crestAdminOK') === '1' && sessionStorage.getItem('crestAdminKey')) document.body.classList.remove('locked');</script>
+
+  <div id="adminGate">
+    <div class="gate-box">
+      <h2><i class="fa-solid fa-user-shield" style="color:var(--accent-primary);"></i> Admin Access</h2>
+      <p>Sign in to open the Crest Academy control console.</p>
+      <div class="form-group"><label>Name</label><input type="text" id="gateName" autocomplete="username" placeholder="Full name" onkeydown="if(event.key==='Enter')unlockAdmin()" /></div>
+      <div class="form-group"><label>Password</label><input type="password" id="gatePass" autocomplete="current-password" placeholder="Password" onkeydown="if(event.key==='Enter')unlockAdmin()" /></div>
+      <button class="action-btn" onclick="unlockAdmin()"><i class="fa-solid fa-right-to-bracket"></i> Enter Console</button>
+      <div class="status-msg danger" id="gateError"></div>
+      <a href="index.html" class="back-btn" style="margin-top:18px;justify-content:center;"><i class="fa-solid fa-arrow-left-long"></i> Back to student portal</a>
+    </div>
+  </div>
+
+  <header>
+    <div>
+      <h1>Executive <span>Control Console</span></h1>
+      <p style="color: var(--text-muted); font-size: 13px; margin-top: 4px;">Crest Academy Database Pipeline Administration</p>
+    </div>
+    <div style="display:flex;gap:22px;align-items:center;">
+      <button class="add-part-btn" onclick="openAddParticipant()"><i class="fa-solid fa-user-plus"></i> Add Participant</button>
+      <a href="index.html" class="back-btn"><i class="fa-solid fa-arrow-left-long"></i> Exit Console Directory</a>
+      <a class="back-btn" style="cursor:pointer;" onclick="adminSignOut()"><i class="fa-solid fa-right-from-bracket"></i> Sign out</a>
+    </div>
+  </header>
+
+  <!-- ADD PARTICIPANT MODAL -->
+  <div class="modal-bg" id="partModal" onclick="if(event.target===this)closeAddParticipant()">
+    <div class="modal-box">
+      <h3><i class="fa-solid fa-user-plus" style="color:var(--accent-primary);"></i> Add Participant</h3>
+      <div class="form-group"><label>Participant name</label><input type="text" id="partName" placeholder="e.g. John Banda" /></div>
+      <div class="form-group"><label>Phone number</label><input type="text" id="partPhone" placeholder="e.g. 0888123456" /></div>
+      <div class="form-group"><label>Password (you choose it)</label>
+        <div style="display:flex;gap:8px;"><input type="text" id="partPass" placeholder="at least 6 characters" /><button type="button" class="mini-btn blue" onclick="genPartPass()" style="padding:0 14px;">Generate</button></div>
+      </div>
+      <button class="action-btn" id="partBtn" onclick="addParticipant()"><i class="fa-solid fa-check"></i> Add Participant</button>
+      <div class="status-msg" id="partStatus"></div>
+      <button class="ghost-btn" onclick="closeAddParticipant()">Close</button>
+    </div>
+  </div>
+
+  <div class="admin-grid">
+    
+    <!-- Dispatch Panel Card -->
+    <div class="panel-card">
+      <h3><i class="fa-solid fa-cloud-arrow-up" style="color:var(--accent-primary);"></i> Dispatch New Resource</h3>
+      
+      <div class="form-group">
+        <label>Resource Node Title</label>
+        <input type="text" id="bookTitle" placeholder="e.g. Pure Mathematics Masterclass Vol. 1" />
+      </div>
+
+      <div class="form-group">
+        <label>System Track Level</label>
+        <select id="bookLevel" onchange="adaptFormAllocations()">
+          <option value="primary">Primary School Tier</option>
+          <option value="secondary" selected>Secondary School Tier</option>
+          <option value="tertiary">Tertiary Advanced Level</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Grade Allocation Node</label>
+        <select id="bookClass"></select>
+      </div>
+
+      <div class="form-group">
+        <label>Subject Allocation Core</label>
+        <select id="bookSubject"></select>
+      </div>
+
+      <div class="form-group">
+        <label>Resource Asset Category</label>
+        <select id="bookType">
+          <option value="Book">📖 eBook Textbook</option>
+          <option value="Video Lesson">📺 Video Masterclass</option>
+          <option value="Notes">📓 Lecture Notes</option>
+          <option value="Past Paper">📝 Past Exam Paper</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Curriculum Stream Syllabus</label>
+        <select id="bookSyllabus">
+          <option value="Cambridge">Cambridge Framework</option>
+          <option value="National">National Curriculum</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Resource Description Summary</label>
+        <textarea id="bookDesc" rows="3" placeholder="Provide description metadata..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Upload Selection Mode</label>
+        <select id="uploadMode" onchange="toggleUploadMode()">
+          <option value="file">📄 Single File Mode</option>
+          <option value="folder">📁 Whole Folder Mode</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Cloud Storage File Upload</label>
+        <div class="upload-box" onclick="triggerSystemFileBrowser()">
+          <i class="fa-solid fa-folder-open" id="uploadBoxIcon"></i>
+          <p id="uploadPromptText">Click here to select resource asset file node stream</p>
+          <div class="file-indicator" id="fileIndicator"></div>
+        </div>
+        <input type="file" id="hiddenFileBrowser" style="display: none;" onchange="handleFileSelection(event)" />
+        <input type="file" id="hiddenFolderBrowser" style="display: none;" webkitdirectory directory onchange="handleFolderSelection(event)" />
+      </div>
+
+      <button class="action-btn" id="submitBtn" onclick="executeResourceCloudDeployment()">
+        <i class="fa-solid fa-circle-check"></i> Initialize Cloud Deployment
+      </button>
+
+      <div class="status-msg" id="panelStatus"></div>
+    </div>
+
+    <!-- Structured File Explorer Panel Card -->
+    <div class="panel-card">
+      <h3><i class="fa-solid fa-network-wired" style="color:var(--success);"></i> Structured File Explorer (<span id="catalogCount">0</span>)</h3>
+      <div class="catalog-list" id="bookList">
+        <p style="color:var(--text-muted);font-style:italic;font-size:13px;">Syncing server parameters...</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Assignments & Grades Section -->
+  <div class="catalog-section" id="workSection">
+    <div class="catalog-title">Assignments &amp; Grades</div>
+    <div class="admin-grid">
+
+      <div class="panel-card">
+        <h3><i class="fa-solid fa-file-signature" style="color:#a855f7;"></i> Post to Student Panel</h3>
+
+        <div class="form-group">
+          <label>What are you posting?</label>
+          <select id="workKind" onchange="toggleWorkKind()">
+            <option value="assignment">📝 Assignment</option>
+            <option value="grade">🏆 Grade / Result</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Student</label>
+          <select id="workStudent"></select>
+        </div>
+
+        <div class="form-group">
+          <label>Title</label>
+          <input type="text" id="workTitle" placeholder="e.g. Electromagnetic Waves Problem Set" />
+        </div>
+
+        <div class="form-group">
+          <label>Subject</label>
+          <select id="workSubject"></select>
+        </div>
+
+        <div id="assignFields">
+          <div class="form-group"><label>Due date (optional)</label><input type="date" id="workDue" /></div>
+          <div class="form-group"><label>Instructions</label><textarea id="workDesc" rows="3" placeholder="What should the student do?"></textarea></div>
+          <div class="form-group">
+            <label>Attach a file (optional)</label>
+            <input type="file" id="workFile" />
+          </div>
+        </div>
+
+        <div id="gradeFields" style="display:none;">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+            <div class="form-group"><label>Score</label><input type="number" id="workScore" min="0" step="any" oninput="autoGradeLetter()" placeholder="85" /></div>
+            <div class="form-group"><label>Out of</label><input type="number" id="workOutOf" min="1" step="any" value="100" oninput="autoGradeLetter()" /></div>
+            <div class="form-group"><label>Grade</label><input type="text" id="workGrade" placeholder="A" /></div>
+          </div>
+          <div class="form-group"><label>Remarks</label><textarea id="workRemarks" rows="2" placeholder="Teacher comments..."></textarea></div>
+        </div>
+
+        <button class="action-btn" id="workSubmitBtn" onclick="postWork()"><i class="fa-solid fa-paper-plane"></i> Publish to Student Panel</button>
+        <div class="status-msg" id="workStatus"></div>
+      </div>
+
+      <div class="panel-card">
+        <h3><i class="fa-solid fa-inbox" style="color:var(--success);"></i> Posted &amp; Received</h3>
+        <div class="catalog-list" id="workLists"><p style="color:var(--text-muted);font-style:italic;font-size:13px;">Loading...</p></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Student Correspondence Center Section -->
+  <div class="catalog-section">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+      <div class="catalog-title" style="margin-bottom: 0;">Student Correspondence Center</div>
+      <button onclick="refreshAdminChatMesh()" style="background: rgba(56, 189, 248, 0.08); border: 1px solid var(--border-color); color: var(--accent-primary); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 8px;"><i class="fas fa-rotate"></i> Sync Feed</button>
+    </div>
+    
+    <div style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+      <div id="adminChatMessagesLog" style="height: 340px; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; background: rgba(4, 7, 20, 0.4); border: 1px solid rgba(255,255,255,0.02); border-radius: 12px; margin-bottom: 20px;"></div>
+
+      <div class="chat-control-wrapper">
+        <!-- Staging Indicator for attachments ready to drop -->
+        <div class="chat-staging-banner" id="chatStagingBanner">
+          <span id="chatStagingText">📄 Staged File: sample.pdf</span>
+          <button onclick="clearStagedChatFile()"><i class="fas fa-times-circle"></i></button>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:12px;color:var(--text-muted);">
+          <label for="adminChatTo" style="font-weight:600;color:var(--accent-primary);text-transform:uppercase;letter-spacing:.05em;">Reply to</label>
+          <select id="adminChatTo" onchange="adminRecipientManual=true" style="flex:1;padding:10px 12px;background:var(--bg-input);border:1px solid rgba(255,255,255,0.05);border-radius:10px;color:#fff;font-size:13px;outline:none;"><option value="all">Everyone</option></select>
+        </div>
+        <div class="chat-action-bar">
+          <!-- Attachment Dropdown Container -->
+          <div class="attachment-container">
+            <button class="attach-trigger-btn" id="chatAttachBtn" onclick="toggleChatAttachmentMenu(event)">
+              <i class="fas fa-plus"></i>
+            </button>
+            <div class="attachment-dropdown" id="chatAttachDropdown">
+              <button class="attachment-option" onclick="openRecordModal()"><i class="fas fa-clipboard-list" style="color: var(--accent-primary);"></i> Add official record</button>
+              <button class="attachment-option" onclick="openLiveCapture('image')"><i class="fas fa-camera" style="color: #ed4956;"></i> Take Photo</button>
+              <button class="attachment-option" onclick="openLiveCapture('video')"><i class="fas fa-video" style="color: #a855f7;"></i> Record Video</button>
+              <button class="attachment-option" onclick="openLiveCapture('audio')"><i class="fas fa-microphone" style="color: #f59e0b;"></i> Record Voice Note</button>
+              <button class="attachment-option" onclick="triggerChatDocumentUpload()"><i class="fas fa-file-invoice" style="color: var(--success);"></i> Upload Document</button>
+            </div>
+          </div>
+
+          <!-- Hidden System Capture Fallbacks -->
+          <input type="file" id="chatCameraPhotoInput" accept="image/*" capture="environment" style="display:none;" onchange="handleChatFileStaging(event, 'image')">
+          <input type="file" id="chatCameraVideoInput" accept="video/*" capture="environment" style="display:none;" onchange="handleChatFileStaging(event, 'video')">
+          <input type="file" id="chatDocumentInput" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt" style="display:none;" onchange="handleChatFileStaging(event, 'document')">
+
+          <input type="text" id="adminChatInputField" placeholder="Type a message reply here..." onkeydown="if(event.key === 'Enter') dispatchAdminChatMessage()" style="flex: 1; padding: 14px 16px; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 12px; color: #fff; font-size: 13px; outline: none;" />
+          <button id="adminChatSendBtn" onclick="dispatchAdminChatMessage()" style="background: linear-gradient(135deg, var(--accent-hover), var(--accent-primary)); color: #060814; font-weight: 600; padding: 14px 24px; border: none; border-radius: 12px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 8px;"><i class="fas fa-paper-plane"></i> Send Reply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Camera / Voice Capture Overlay Modal -->
+  <div class="record-modal" id="liveCaptureModal">
+    <div class="capture-modal-content">
+      <div class="record-modal-header">
+        <h4 id="captureModalTitle"><i class="fas fa-camera" style="color: var(--accent-primary);"></i> Take Photo</h4>
+        <button onclick="closeLiveCapture()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:16px;"><i class="fas fa-times"></i></button>
+      </div>
+
+      <div class="capture-stage" id="captureStage">
+        <video id="captureLiveVideo" autoplay playsinline muted></video>
+        <img id="capturePhotoPreview" style="display:none;" />
+        <video id="captureVideoPreview" style="display:none;" controls></video>
+        <div class="capture-rec-dot" id="captureRecDot"><span class="dot"></span> REC</div>
+        <div class="capture-timer" id="captureTimer">00:00</div>
+      </div>
+
+      <div class="capture-error-box" id="captureErrorBox"></div>
+      <div class="capture-mode-label" id="captureModeLabel">Allow camera access to begin live capture.</div>
+
+      <canvas id="capturePhotoCanvas" style="display:none;"></canvas>
+
+      <div class="capture-controls" id="captureControls">
+        <button class="cap-btn cap-btn-secondary" id="captureRetakeBtn" onclick="retakeCapture()" disabled title="Retake"><i class="fas fa-rotate-left"></i></button>
+        <button class="cap-btn cap-btn-main" id="captureMainBtn" onclick="handleCaptureMainAction()"><i class="fas fa-camera" id="captureMainIcon"></i></button>
+        <button class="cap-btn cap-btn-secondary" id="captureUseBtn" onclick="useCapturedMedia()" disabled title="Use this"><i class="fas fa-check"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Official Record Configuration Overlay Modal -->
+  <div class="record-modal" id="recordFormModal">
+    <div class="record-modal-content">
+      <div class="record-modal-header">
+        <h4><i class="fas fa-clipboard-list" style="color: var(--accent-primary);"></i> Insert Official System Record</h4>
+        <button onclick="closeRecordModal()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:16px;"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="form-group">
+        <label>Record Category/Header</label>
+        <input type="text" id="recordHeaderTitle" placeholder="e.g. DISCIPLINARY / ATTENDANCE / FEES LOG" />
+      </div>
+      <div class="form-group">
+        <label>Official Transcript/Notes Statement</label>
+        <textarea id="recordNotesBody" rows="4" placeholder="Type official administrative data logs here..."></textarea>
+      </div>
+      <div class="record-modal-footer">
+        <button onclick="closeRecordModal()" style="background: rgba(255,255,255,0.05); color:#fff; border:none; padding:10px 16px; border-radius:8px; cursor:pointer; font-size:13px;">Cancel</button>
+        <button onclick="commitOfficialRecordToChat()" style="background: var(--success); color:#fff; border:none; padding:10px 16px; border-radius:8px; cursor:pointer; font-size:13px; font-weight:600;">Save Record Node</button>
+      </div>
+    </div>
+  </div>
+
+  <footer style="margin-top: 60px; padding-top: 20px; border-top: 1px solid var(--border-color); text-align: center; color: var(--text-muted); font-size: 12px;">
+    Executive Console Control Architecture &copy; 2026 Crest Academy International.
+  </footer>
+
+  <script>
+    // MATCHED COHESIVE SYSTEM LEDGER CREDENTIALS
+
+    // Cloudinary credentials configuration
+    const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dfrnpdnld/auto/upload";
+    const CLOUDINARY_PRESET = "taydayo";
+
+    /* names used by the shared cloud helper */
+    /* ===== CLOUD SETTINGS ===== */
+    const CLOUD_URL = CLOUDINARY_URL, CLOUD_PRESET = CLOUDINARY_PRESET;
+    // >>> PASTE YOUR SUPABASE DETAILS HERE (Supabase > Project Settings > API) <<<
+    const SUPABASE_URL = "https://otjybdiyoqnsynjbofuj.supabase.co";      // e.g. https://abcdxyz.supabase.co
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90anliZGl5b3Fuc3luamJvZnVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI0ODk1OTgsImV4cCI6MjEwODA2NTU5OH0.itwB7UrJNSNIGj2VN82PniqX9fccquf0d9fBwGB05Jc"; // the anon / publishable key
+
+    async function rpc(fn, args) {
+      if (/PASTE_YOUR/.test(SUPABASE_URL + SUPABASE_KEY)) throw new Error('Supabase is not connected yet: paste your project URL and anon key at the top of this script.');
+      const headers = { 'Content-Type': 'application/json', apikey: SUPABASE_KEY };
+      if (SUPABASE_KEY.startsWith('eyJ')) headers.Authorization = 'Bearer ' + SUPABASE_KEY;
+      const r = await fetch(SUPABASE_URL.replace(/\/+$/, '') + '/rest/v1/rpc/' + fn, { method: 'POST', headers: headers, body: JSON.stringify(args || {}) });
+      const txt = await r.text(); let data = null; try { data = txt ? JSON.parse(txt) : null; } catch (e) {}
+      if (!r.ok) throw new Error((data && (data.message || data.hint)) || ('Request failed (' + r.status + ')'));
+      return data;
+    }
+    function adminKey() { return sessionStorage.getItem('crestAdminKey') || ''; }
+    async function aItems(coll) { return (await rpc('admin_items', { p_key: adminKey(), p_coll: coll })) || []; }
+    async function aPut(coll, item) { await rpc('admin_put_item', { p_key: adminKey(), p_coll: coll, p_item: item }); }
+    const CHAT_KEEP = 250;
+
+    let selectedFilesQueue = [];
+    
+    // Global state track configurations for active chat attachments
+    let stagedChatFile = null;
+    let stagedChatFileType = null; // 'image' | 'video' | 'audio' | 'document'
+
+    /* Subject lists match the student portal folders exactly */
+    const localSubjects = {
+      primary: ["English", "Chichewa", "Mathematics", "Science & Technology", "Social Studies", "Agriculture", "Bible Knowledge", "Life Skills"],
+      secondary: ["English", "Bible Knowledge", "Biology", "Physics", "Chemistry", "Agriculture", "Mathematics", "Computer Studies", "Business Studies", "Chichewa"],
+      tertiary: ["Computer Engineering", "Advanced Calculus", "Data Structures", "Business Management", "Medicine & Health", "Education"]
+    };
+
+    const localClasses = {
+      primary: ['Standard 1','Standard 2','Standard 3','Standard 4','Standard 5','Standard 6','Standard 7','Standard 8'],
+      secondary: ['Form 1','Form 2','Form 3','Form 4'],
+      tertiary: ['Year 1','Year 2','Year 3','Year 4']
+    };
+
+    function adaptFormAllocations() {
+      const lvl = document.getElementById('bookLevel').value;
+      
+      const classSelect = document.getElementById('bookClass');
+      classSelect.innerHTML = localClasses[lvl].map(c => `<option value="${c}">${c}</option>`).join('');
+
+      const subjSelect = document.getElementById('bookSubject');
+      subjSelect.innerHTML = localSubjects[lvl].map(s => `<option value="${s}">${s}</option>`).join('');
+    }
+
+    function toggleUploadMode() {
+      const mode = document.getElementById('uploadMode').value;
+      const icon = document.getElementById('uploadBoxIcon');
+      selectedFilesQueue = [];
+      document.getElementById('fileIndicator').style.display = 'none';
+      document.getElementById('uploadPromptText').style.display = 'block';
+      
+      if(mode === 'file') {
+        icon.className = "fa-solid fa-file-pdf";
+        document.getElementById('uploadPromptText').textContent = "Click here to select single resource file";
+      } else {
+        icon.className = "fa-solid fa-folder-open";
+        document.getElementById('uploadPromptText').textContent = "Click here to select resource folder cluster";
+      }
+    }
+
+    function triggerSystemFileBrowser() {
+      const mode = document.getElementById('uploadMode').value;
+      if (mode === 'file') {
+        document.getElementById('hiddenFileBrowser').click();
+      } else {
+        document.getElementById('hiddenFolderBrowser').click();
+      }
+    }
+
+    function handleFileSelection(e) {
+      const files = Array.from(e.target.files);
+      if(files.length === 0) return;
+      const file = files[0];
+      selectedFilesQueue = [file];
+
+      // Auto-detect subject + type from the filename itself (single-file mode has no folder context)
+      const level = document.getElementById('bookLevel').value;
+      const knownSubjects = localSubjects[level] || [];
+      file.detectedSubject = matchSubjectName(file.name, knownSubjects);
+      file.detectedType = detectTypeFromFile(file);
+      file.detectedClass = detectClassFromName(file.name, level);
+
+      let info = `📄 File Verified: ${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+      if (file.detectedSubject || file.detectedType || file.detectedClass) {
+        const tags = [file.detectedClass, file.detectedSubject, file.detectedType].filter(Boolean).join(' • ');
+        info += ` — 🎯 Detected: ${tags}`;
+      }
+      displayFileIndicator(info);
+
+      if(!document.getElementById('bookTitle').value.trim()) {
+        document.getElementById('bookTitle').value = file.name.replace(/\.[^/.]+$/, "");
+      }
+    }
+
+    function handleFolderSelection(e) {
+      const files = Array.from(e.target.files);
+      if (files.length === 0) return;
+      selectedFilesQueue = files.filter(f => !f.name.startsWith('.'));
+
+      // Auto-detect subject + type per file: check the subfolder name FIRST, then fall back
+      // to scanning the filename itself if the folder gave no confident match.
+      const level = document.getElementById('bookLevel').value;
+      const knownSubjects = localSubjects[level] || [];
+      let matchedCount = 0;
+
+      selectedFilesQueue.forEach(f => {
+        const relPath = f.webkitRelativePath || f.name;
+        const parts = relPath.split('/');
+        // parts[0] = root folder name, parts[1] = subfolder (if any) = likely the subject name
+        const subfolderName = parts.length > 2 ? parts[1] : null;
+
+        let subj = subfolderName ? matchSubjectName(subfolderName, knownSubjects) : null;
+        if (!subj) subj = matchSubjectName(f.name, knownSubjects); // fall back: scan the filename
+
+        f.detectedSubject = subj;
+        if (f.detectedSubject) matchedCount++;
+
+        f.detectedType = detectTypeFromFile(f);
+        f.detectedClass = detectClassFromName(relPath, level);
+      });
+
+      const totalSize = selectedFilesQueue.reduce((acc, f) => acc + f.size, 0);
+      let summary = `📁 Verified Cluster: ${selectedFilesQueue.length} files detected (${(totalSize / (1024 * 1024)).toFixed(2)} MB)`;
+      if (matchedCount > 0) {
+        summary += ` — 🎯 ${matchedCount} auto-sorted by subject`;
+      }
+      displayFileIndicator(summary);
+    }
+
+    // Matches a folder OR file name (e.g. "Biology", "Biology_PastPaper_2023.pdf") to the closest known subject
+    function matchSubjectName(rawName, knownSubjects) {
+      const clean = rawName.trim().toLowerCase().replace(/[\s_\-\.]+/g, '');
+      for (let subj of knownSubjects) {
+        const cleanSubj = subj.toLowerCase().replace(/[\s_\-\.]+/g, '');
+        if (clean === cleanSubj || clean.includes(cleanSubj)) {
+          return subj;
+        }
+      }
+      return null; // no confident match — caller will fall back to the dropdown value
+    }
+
+    // Auto-detect Resource Asset Category. Checks the FILENAME for keywords first
+    // (e.g. "past paper", "exam", "notes", "lesson"), then falls back to file extension.
+    function detectTypeFromFile(file) {
+      const nameClean = file.name.toLowerCase().replace(/[_\-\.]+/g, ' ');
+
+      const pastPaperKeywords = ['past paper', 'pastpaper', 'exam paper', 'examination', 'mock exam', 'msce', 'jce', 'pslce'];
+      const notesKeywords = ['notes', 'note ', 'summary', 'handout', 'revision'];
+      const videoKeywords = ['lesson', 'lecture', 'tutorial', 'masterclass', 'video'];
+
+      if (pastPaperKeywords.some(k => nameClean.includes(k))) return 'Past Paper';
+      if (notesKeywords.some(k => nameClean.includes(k))) return 'Notes';
+
+      const ext = file.name.split('.').pop().toLowerCase();
+      const videoExts = ['mp4', 'mov', 'avi', 'mkv', 'webm', 'm4v'];
+      const docExts = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'txt'];
+
+      if (videoExts.includes(ext)) return 'Video Lesson';
+      if (videoKeywords.some(k => nameClean.includes(k)) && docExts.includes(ext)) return 'Video Lesson'; // e.g. a transcript named "...lesson.pdf" still flagged as lesson content
+      if (docExts.includes(ext)) return 'Book';
+      return null; // unknown extension — fall back to dropdown value
+    }
+
+    // Finds "Form 2", "Standard 5", "Year 1" inside a file or folder name (only if valid for the chosen level)
+    function detectClassFromName(raw, level) {
+      const t = String(raw).toLowerCase().replace(/[_\-\.\/]+/g, ' ');
+      const m = t.match(/\b(form|standard|std|year)\s*([1-8])\b/);
+      if (!m) return null;
+      const word = m[1] === 'std' ? 'Standard' : m[1].charAt(0).toUpperCase() + m[1].slice(1);
+      const cand = word + ' ' + m[2];
+      return (localClasses[level] || []).includes(cand) ? cand : null;
+    }
+
+    function displayFileIndicator(msg) {
+      const indicator = document.getElementById('fileIndicator');
+      const text = document.getElementById('uploadPromptText');
+      text.style.display = 'none';
+      indicator.textContent = msg;
+      indicator.style.display = 'block';
+    }
+
+    async function getBooks() {
+      try { return (await rpc('get_books', { p_key: adminKey() })) || []; }
+      catch (err) { console.error(err); return []; }
+    }
+
+    async function saveBooks(booksArray) {
+      await rpc('admin_set_books', { p_key: adminKey(), p_books: booksArray });
+    }
+
+    function toggleFolderDisplay(id) {
+      const container = document.getElementById(id);
+      const icon = document.getElementById('icon-' + id);
+      if (container.style.display === "block") {
+        container.style.display = "none";
+        if(icon) icon.className = "fa-solid fa-folder";
+      } else {
+        container.style.display = "block";
+        if(icon) icon.className = "fa-solid fa-folder-open";
+      }
+    }
+
+    async function loadBookList() {
+      const listContainer = document.getElementById('bookList');
+      const books = await getBooks();
+      document.getElementById('catalogCount').textContent = books.length;
+
+      if (!books || books.length === 0) {
+        listContainer.innerHTML = '<p style="color:var(--text-muted);font-style:italic;font-size:13px;">Enterprise repository catalog empty.</p>';
+        return;
+      }
+
+      let directoryTree = { primary: {}, secondary: {}, tertiary: {} };
+
+      books.forEach((book, originalIndex) => {
+        const lv = book.level || 'secondary';
+        const cls = book.className || 'General';
+        const subj = book.subject || 'Uncategorized';
+        const ty = book.type || 'Book';
+
+        if (!directoryTree[lv]) directoryTree[lv] = {};
+        if (!directoryTree[lv][cls]) directoryTree[lv][cls] = {};
+        if (!directoryTree[lv][cls][subj]) directoryTree[lv][cls][subj] = {};
+        if (!directoryTree[lv][cls][subj][ty]) directoryTree[lv][cls][subj][ty] = [];
+
+        directoryTree[lv][cls][subj][ty].push({ ...book, index: originalIndex });
+      });
+
+      let treeHtml = '';
+      const tierLabels = { primary: 'Primary School Tier', secondary: 'Secondary School Tier', tertiary: 'Tertiary Advanced Level' };
+
+      for (let tier in directoryTree) {
+        let classesObj = directoryTree[tier];
+        let tierItemCount = 0;
+
+        for (let c in classesObj) {
+          for (let s in classesObj[c]) {
+            for (let t in classesObj[c][s]) { tierItemCount += classesObj[c][s][t].length; }
+          }
+        }
+        if (tierItemCount === 0) continue; 
+
+        let tierId = `tier-${tier}`;
+        treeHtml += `
+          <div class="folder-node">
+            <div class="folder-header" onclick="toggleFolderDisplay('${tierId}')">
+              <div class="folder-title-area"><i id="icon-${tierId}" class="fa-solid fa-folder"></i> ${tierLabels[tier]}</div>
+              <span class="folder-meta-count">${tierItemCount} items</span>
+            </div>
+            <div class="folder-contents" id="${tierId}">
+        `;
+
+        for (let className in classesObj) {
+          let subjectsObj = classesObj[className];
+          let classId = `class-${tier}-${className.replace(/\s+/g, '-')}`;
+          let classItemCount = 0;
+          for (let s in subjectsObj) { for (let t in subjectsObj[s]) { classItemCount += subjectsObj[s][t].length; } }
+
+          treeHtml += `
+            <div class="folder-node sub-folder">
+              <div class="folder-header" onclick="toggleFolderDisplay('${classId}')" style="background: #12193d;">
+                <div class="folder-title-area"><i id="icon-${classId}" class="fa-solid fa-folder" style="color: #60a5fa;"></i> ${className}</div>
+                <span class="folder-meta-count" style="background: rgba(96,165,250,0.15); color: #60a5fa;">${classItemCount} files</span>
+              </div>
+              <div class="folder-contents" id="${classId}" style="background: #0b112c;">
+          `;
+
+          for (let subjectName in subjectsObj) {
+            let typesObj = subjectsObj[subjectName];
+            let subjId = `subj-${tier}-${className.replace(/\s+/g, '-')}-${subjectName.replace(/\s+/g, '-')}`;
+            let subjItemCount = 0;
+            for (let t in typesObj) { subjItemCount += typesObj[t].length; }
+
+            treeHtml += `
+              <div class="folder-node sub-folder" style="border-left: 2px dashed rgba(245,158,11,0.25);">
+                <div class="folder-header" onclick="toggleFolderDisplay('${subjId}')" style="background: #151c40; padding: 11px 14px;">
+                  <div class="folder-title-area" style="font-size:13px;"><i id="icon-${subjId}" class="fa-solid fa-folder" style="color: #f59e0b;"></i> ${subjectName}</div>
+                  <span class="folder-meta-count" style="background: rgba(245,158,11,0.15); color: #f59e0b;">${subjItemCount} files</span>
+                </div>
+                <div class="folder-contents" id="${subjId}" style="background: #0a0f28;">
+            `;
+
+            for (let typeName in typesObj) {
+              let filesArray = typesObj[typeName];
+              let typeId = `type-${tier}-${className.replace(/\s+/g, '-')}-${subjectName.replace(/\s+/g, '-')}-${typeName.replace(/\s+/g, '-')}`;
+
+              treeHtml += `
+                <div class="folder-node sub-folder" style="border-left: 2px dashed rgba(16,185,129,0.2);">
+                  <div class="folder-header" onclick="toggleFolderDisplay('${typeId}')" style="background: #17204c; padding: 10px 14px;">
+                    <div class="folder-title-area" style="font-size:12px;"><i id="icon-${typeId}" class="fa-solid fa-folder" style="color: #10b981;"></i> ${typeName}s</div>
+                    <span class="folder-meta-count" style="background: rgba(16,185,129,0.15); color: #10b981; font-size:10px;">${filesArray.length}</span>
+                  </div>
+                  <div class="folder-contents" id="${typeId}" style="background: #0f163a; padding-left: 10px;">
+              `;
+
+              filesArray.forEach(b => {
+                treeHtml += `
+                  <div class="book-item">
+                    <div class="book-item-info">
+                      <h4>${b.title} <span style="font-size: 9px; color: var(--accent-primary); background:rgba(56,189,248,0.1); padding:1px 4px; border-radius:4px; margin-left:5px;">${b.syllabus || 'National'}</span></h4>
+                      <div class="book-meta">
+                        <span class="meta-tag"><i class="fa-solid fa-book-bookmark"></i> ${b.subject}</span>
+                      </div>
+                    </div>
+                    <button class="del-btn" onclick="deleteBook(${b.index}); event.stopPropagation();">
+                      <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                  </div>
+                `;
+              });
+
+              treeHtml += `</div></div>`;
+            }
+            treeHtml += `</div></div>`;
+          }
+          treeHtml += `</div></div>`;
+        }
+        treeHtml += `</div></div>`;
+      }
+
+      listContainer.innerHTML = treeHtml || '<p style="color:var(--text-muted);font-style:italic;font-size:13px;">No organized entries found.</p>';
+    }
+
+    async function executeResourceCloudDeployment() {
+      const titleInput = document.getElementById('bookTitle').value.trim();
+      const level = document.getElementById('bookLevel').value;
+      const className = document.getElementById('bookClass').value;
+      const subject = document.getElementById('bookSubject').value;
+      const type = document.getElementById('bookType').value;
+      const syllabus = document.getElementById('bookSyllabus').value;
+      const description = document.getElementById('bookDesc').value.trim();
+      const mode = document.getElementById('uploadMode').value;
+      const btn = document.getElementById('submitBtn');
+
+      if (selectedFilesQueue.length === 0) {
+        showStatus("⚠️ Allocation error: Asset selection targets are missing.", "danger");
+        return;
+      }
+
+      btn.disabled = true;
+      showStatus("🔄 Contacting CDN pipeline endpoint streams...", "success");
+
+      try {
+        let liveCatalog = await getBooks();
+
+        for (let file of selectedFilesQueue) {
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('upload_preset', CLOUDINARY_PRESET);
+
+          showStatus(`🚀 Uploading: ${file.name}...`, "success");
+          const cloudRes = await fetch(CLOUDINARY_URL, { method: 'POST', body: formData });
+          if (!cloudRes.ok) throw new Error(`Cloudinary endpoint failure status ${cloudRes.status}`);
+          const cloudData = await cloudRes.json();
+          
+          const finalTitle = mode === 'folder' ? file.name.replace(/\.[^/.]+$/, "") : (titleInput || file.name.replace(/\.[^/.]+$/, ""));
+          const finalFileUrl = cloudData.secure_url;
+
+          // Use auto-detected subject/type from the folder's subfolder structure & file extension
+          // (set in handleFolderSelection). Falls back to the dropdown selections if nothing was detected.
+          const finalSubject = file.detectedSubject || subject;
+          const finalType = file.detectedType || type;
+          const finalClass = file.detectedClass || className;
+
+          const newResourceNode = {
+            title: finalTitle,
+            level: level,
+            className: finalClass,
+            subject: finalSubject,
+            type: finalType,
+            syllabus: syllabus,
+            description: description || "Premium study reference framework.",
+            link: finalFileUrl,
+            timestamp: new Date().toISOString()
+          };
+          liveCatalog.push(newResourceNode);
+        }
+
+        showStatus("🚀 Finalizing data ledger sync matrix...", "success");
+        await saveBooks(liveCatalog);
+        showStatus("✅ Execution complete! Assets organized into database structures.", "success");
+        resetConsoleFormFields();
+        await loadBookList();
+      } catch (err) {
+        console.error(err);
+        showStatus(`❌ System internal crash: ${err.message}`, "danger");
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function deleteBook(index) {
+      if(!confirm("Purge selected target ledger from ecosystem matrix?")) return;
+      try {
+        let books = await getBooks();
+        books.splice(index, 1);
+        await saveBooks(books);
+        await loadBookList();
+      } catch(err) {
+        alert("Deletion failed: " + err.message);
+      }
+    }
+
+    function showStatus(msg, type) {
+      const status = document.getElementById('panelStatus');
+      status.className = `status-msg ${type}`;
+      status.textContent = msg;
+      status.style.display = "block";
+    }
+
+    function resetConsoleFormFields() {
+      document.getElementById('bookTitle').value = "";
+      document.getElementById('bookDesc').value = "";
+      selectedFilesQueue = [];
+      document.getElementById('fileIndicator').style.display = 'none';
+      document.getElementById('uploadPromptText').style.display = 'block';
+    }
+
+
+    // ==================================================================================
+    // EXTENDED ADMIN CHAT & RICH MEDIA UPLOAD CONTROL SYSTEM
+    // ==================================================================================
+
+    function toggleChatAttachmentMenu(event) {
+      event.stopPropagation();
+      const menu = document.getElementById('chatAttachDropdown');
+      const btn = document.getElementById('chatAttachBtn');
+      if(menu.style.display === 'flex') {
+        menu.style.display = 'none';
+        btn.classList.remove('active');
+      } else {
+        menu.style.display = 'flex';
+        btn.classList.add('active');
+      }
+    }
+
+    // Auto-close attachment tray on outside clicks
+    document.addEventListener('click', () => {
+      document.getElementById('chatAttachDropdown').style.display = 'none';
+      document.getElementById('chatAttachBtn').classList.remove('active');
+    });
+
+    function openRecordModal() {
+      document.getElementById('recordFormModal').style.display = 'flex';
+    }
+
+    function closeRecordModal() {
+      document.getElementById('recordFormModal').style.display = 'none';
+      document.getElementById('recordHeaderTitle').value = "";
+      document.getElementById('recordNotesBody').value = "";
+    }
+
+    function triggerChatCamera(mode) {
+      // Fallback path: native OS picker (used if live in-browser capture is unavailable)
+      if(mode === 'image') {
+        document.getElementById('chatCameraPhotoInput').click();
+      } else {
+        document.getElementById('chatCameraVideoInput').click();
+      }
+    }
+
+    // ==================================================================================
+    // LIVE IN-BROWSER CAPTURE SYSTEM: Camera Photo / Camera Video / Voice Note Recorder
+    // ==================================================================================
+
+    let liveCaptureMode = null;       // 'image' | 'video' | 'audio'
+    let liveMediaStream = null;       // active getUserMedia stream
+    let liveMediaRecorder = null;     // MediaRecorder instance for video/audio
+    let liveRecordedChunks = [];
+    let liveCapturedBlob = null;      // final blob ready to stage
+    let liveCapturedFileName = "";
+    let liveTimerInterval = null;
+    let liveTimerSeconds = 0;
+    let liveAudioCtx = null;
+    let liveAnalyser = null;
+    let liveVisualizerFrame = null;
+    let isCurrentlyRecording = false;
+
+    function openLiveCapture(mode) {
+      liveCaptureMode = mode;
+      resetCaptureUI();
+
+      const titleEl = document.getElementById('captureModalTitle');
+      const mainIcon = document.getElementById('captureMainIcon');
+      const stage = document.getElementById('captureStage');
+      stage.classList.remove('audio-stage');
+
+      if (mode === 'image') {
+        titleEl.innerHTML = '<i class="fas fa-camera" style="color:#ed4956;"></i> Take Photo';
+        mainIcon.className = 'fas fa-camera';
+        document.getElementById('captureModeLabel').textContent = "Position the shot, then tap to capture.";
+      } else if (mode === 'video') {
+        titleEl.innerHTML = '<i class="fas fa-video" style="color:#a855f7;"></i> Record Video';
+        mainIcon.className = 'fas fa-circle';
+        document.getElementById('captureModeLabel').textContent = "Tap to start recording.";
+      } else {
+        titleEl.innerHTML = '<i class="fas fa-microphone" style="color:#f59e0b;"></i> Record Voice Note';
+        mainIcon.className = 'fas fa-microphone';
+        stage.classList.add('audio-stage');
+        document.getElementById('captureModeLabel').textContent = "Tap to start recording your voice note.";
+      }
+
+      document.getElementById('liveCaptureModal').style.display = 'flex';
+      startLiveStream(mode);
+    }
+
+    async function startLiveStream(mode) {
+      const errorBox = document.getElementById('captureErrorBox');
+      errorBox.style.display = 'none';
+
+      try {
+        const constraints = mode === 'audio'
+          ? { audio: true }
+          : { video: { facingMode: 'environment' }, audio: mode === 'video' };
+
+        liveMediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+
+        if (mode === 'audio') {
+          setupMicVisualizer(liveMediaStream);
+        } else {
+          const videoEl = document.getElementById('captureLiveVideo');
+          videoEl.style.display = 'block';
+          videoEl.srcObject = liveMediaStream;
+        }
+      } catch (err) {
+        console.error("Live capture stream error:", err);
+        errorBox.textContent = "⚠️ Could not access " + (mode === 'audio' ? "microphone" : "camera") + " (" + err.message + "). Falling back to device picker.";
+        errorBox.style.display = 'block';
+        document.getElementById('captureControls').style.display = 'none';
+
+        // Graceful fallback to native OS capture pickers
+        setTimeout(() => {
+          closeLiveCapture();
+          if (mode === 'image' || mode === 'video') {
+            triggerChatCamera(mode);
+          } else {
+            alert("Microphone access unavailable. Please check browser permissions to record voice notes.");
+          }
+        }, 1400);
+      }
+    }
+
+    function setupMicVisualizer(stream) {
+      const stage = document.getElementById('captureStage');
+      let bars = stage.querySelector('.mic-visualizer');
+      if (!bars) {
+        bars = document.createElement('div');
+        bars.className = 'mic-visualizer';
+        for (let i = 0; i < 24; i++) {
+          const bar = document.createElement('div');
+          bar.className = 'bar';
+          bars.appendChild(bar);
+        }
+        stage.appendChild(bars);
+      }
+      bars.style.display = 'flex';
+
+      liveAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const source = liveAudioCtx.createMediaStreamSource(stream);
+      liveAnalyser = liveAudioCtx.createAnalyser();
+      liveAnalyser.fftSize = 64;
+      source.connect(liveAnalyser);
+
+      const dataArray = new Uint8Array(liveAnalyser.frequencyBinCount);
+      const barEls = bars.querySelectorAll('.bar');
+
+      function draw() {
+        liveAnalyser.getByteFrequencyData(dataArray);
+        barEls.forEach((bar, i) => {
+          const val = dataArray[i % dataArray.length] || 0;
+          bar.style.height = Math.max(8, (val / 255) * 70) + 'px';
+        });
+        liveVisualizerFrame = requestAnimationFrame(draw);
+      }
+      draw();
+    }
+
+    function handleCaptureMainAction() {
+      if (liveCaptureMode === 'image') {
+        snapPhoto();
+      } else {
+        // video or audio: toggle recording
+        if (!isCurrentlyRecording) {
+          startMediaRecording();
+        } else {
+          stopMediaRecording();
+        }
+      }
+    }
+
+    function snapPhoto() {
+      if (!liveMediaStream) return;
+      const videoEl = document.getElementById('captureLiveVideo');
+      const canvas = document.getElementById('capturePhotoCanvas');
+      canvas.width = videoEl.videoWidth || 640;
+      canvas.height = videoEl.videoHeight || 480;
+      canvas.getContext('2d').drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+
+      canvas.toBlob((blob) => {
+        liveCapturedBlob = blob;
+        liveCapturedFileName = `voice_capture_${Date.now()}.jpg`.replace('voice_', 'photo_');
+
+        const previewImg = document.getElementById('capturePhotoPreview');
+        previewImg.src = URL.createObjectURL(blob);
+        previewImg.style.display = 'block';
+        videoEl.style.display = 'none';
+        stopAllStreams(false);
+
+        document.getElementById('captureUseBtn').disabled = false;
+        document.getElementById('captureRetakeBtn').disabled = false;
+        document.getElementById('captureMainBtn').style.display = 'none';
+        document.getElementById('captureModeLabel').textContent = "Looks good? Use it or retake.";
+      }, 'image/jpeg', 0.92);
+    }
+
+    function startMediaRecording() {
+      if (!liveMediaStream) return;
+      liveRecordedChunks = [];
+
+      let mimeType = '';
+      if (liveCaptureMode === 'audio') {
+        mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '';
+      } else {
+        mimeType = MediaRecorder.isTypeSupported('video/webm') ? 'video/webm' : '';
+      }
+
+      try {
+        liveMediaRecorder = mimeType ? new MediaRecorder(liveMediaStream, { mimeType }) : new MediaRecorder(liveMediaStream);
+      } catch (err) {
+        console.error(err);
+        document.getElementById('captureErrorBox').textContent = "⚠️ Recording could not start: " + err.message;
+        document.getElementById('captureErrorBox').style.display = 'block';
+        return;
+      }
+
+      liveMediaRecorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) liveRecordedChunks.push(e.data);
+      };
+      liveMediaRecorder.onstop = onRecordingStopped;
+
+      liveMediaRecorder.start();
+      isCurrentlyRecording = true;
+
+      document.getElementById('captureRecDot').classList.add('live');
+      document.getElementById('captureTimer').classList.add('live');
+      document.getElementById('captureMainBtn').classList.add('is-recording');
+      document.getElementById('captureMainIcon').className = 'fas fa-stop';
+      document.getElementById('captureModeLabel').textContent = liveCaptureMode === 'audio' ? "Recording your voice note…" : "Recording video…";
+
+      liveTimerSeconds = 0;
+      updateCaptureTimerDisplay();
+      liveTimerInterval = setInterval(() => {
+        liveTimerSeconds++;
+        updateCaptureTimerDisplay();
+      }, 1000);
+    }
+
+    function stopMediaRecording() {
+      if (liveMediaRecorder && liveMediaRecorder.state !== 'inactive') {
+        liveMediaRecorder.stop();
+      }
+      isCurrentlyRecording = false;
+      clearInterval(liveTimerInterval);
+      document.getElementById('captureRecDot').classList.remove('live');
+      document.getElementById('captureMainBtn').classList.remove('is-recording');
+    }
+
+    function onRecordingStopped() {
+      const mime = liveCaptureMode === 'audio' ? 'audio/webm' : 'video/webm';
+      liveCapturedBlob = new Blob(liveRecordedChunks, { type: mime });
+      const ext = liveCaptureMode === 'audio' ? 'webm' : 'webm';
+      liveCapturedFileName = `${liveCaptureMode === 'audio' ? 'voice_note' : 'video_capture'}_${Date.now()}.${ext}`;
+
+      stopAllStreams(false);
+
+      const url = URL.createObjectURL(liveCapturedBlob);
+
+      if (liveCaptureMode === 'video') {
+        const videoEl = document.getElementById('captureLiveVideo');
+        const previewEl = document.getElementById('captureVideoPreview');
+        videoEl.style.display = 'none';
+        previewEl.src = url;
+        previewEl.style.display = 'block';
+        previewEl.muted = false;
+      } else {
+        // Re-purpose hidden video preview element as a styled audio player on the stage
+        const stage = document.getElementById('captureStage');
+        let player = document.getElementById('captureAudioPlayer');
+        if (!player) {
+          player = document.createElement('audio');
+          player.id = 'captureAudioPlayer';
+          player.controls = true;
+          player.style.width = '85%';
+          stage.querySelector('.mic-visualizer')?.remove();
+          stage.appendChild(player);
+        }
+        player.src = url;
+        player.style.display = 'block';
+      }
+
+      document.getElementById('captureUseBtn').disabled = false;
+      document.getElementById('captureRetakeBtn').disabled = false;
+      document.getElementById('captureMainBtn').style.display = 'none';
+      document.getElementById('captureModeLabel').textContent = "Review your recording, then use it or retake.";
+    }
+
+    function updateCaptureTimerDisplay() {
+      const m = Math.floor(liveTimerSeconds / 60).toString().padStart(2, '0');
+      const s = (liveTimerSeconds % 60).toString().padStart(2, '0');
+      document.getElementById('captureTimer').textContent = `${m}:${s}`;
+    }
+
+    function retakeCapture() {
+      liveCapturedBlob = null;
+      resetCaptureUI();
+      startLiveStream(liveCaptureMode);
+    }
+
+    function useCapturedMedia() {
+      if (!liveCapturedBlob) return;
+
+      const file = new File([liveCapturedBlob], liveCapturedFileName, { type: liveCapturedBlob.type });
+      const typeKey = liveCaptureMode === 'image' ? 'image' : liveCaptureMode === 'video' ? 'video' : 'audio';
+
+      stagedChatFile = file;
+      stagedChatFileType = typeKey;
+
+      const banner = document.getElementById('chatStagingBanner');
+      const text = document.getElementById('chatStagingText');
+      let prefix = typeKey === 'image' ? '📸 Staged Photo: ' : typeKey === 'video' ? '🎥 Staged Video: ' : '🎙️ Staged Voice Note: ';
+      text.textContent = `${prefix}${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+      banner.style.display = 'flex';
+
+      closeLiveCapture();
+    }
+
+    function resetCaptureUI() {
+      stopAllStreams(true);
+
+      document.getElementById('captureLiveVideo').style.display = 'block';
+      document.getElementById('captureLiveVideo').srcObject = null;
+      document.getElementById('capturePhotoPreview').style.display = 'none';
+      document.getElementById('capturePhotoPreview').src = '';
+      document.getElementById('captureVideoPreview').style.display = 'none';
+      document.getElementById('captureVideoPreview').src = '';
+      document.getElementById('captureAudioPlayer')?.remove();
+      document.querySelector('#captureStage .mic-visualizer')?.remove();
+
+      document.getElementById('captureRecDot').classList.remove('live');
+      document.getElementById('captureTimer').classList.remove('live');
+      document.getElementById('captureTimer').textContent = '00:00';
+      document.getElementById('captureControls').style.display = 'flex';
+      document.getElementById('captureMainBtn').style.display = 'flex';
+      document.getElementById('captureMainBtn').classList.remove('is-recording');
+      document.getElementById('captureUseBtn').disabled = true;
+      document.getElementById('captureRetakeBtn').disabled = true;
+      document.getElementById('captureErrorBox').style.display = 'none';
+
+      liveTimerSeconds = 0;
+      isCurrentlyRecording = false;
+      clearInterval(liveTimerInterval);
+    }
+
+    function stopAllStreams(closeAudioCtx) {
+      if (liveMediaRecorder && liveMediaRecorder.state !== 'inactive') {
+        try { liveMediaRecorder.stop(); } catch(e) {}
+      }
+      liveMediaRecorder = null;
+
+      if (liveMediaStream) {
+        liveMediaStream.getTracks().forEach(track => track.stop());
+        liveMediaStream = null;
+      }
+
+      if (liveVisualizerFrame) {
+        cancelAnimationFrame(liveVisualizerFrame);
+        liveVisualizerFrame = null;
+      }
+
+      if (closeAudioCtx && liveAudioCtx) {
+        liveAudioCtx.close().catch(()=>{});
+        liveAudioCtx = null;
+      }
+    }
+
+    function closeLiveCapture() {
+      stopAllStreams(true);
+      clearInterval(liveTimerInterval);
+      document.getElementById('liveCaptureModal').style.display = 'none';
+      liveCapturedBlob = null;
+      liveCaptureMode = null;
+    }
+
+    function triggerChatDocumentUpload() {
+      document.getElementById('chatDocumentInput').click();
+    }
+
+    function handleChatFileStaging(event, type) {
+      const file = event.target.files[0];
+      if(!file) return;
+
+      stagedChatFile = file;
+      stagedChatFileType = type;
+
+      const banner = document.getElementById('chatStagingBanner');
+      const text = document.getElementById('chatStagingText');
+      
+      let prefix = type === 'image' ? '📸 Staged Photo: ' : type === 'video' ? '🎥 Staged Video: ' : '📄 Staged Doc: ';
+      text.textContent = `${prefix}${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+      banner.style.display = 'flex';
+    }
+
+    function clearStagedChatFile() {
+      stagedChatFile = null;
+      stagedChatFileType = null;
+      document.getElementById('chatStagingBanner').style.display = 'none';
+      document.getElementById('chatCameraPhotoInput').value = "";
+      document.getElementById('chatCameraVideoInput').value = "";
+      document.getElementById('chatDocumentInput').value = "";
+    }
+
+    let adminChatCache = [], adminRecipientManual = false, lastChatSig = '';
+
+    function chatTargetLabel(to) {
+      if (!to || to === 'all') return 'Everyone';
+      const st = adminStudents.find(x => x.phone === to);
+      return st ? st.name : to;
+    }
+
+    function updateRecipientOptions() {
+      const sel = document.getElementById('adminChatTo'); if (!sel) return;
+      const keep = sel.value;
+      const phones = new Map();
+      adminStudents.forEach(x => phones.set(x.phone, x.name));
+      adminChatCache.forEach(m => { if (!m.isTeacher && m.phone && !phones.has(m.phone)) phones.set(m.phone, m.sender); });
+      sel.innerHTML = '<option value="all">Everyone</option>' + [...phones].map(([p, n]) => `<option value="${esc(p)}">${esc(n)} (${esc(p)})</option>`).join('');
+      let want = keep;
+      if (!adminRecipientManual) {
+        const lastStudentMsg = [...adminChatCache].reverse().find(m => !m.isTeacher && m.phone);
+        if (lastStudentMsg) want = lastStudentMsg.phone;
+      }
+      sel.value = [...sel.options].some(o => o.value === want) ? want : 'all';
+    }
+
+    function setChatRecipient(phone) {
+      const sel = document.getElementById('adminChatTo');
+      if ([...sel.options].some(o => o.value === phone)) { sel.value = phone; adminRecipientManual = true; }
+    }
+
+    async function refreshAdminChatMesh(force) {
+      const messageLog = document.getElementById('adminChatMessagesLog');
+      if (cloudReady) {
+        try { adminChatCache = await aItems('chat'); } catch (e) { console.error(e); }
+      }
+      const chatHistory = adminChatCache;
+      const last = chatHistory[chatHistory.length - 1];
+      const sig = chatHistory.length + ':' + (last ? last.id : '') + ':' + adminStudents.length;
+      updateRecipientOptions();
+      if (!force && sig === lastChatSig) return;
+      lastChatSig = sig;
+      const nearBottom = messageLog.scrollHeight - messageLog.scrollTop - messageLog.clientHeight < 80;
+
+      if (chatHistory.length === 0) {
+        messageLog.innerHTML = `<div style="text-align: center; color: var(--text-muted); font-size: 12px; font-style: italic; padding: 40px 0;"><i class="fas fa-comments" style="font-size: 24px; display:block; margin-bottom: 8px; color: rgba(255,255,255,0.05);"></i> Communications line is pristine empty. No student traffic logged.</div>`;
+        return;
+      }
+
+      messageLog.innerHTML = chatHistory.map(msg => {
+        if (msg.isSystem) {
+          return `<div style="text-align: center; color: var(--text-muted); font-size: 11px; font-style: italic; background: rgba(255,255,255,0.02); padding: 8px; border-radius: 8px; border: 1px dashed rgba(255,255,255,0.05); width: 100%; max-width: 90%; margin: 0 auto;">${esc(msg.message)}</div>`;
+        }
+
+        const isFaculty = !!msg.isTeacher;
+        const bubbleBg = isFaculty ? 'rgba(56, 189, 248, 0.1)' : 'rgba(255, 255, 255, 0.04)';
+        const bubbleBorder = isFaculty ? 'border: 1px solid rgba(56, 189, 248, 0.25);' : 'border: 1px solid rgba(255,255,255,0.05);';
+        const alignSelf = isFaculty ? 'flex-end' : 'flex-start';
+        const radiusConfig = isFaculty ? 'border-radius: 16px 16px 2px 16px;' : 'border-radius: 16px 16px 16px 2px;';
+        const labelNameColor = isFaculty ? 'color: var(--accent-primary);' : 'color: #ef4444;';
+        const label = isFaculty ? `${esc(msg.sender)} → ${esc(chatTargetLabel(msg.to))}` : `${esc(msg.sender)}${msg.phone ? ' · ' + esc(msg.phone) : ''}`;
+
+        let dynamicContent = '';
+        if (msg.recordData) {
+          dynamicContent = `
+            <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 12px; margin-top: 4px; min-width: 240px;">
+              <div style="font-size: 11px; font-weight:800; color:#10b981; text-transform:uppercase; margin-bottom:6px;"><i class="fas fa-folder-minus"></i> ${esc(msg.recordData.header)}</div>
+              <div style="font-size: 12px; color:#e2e8f0; line-height:1.4; white-space: pre-wrap;">${esc(msg.recordData.notes)}</div>
+            </div>`;
+        } else if (msg.audio && safeUrl(msg.audio)) {
+          dynamicContent = `<div style="display:flex; align-items:center; gap:8px; margin-top:4px;"><i class="fas fa-microphone" style="color:#ef4444;"></i> <audio controls src="${esc(msg.audio)}" style="width: 220px; height: 32px; filter: invert(0.9) hue-rotate(180deg);"></audio></div>`;
+        } else if (msg.image && safeUrl(msg.image)) {
+          dynamicContent = `<div style="margin-top:5px;"><a href="${esc(msg.image)}" target="_blank" rel="noopener"><img src="${esc(msg.image)}" alt="Chat Upload" style="max-width: 240px; max-height:180px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);"></a></div>`;
+        } else if (msg.video && safeUrl(msg.video)) {
+          dynamicContent = `<div style="margin-top:5px;"><video controls src="${esc(msg.video)}" style="max-width: 240px; max-height:180px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);"></video></div>`;
+        } else if (msg.document && safeUrl(msg.document)) {
+          dynamicContent = `
+            <a href="${esc(msg.document)}" target="_blank" rel="noopener" style="display:flex; align-items:center; gap:10px; background: rgba(255,255,255,0.05); padding:10px; border-radius:8px; text-decoration:none; color:var(--accent-primary); font-size:12px; font-weight:600; margin-top:4px; border:1px solid rgba(56,189,248,0.15);">
+              <i class="fas fa-file-pdf" style="font-size:18px;"></i>
+              <span style="text-decoration:underline; word-break:break-all;">${esc(msg.message || 'View Attached Document')}</span>
+            </a>`;
+        } else {
+          dynamicContent = `<span style="white-space:pre-wrap;">${esc(msg.message)}</span>`;
+        }
+
+        const clickAttr = (!isFaculty && msg.phone) ? `onclick="setChatRecipient('${esc(msg.phone)}')" title="Click to reply to this student" style="cursor:pointer;"` : '';
+        return `
+          <div ${clickAttr} style="display: flex; flex-direction: column; max-width: 80%; align-self: ${alignSelf}; gap: 3px;${clickAttr ? ' cursor:pointer;' : ''}">
+            <span style="font-size: 10px; font-weight: 700; ${labelNameColor} text-transform: uppercase; letter-spacing: 0.03em;">${label}</span>
+            <div style="background: ${bubbleBg}; color: #fff; ${bubbleBorder} padding: 12px 16px; font-size: 13px; line-height: 1.5; ${radiusConfig}">
+              ${dynamicContent}
+            </div>
+            <span style="font-size: 9px; color: var(--text-muted); align-self: ${isFaculty ? 'flex-end' : 'flex-start'}">${esc(msg.time)}</span>
+          </div>
+        `;
+      }).join('');
+
+      if (nearBottom || force) messageLog.scrollTop = messageLog.scrollHeight;
+    }
+
+    async function pushAdminChat(node) {
+      if (!cloudReady) throw new Error('Cloud chat is not ready yet. Reload the console.');
+      node.id = newId('m'); node.ts = Date.now();
+      await aPut('chat', node);
+    }
+
+    async function dispatchAdminChatMessage() {
+      const input = document.getElementById('adminChatInputField');
+      const text = input.value.trim();
+      const sendBtn = document.getElementById('adminChatSendBtn');
+      if (!text && !stagedChatFile) return;
+
+      let newMessageNode = {
+        sender: "Sir Taydayo (Dean of STEM)",
+        time: nowHHMM(),
+        isTeacher: true,
+        to: document.getElementById('adminChatTo').value || 'all'
+      };
+
+      sendBtn.disabled = true;
+      try {
+        if (stagedChatFile) {
+          input.placeholder = "Uploading resource pipeline to Cloudinary CDN...";
+          const url = await cloudUpload(stagedChatFile, stagedChatFile.name);
+          if (stagedChatFileType === 'image') { newMessageNode.image = url; newMessageNode.message = text || "Image Attachment"; }
+          else if (stagedChatFileType === 'video') { newMessageNode.video = url; newMessageNode.message = text || "Video Attachment"; }
+          else if (stagedChatFileType === 'audio') { newMessageNode.audio = url; newMessageNode.message = text || "Voice Note"; }
+          else { newMessageNode.document = url; newMessageNode.message = text || stagedChatFile.name; }
+        } else {
+          newMessageNode.message = text;
+        }
+        await pushAdminChat(newMessageNode);
+      } catch (err) {
+        console.error(err);
+        alert("Message was not sent: " + err.message);
+        sendBtn.disabled = false;
+        input.placeholder = "Type a message reply here...";
+        return;
+      }
+
+      input.value = "";
+      input.placeholder = "Type a message reply here...";
+      sendBtn.disabled = false;
+      clearStagedChatFile();
+      refreshAdminChatMesh(true);
+    }
+
+    async function commitOfficialRecordToChat() {
+      const header = document.getElementById('recordHeaderTitle').value.trim();
+      const notes = document.getElementById('recordNotesBody').value.trim();
+      if (!header || !notes) { alert("Please complete both parameters to initialize system ledger log."); return; }
+      try {
+        await pushAdminChat({ sender: "Sir Taydayo (Dean of STEM)", time: nowHHMM(), isTeacher: true, to: document.getElementById('adminChatTo').value || 'all', recordData: { header: header, notes: notes } });
+      } catch (err) { alert("Record was not sent: " + err.message); return; }
+      closeRecordModal();
+      refreshAdminChatMesh(true);
+    }
+
+    async function cloudUpload(blob, filename) {
+      const fd = new FormData();
+      fd.append("file", blob, filename || "upload");
+      fd.append("upload_preset", CLOUD_PRESET);
+      const r = await fetch(CLOUD_URL, { method: "POST", body: fd });
+      if (!r.ok) throw new Error("Upload failed (" + r.status + ")");
+      return (await r.json()).secure_url;
+    }
+
+    function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+    function safeUrl(u) { return /^https:\/\//i.test(u || "") ? u : ""; }
+    function normName(s) { return String(s).toLowerCase().replace(/\s+/g, " ").trim(); }
+    function normPhone(s) { return String(s).replace(/[^\d+]/g, ""); }
+    function newId(p) { return p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+    function nowHHMM() { return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); }
+
+    function sha256Hex(msg) {
+      const bytes = Array.from(new TextEncoder().encode(msg));
+      const primes = []; for (let n = 2; primes.length < 64; n++) { if (primes.every(p => n % p)) primes.push(n); }
+      const frac = x => ((x - Math.floor(x)) * 4294967296) | 0;
+      const K = primes.map(p => frac(Math.cbrt(p)));
+      let H = primes.slice(0, 8).map(p => frac(Math.sqrt(p)));
+      const bitLen = bytes.length * 8;
+      bytes.push(0x80); while (bytes.length % 64 !== 56) bytes.push(0);
+      for (let i = 7; i >= 0; i--) bytes.push(i >= 4 ? 0 : (bitLen >>> (i * 8)) & 255);
+      const rotr = (x, n) => (x >>> n) | (x << (32 - n));
+      for (let o = 0; o < bytes.length; o += 64) {
+        const w = new Array(64);
+        for (let i = 0; i < 16; i++) w[i] = (bytes[o + i * 4] << 24) | (bytes[o + i * 4 + 1] << 16) | (bytes[o + i * 4 + 2] << 8) | bytes[o + i * 4 + 3];
+        for (let i = 16; i < 64; i++) {
+          const s0 = rotr(w[i - 15], 7) ^ rotr(w[i - 15], 18) ^ (w[i - 15] >>> 3);
+          const s1 = rotr(w[i - 2], 17) ^ rotr(w[i - 2], 19) ^ (w[i - 2] >>> 10);
+          w[i] = (w[i - 16] + s0 + w[i - 7] + s1) | 0;
+        }
+        let [a, b, c, d, e, f, g, h] = H;
+        for (let i = 0; i < 64; i++) {
+          const S1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25), ch = (e & f) ^ (~e & g), t1 = (h + S1 + ch + K[i] + w[i]) | 0;
+          const S0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22), maj = (a & b) ^ (a & c) ^ (b & c), t2 = (S0 + maj) | 0;
+          h = g; g = f; f = e; e = (d + t1) | 0; d = c; c = b; b = a; a = (t1 + t2) | 0;
+        }
+        H = [(H[0] + a) | 0, (H[1] + b) | 0, (H[2] + c) | 0, (H[3] + d) | 0, (H[4] + e) | 0, (H[5] + f) | 0, (H[6] + g) | 0, (H[7] + h) | 0];
+      }
+      return H.map(x => (x >>> 0).toString(16).padStart(8, "0")).join("");
+    }
+    function adminHash(name, pw) { return sha256Hex("crest-admin|" + normName(name) + "|" + String(pw).replace(/\s+/g, "")); }
+    function studentHash(phone, pw) { return sha256Hex("crest-student|" + phone + "|" + pw); }
+
+    /* ===================== ADMIN SIGN-IN ===================== */
+    async function unlockAdmin() {
+      const err = document.getElementById('gateError');
+      const key = normName(document.getElementById('gateName').value) + '|' + document.getElementById('gatePass').value;
+      try {
+        if (!(await rpc('admin_check', { p_key: key }))) { err.textContent = 'Wrong name or password.'; err.style.display = 'block'; return; }
+      } catch (e) { err.textContent = e.message; err.style.display = 'block'; return; }
+      sessionStorage.setItem('crestAdminOK', '1'); sessionStorage.setItem('crestAdminKey', key);
+      document.body.classList.remove('locked');
+      err.style.display = 'none';
+      startAdmin();
+    }
+    function adminSignOut() { sessionStorage.removeItem('crestAdminOK'); sessionStorage.removeItem('crestAdminKey'); location.reload(); }
+
+    /* ===================== ASSIGNMENTS, GRADES, STUDENTS ===================== */
+    let cloudReady = false, adminStudents = [], adminWork = [], adminStarted = false, CLOUD_ERR = '';
+
+    function allSubjectsForWork() { return [...new Set([].concat(localSubjects.secondary, localSubjects.primary, localSubjects.tertiary))]; }
+
+    function toggleWorkKind() {
+      const g = document.getElementById('workKind').value === 'grade';
+      document.getElementById('assignFields').style.display = g ? 'none' : 'block';
+      document.getElementById('gradeFields').style.display = g ? 'block' : 'none';
+      fillStudentSelect();
+    }
+
+    function fillStudentSelect() {
+      const sel = document.getElementById('workStudent'), grade = document.getElementById('workKind').value === 'grade';
+      const keep = sel.value;
+      sel.innerHTML = (grade ? '<option value="">Choose a student...</option>' : '<option value="all">All students</option>') +
+        adminStudents.map(x => `<option value="${esc(x.phone)}">${esc(x.name)} (${esc(x.phone)})</option>`).join('');
+      if ([...sel.options].some(o => o.value === keep)) sel.value = keep;
+    }
+
+    function autoGradeLetter() {
+      const sc = parseFloat(document.getElementById('workScore').value), out = parseFloat(document.getElementById('workOutOf').value);
+      if (isNaN(sc) || !out) return;
+      const p = sc / out * 100;
+      document.getElementById('workGrade').value = p >= 90 ? 'A*' : p >= 80 ? 'A' : p >= 70 ? 'B' : p >= 60 ? 'C' : p >= 50 ? 'D' : p >= 40 ? 'E' : 'F';
+    }
+
+    function workStatus(msg, type) {
+      const st = document.getElementById('workStatus');
+      st.className = 'status-msg ' + type; st.textContent = msg; st.style.display = 'block';
+    }
+
+    async function postWork() {
+      const kind = document.getElementById('workKind').value, to = document.getElementById('workStudent').value;
+      const title = document.getElementById('workTitle').value.trim(), subject = document.getElementById('workSubject').value;
+      if (!cloudReady) return workStatus('⚠️ Cloud storage is not ready. Reload the console and try again.', 'danger');
+      if (!title) return workStatus('⚠️ Please enter a title.', 'danger');
+      if (!to) return workStatus('⚠️ Please choose a student.', 'danger');
+      const node = { id: newId('w'), kind: kind, to: to, title: title, subject: subject, ts: Date.now(), date: new Date().toISOString().slice(0, 10) };
+      const btn = document.getElementById('workSubmitBtn'); btn.disabled = true;
+      try {
+        if (kind === 'assignment') {
+          node.description = document.getElementById('workDesc').value.trim();
+          node.due = document.getElementById('workDue').value;
+          const f = document.getElementById('workFile').files[0];
+          if (f) { workStatus('🚀 Uploading ' + f.name + '...', 'success'); node.fileUrl = await cloudUpload(f, f.name); node.fileName = f.name; }
+        } else {
+          const score = parseFloat(document.getElementById('workScore').value), outOf = parseFloat(document.getElementById('workOutOf').value) || 100;
+          if (isNaN(score)) { btn.disabled = false; return workStatus('⚠️ Please enter the score.', 'danger'); }
+          node.score = score; node.outOf = outOf;
+          node.grade = document.getElementById('workGrade').value.trim();
+          node.remarks = document.getElementById('workRemarks').value.trim();
+        }
+        await aPut('work', node);
+        workStatus('✅ Published. The student will see it in their panel.', 'success');
+        ['workTitle', 'workDesc', 'workDue', 'workFile', 'workScore', 'workGrade', 'workRemarks'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+        document.getElementById('workOutOf').value = 100;
+        await refreshWork();
+      } catch (err) { workStatus('❌ ' + err.message, 'danger'); }
+      btn.disabled = false;
+    }
+
+    async function deleteWork(id) {
+      if (!confirm('Remove this item from the student panel?')) return;
+      try { await rpc('admin_delete_item', { p_key: adminKey(), p_id: id }); await refreshWork(); }
+      catch (err) { alert('Could not delete: ' + err.message); }
+    }
+
+    function studentName(phone) { if (phone === 'all') return 'All students'; const s = adminStudents.find(x => x.phone === phone); return s ? s.name : phone; }
+
+    async function refreshStudents() {
+      if (!cloudReady) return;
+      try { adminStudents = (await rpc('admin_students', { p_key: adminKey() })) || []; } catch (e) { console.error(e); }
+      fillStudentSelect();
+    }
+
+    async function refreshWork() {
+      if (!cloudReady) return;
+      try { adminWork = await aItems('work'); } catch (e) { console.error(e); }
+      const box = document.getElementById('workLists');
+      const posted = adminWork.filter(x => x.kind !== 'submission').sort((a, b) => b.ts - a.ts);
+      const subs = adminWork.filter(x => x.kind === 'submission').sort((a, b) => b.ts - a.ts);
+
+      let html = `<div class="sub-title" style="margin-top:0;">Student submissions (${subs.length})</div>`;
+      html += subs.length ? subs.map(x => {
+        const a = adminWork.find(w => w.id === x.assignmentId);
+        return `<div class="mini-row"><div><strong>${esc(x.name)}</strong> · ${esc(a ? a.title : 'Assignment')}<small>${esc(new Date(x.ts).toLocaleString())}${x.note ? ' — ' + esc(x.note) : ''}</small></div>
+          <div style="display:flex;gap:6px;">${safeUrl(x.fileUrl) ? `<a class="mini-btn blue" href="${esc(x.fileUrl)}" target="_blank" rel="noopener" style="text-decoration:none;">Open</a>` : ''}
+          <button class="mini-btn blue" onclick="startGradeFor('${esc(x.phone)}','${esc(a ? a.title : '')}','${esc(a ? a.subject || '' : '')}')">Grade</button></div></div>`;
+      }).join('') : '<p style="color:var(--text-muted);font-style:italic;font-size:12px;">No submissions yet.</p>';
+
+      html += `<div class="sub-title">Posted items (${posted.length})</div>`;
+      html += posted.length ? posted.map(x => `<div class="mini-row"><div>${x.kind === 'grade' ? '🏆' : '📝'} <strong>${esc(x.title)}</strong><small>${esc(x.subject || '')} → ${esc(studentName(x.to))}${x.kind === 'grade' ? ' · ' + esc(x.score) + '/' + esc(x.outOf) + ' ' + esc(x.grade || '') : ''}</small></div>
+          <button class="mini-btn" onclick="deleteWork('${esc(x.id)}')">Delete</button></div>`).join('')
+        : '<p style="color:var(--text-muted);font-style:italic;font-size:12px;">Nothing posted yet.</p>';
+
+      html += `<div class="sub-title">Participants (${adminStudents.length})</div>`;
+      html += adminStudents.length ? adminStudents.map(x => `<div class="mini-row"><div><strong>${esc(x.name)}</strong><small>${esc(x.phone)}</small></div>
+          <div style="display:flex;gap:6px;"><button class="mini-btn blue" onclick="resetStudentPassword('${esc(x.phone)}')">Reset password</button><button class="mini-btn" onclick="deleteStudent('${esc(x.phone)}')">Remove</button></div></div>`).join('')
+        : '<p style="color:var(--text-muted);font-style:italic;font-size:12px;">No participants yet. Click Add Participant at the top.</p>';
+      box.innerHTML = html;
+    }
+
+    function startGradeFor(phone, title, subject) {
+      document.getElementById('workKind').value = 'grade'; toggleWorkKind();
+      document.getElementById('workStudent').value = phone;
+      document.getElementById('workTitle').value = title;
+      if (subject && [...document.getElementById('workSubject').options].some(o => o.value === subject)) document.getElementById('workSubject').value = subject;
+      document.getElementById('workSection').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    async function resetStudentPassword(phone) {
+      const pw = prompt('Type a NEW password for ' + studentName(phone) + ' (at least 6 characters):');
+      if (!pw) return;
+      if (pw.length < 6) { alert('Password must be at least 6 characters.'); return; }
+      try {
+        await rpc('admin_reset_password', { p_key: adminKey(), p_phone: phone, p_password: pw });
+        alert('Done. Give the student the new password. Their old saved login will stop working.'); await refreshStudents();
+      } catch (err) { alert('Could not update: ' + err.message); }
+    }
+
+    /* ===================== ADD / REMOVE PARTICIPANTS ===================== */
+    function openAddParticipant() {
+      ['partName', 'partPhone', 'partPass'].forEach(id => document.getElementById(id).value = '');
+      const st = document.getElementById('partStatus'); st.style.display = 'none';
+      document.getElementById('partModal').classList.add('open');
+      setTimeout(() => document.getElementById('partName').focus(), 50);
+    }
+    function closeAddParticipant() { document.getElementById('partModal').classList.remove('open'); }
+    function genPartPass() {
+      const chars = 'abcdefghjkmnpqrstuvwxyz23456789'; let p = '';
+      for (let i = 0; i < 6; i++) p += chars[Math.floor(Math.random() * chars.length)];
+      document.getElementById('partPass').value = p;
+    }
+    function partStatus(msg, type) { const st = document.getElementById('partStatus'); st.className = 'status-msg ' + type; st.innerHTML = msg; st.style.display = 'block'; }
+
+    async function addParticipant() {
+      const name = document.getElementById('partName').value.trim().replace(/\s+/g, ' ');
+      const phone = normPhone(document.getElementById('partPhone').value);
+      const pw = document.getElementById('partPass').value;
+      if (name.length < 3) return partStatus('⚠️ Enter the participant name.', 'danger');
+      if (phone.replace('+', '').length < 7) return partStatus('⚠️ Enter a valid phone number.', 'danger');
+      if (pw.length < 6) return partStatus('⚠️ Password must be at least 6 characters.', 'danger');
+      if (!cloudReady) {
+        partStatus('⏳ Connecting to cloud storage...', 'success');
+        await retryCloud();
+        if (!cloudReady) return partStatus('❌ Cloud storage is not ready: ' + esc(CLOUD_ERR || 'unknown error'), 'danger');
+      }
+      const btn = document.getElementById('partBtn'); btn.disabled = true;
+      try {
+        const res = await rpc('admin_add_student', { p_key: adminKey(), p_name: name, p_phone: phone, p_password: pw });
+        const exists = res === 'exists';
+        if (exists) partStatus('⚠️ That phone number already has an account. Use Reset password in the list.', 'danger');
+        else {
+          partStatus('✅ Added. Give the student:<br><strong>Name:</strong> ' + esc(name) + '<br><strong>Phone:</strong> ' + esc(phone) + '<br><strong>Password:</strong> ' + esc(pw), 'success');
+          ['partName', 'partPhone', 'partPass'].forEach(id => document.getElementById(id).value = '');
+          await refreshStudents(); await refreshWork();
+        }
+      } catch (err) { partStatus('❌ ' + esc(err.message), 'danger'); }
+      btn.disabled = false;
+    }
+
+    async function deleteStudent(phone) {
+      if (!confirm('Remove ' + studentName(phone) + '? They will be signed out and lose access.')) return;
+      try { await rpc('admin_delete_student', { p_key: adminKey(), p_phone: phone }); await refreshStudents(); await refreshWork(); }
+      catch (err) { alert('Could not remove: ' + err.message); }
+    }
+
+    function showCloudBanner(msg) {
+      let b = document.getElementById('cloudBanner');
+      if (!b) { b = document.createElement('div'); b.id = 'cloudBanner'; b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#7f1d1d;color:#fff;padding:12px 16px;font-size:13px;display:flex;gap:12px;align-items:center;justify-content:space-between;'; document.body.appendChild(b); }
+      b.innerHTML = '<span>❌ Cloud storage problem: ' + esc(msg) + '</span><button class="mini-btn blue" onclick="retryCloud()">Retry</button>';
+      b.style.display = 'flex';
+    }
+    function hideCloudBanner() { const b = document.getElementById('cloudBanner'); if (b) b.style.display = 'none'; }
+    async function retryCloud() { adminStarted = false; await startAdmin(true); }
+
+    /* ===================== START ===================== */
+    async function startAdmin(retry) {
+      if (adminStarted) return; adminStarted = true;
+      if (!retry) { adaptFormAllocations(); }
+      document.getElementById('workSubject').innerHTML = allSubjectsForWork().map(x => `<option>${esc(x)}</option>`).join('');
+      if (!retry) { toggleWorkKind(); }
+      try {
+        if (!(await rpc('admin_check', { p_key: adminKey() }))) { adminSignOut(); return; }
+        cloudReady = true; CLOUD_ERR = ''; hideCloudBanner();
+        await loadBookList();
+        await Promise.all([refreshStudents(), refreshWork()]);
+        await refreshAdminChatMesh(true);
+      } catch (err) {
+        console.error(err);
+        adminStarted = false; CLOUD_ERR = err.message; showCloudBanner(err.message);
+        workStatus('❌ Could not reach cloud storage: ' + err.message, 'danger');
+      }
+    }
+
+    // Light polling (cloud plans limit requests): every 30s, only while this tab is visible
+    setInterval(() => { if (adminStarted && document.visibilityState === 'visible') { refreshAdminChatMesh(); } }, 30000);
+    setInterval(() => { if (adminStarted && document.visibilityState === 'visible') { refreshWork(); refreshStudents(); } }, 90000);
+
+    document.addEventListener("DOMContentLoaded", () => {
+      if (sessionStorage.getItem('crestAdminOK') === '1' && sessionStorage.getItem('crestAdminKey')) startAdmin();
+    });
+  </script>
+</body>
+</html>
