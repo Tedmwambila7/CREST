@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Crest Academy International — Premium Learning Hub</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    /* Premium International School Global Design Elements */
+    body {
+      background: #040714;
+      color: #f1f5f9;
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    
+    /* Luxury Authentication System Overlay */
+    .auth-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(4, 7, 20, 0.98);
+      backdrop-filter: blur(20px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 10000;
+      overflow-y: auto;
+      padding: 20px;
+    }
+    .auth-box {
+      background: linear-gradient(145deg, #0b132b, #070b1e);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 28px;
+      padding: 45px 40px;
+      width: 100%; max-width: 480px;
+      text-align: center;
+      box-shadow: 0 30px 60px -15px rgba(0,0,0,0.7);
+    }
+    .auth-box .brand-icon {
+      font-size: 44px; color: #38bdf8; margin-bottom: 18px;
+      text-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+    }
+    .auth-box h2 { font-size: 26px; font-weight: 800; color: #fff; margin-bottom: 8px; letter-spacing: -0.02em; }
+    .auth-box p { color: #94a3b8; font-size: 13px; margin-bottom: 28px; }
+    
+    .auth-form-group { display: flex; flex-direction: column; gap: 16px; margin-bottom: 20px; text-align: left; }
+    .auth-form-group label { font-size: 11px; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: -8px; }
+    
+    .input-wrapper { position: relative; width: 100%; }
+    .input-wrapper i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #64748b; font-size: 15px; }
+    
+    .auth-box input, .sidebar-block input, .sidebar-block select, .sidebar-block textarea, .portal-card input, .portal-card textarea, .portal-card select {
+      width: 100%; padding: 12px 14px 12px 42px;
+      background: #0f172a; border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 12px; color: #fff; font-size: 13px; outline: none;
+      font-family: 'Poppins', sans-serif;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-sizing: border-box;
+    }
+    .auth-box input:focus, .sidebar-block input:focus, .sidebar-block select:focus, .sidebar-block textarea:focus, .portal-card input:focus, .portal-card textarea:focus, .portal-card select:focus { 
+      border-color: #38bdf8; background: #131e3b; box-shadow: 0 0 12px rgba(56,189,248,0.15); 
+    }
+    
+    /* Password Policy Validation Display */
+    .password-policies {
+      background: rgba(4, 7, 20, 0.6);
+      border-radius: 12px; padding: 14px 18px; margin-top: -6px; margin-bottom: 15px;
+      display: flex; flex-direction: column; gap: 8px; text-align: left;
+      border: 1px solid rgba(255,255,255,0.03);
+    }
+    .policy-item { font-size: 11px; color: #64748b; display: flex; align-items: center; gap: 10px; font-weight: 500; }
+    .policy-item.valid { color: #10b981; }
+    .policy-item.invalid { color: #f43f5e; }
+    
+    .auth-box .submit-btn {
+      width: 100%; padding: 16px;
+      background: linear-gradient(135deg, #0288d1, #38bdf8);
+      color: #040714; border: none; border-radius: 14px;
+      font-size: 15px; font-weight: 700; cursor: pointer; letter-spacing: 0.02em;
+      box-shadow: 0 4px 20px rgba(56,189,248,0.3);
+      transition: all 0.2s ease;
+    }
+    .auth-box .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(56,189,248,0.4); }
+    .auth-box .toggle-text { color: #94a3b8; font-size: 13px; margin-top: 16px; cursor: pointer; }
+    .auth-box .toggle-text span { color: #38bdf8; font-weight: 700; }
+    
+    .auth-box .error-msg { 
+      color: #ef4444; font-size: 12px; margin-top: 14px; background: rgba(239,68,68,0.08); 
+      padding: 12px; border-radius: 10px; border: 1px solid rgba(239,68,68,0.15); display: none; text-align: left;
+    }
+    .auth-box .success-msg { 
+      color: #10b981; font-size: 13px; margin-top: 14px; background: rgba(16,185,129,0.08);
+      padding: 12px; border-radius: 10px; border: 1px solid rgba(16,185,129,0.15); display: none; text-align: left;
+    }
+
+    /* Folder Directory Listing Display Structure */
+    .sidebar-block {
+      background: linear-gradient(145deg, #0b112c, #070b1e);
+      border: 1px solid rgba(79, 195, 247, 0.15);
+      border-radius: 20px; padding: 24px; margin-bottom: 25px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+    .sidebar-block h3 {
+      color: #fff; font-size: 13px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; margin-bottom: 18px; border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding-bottom: 10px;
+    }
+    .folder-item-btn {
+      width: 100%; padding: 12px 16px; background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.04); border-radius: 12px;
+      color: #94a3b8; font-size: 13px; font-weight: 600; text-align: left;
+      cursor: pointer; display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 10px; transition: all 0.2s ease;
+      box-sizing: border-box;
+    }
+    .folder-item-btn i.left-icon { width: 24px; font-size: 14px; color: #64748b; }
+    .folder-item-btn:hover, .folder-item-btn.active {
+      background: linear-gradient(135deg, rgba(2,136,209,0.15), rgba(56,189,248,0.05));
+      border-color: #38bdf8; color: #fff;
+    }
+    .folder-item-btn:hover i.left-icon, .folder-item-btn.active i.left-icon { color: #38bdf8; }
+
+    /* Form Fields Alignment */
+    .side-form-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; position: relative; }
+    .side-form-group i { position: absolute; left: 14px; top: 38px; color: #64748b; font-size: 13px; }
+    .side-form-group label { font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.04em; }
+
+    /* Nav bar Link Decor */
+    .nav-link { color: #94a3b8; text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; cursor: pointer; }
+    .nav-link:hover, .nav-link.active { color: #38bdf8; }
+
+    /* Scrolling Banner Flier Board System */
+    .fliers-container {
+      background: linear-gradient(135deg, #090f24, #131d3a);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 18px; padding: 20px 25px; margin-bottom: 35px;
+      display: flex; align-items: center; gap: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+    }
+    .flier-badge {
+      background: #f43f5e; color: #fff; padding: 8px 14px; border-radius: 10px;
+      font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+      display: flex; align-items: center; gap: 8px; animation: pulse 1.5s infinite alternate;
+    }
+    .flier-track { flex: 1; white-space: nowrap; overflow: hidden; }
+    .flier-text-scroll { display: inline-block; padding-left: 100%; animation: marquee 30s linear infinite; color: #38bdf8; font-weight: 600; font-size: 14px; }
+    .flier-text-scroll span { color: #fff; margin-right: 60px; }
+
+    /* Dynamic Types Tab Filter Decor */
+    .type-tab {
+      background: transparent; border: none; padding: 8px 16px; border-radius: 10px;
+      color: #94a3b8; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    }
+    .type-tab:hover, .type-tab.active { background: rgba(56, 189, 248, 0.15); color: #fff; }
+
+    /* STUDENT PORTAL STYLING */
+    .portal-section-header {
+      background: linear-gradient(135deg, #0f172a, #1e1b4b);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      border-radius: 20px; padding: 25px; margin-bottom: 25px;
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;
+    }
+    .portal-tab-btn {
+      padding: 10px 20px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px; color: #94a3b8; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.3s;
+    }
+    .portal-tab-btn.active, .portal-tab-btn:hover {
+      background: linear-gradient(135deg, #a855f7, #6366f1); color: #fff; border-color: #a855f7;
+      box-shadow: 0 4px 15px rgba(168,85,247,0.3);
+    }
+    .portal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+    .portal-card {
+      background: linear-gradient(145deg, #0b112c, #070b1e);
+      border: 1px solid rgba(56, 189, 248, 0.15); border-radius: 18px; padding: 22px;
+      display: flex; flex-direction: column; gap: 14px; position: relative; transition: all 0.3s ease;
+    }
+    .portal-card:hover { transform: translateY(-4px); border-color: #38bdf8; box-shadow: 0 12px 30px rgba(0,0,0,0.5); }
+    .status-badge {
+      padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .status-pending { background: rgba(234, 179, 8, 0.15); color: #eab308; border: 1px solid rgba(234, 179, 8, 0.3); }
+    .status-submitted { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .status-graded { background: rgba(168, 85, 247, 0.15); color: #a855f7; border: 1px solid rgba(168, 85, 247, 0.3); }
+    
+    .file-input-wrapper {
+      border: 2px dashed rgba(56, 189, 248, 0.3); border-radius: 12px; padding: 15px; text-align: center;
+      background: rgba(15, 23, 42, 0.5); cursor: pointer; transition: all 0.2s;
+    }
+    .file-input-wrapper:hover { border-color: #38bdf8; background: rgba(56, 189, 248, 0.05); }
+
+    @keyframes marquee { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
+    @keyframes pulse { 0% { opacity: 0.6; } 100% { opacity: 1; } }
+  
+    /* Library folder tree */
+    .repo-panel { background: linear-gradient(145deg, #0b112c, #060a1f); border: 1px solid rgba(56,189,248,0.15); border-radius: 16px; padding: 24px; min-height: 360px; }
+    .breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; color: #64748b; margin-bottom: 8px; }
+    .breadcrumb a { color: #38bdf8; cursor: pointer; font-weight: 600; text-decoration: none; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb .crumb-current { color: #fff; font-weight: 700; }
+    .repo-title { font-size: 18px; font-weight: 800; color: #fff; margin: 0 0 4px; }
+    .repo-sub { font-size: 12px; color: #94a3b8; margin: 0 0 20px; }
+    .repo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; }
+    .folder-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 18px 14px; cursor: pointer; text-align: center; transition: all 0.2s ease; color: #f1f5f9; font-family: inherit; }
+    .folder-card:hover { border-color: #38bdf8; background: rgba(56,189,248,0.08); transform: translateY(-2px); }
+    .folder-card i { font-size: 30px; margin-bottom: 10px; display: block; }
+    .folder-card .fc-name { font-size: 13px; font-weight: 700; }
+    .folder-card .fc-meta { font-size: 11px; color: #64748b; margin-top: 4px; }
+    .file-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; margin-bottom: 10px; font-size: 13px; }
+    .file-row a { color: #38bdf8; font-weight: 600; text-decoration: none; font-size: 12px; white-space: nowrap; }
+    .repo-empty { text-align: center; color: #64748b; padding: 50px 20px; font-size: 13px; line-height: 1.7; }
+    .repo-empty i { font-size: 34px; display: block; margin-bottom: 12px; color: #334155; }
+      #chatBoxContainer { max-width: calc(100vw - 40px); }
+  </style>
+</head>
+<body>
+
+  <!-- SECURE GATEWAY ENFORCEMENT OVERLAY -->
+  <div class="auth-overlay" id="studentAuthOverlay" style="display: none;">
+    <div class="auth-box">
+      <div class="brand-icon"><i class="fas fa-building-columns"></i></div>
+      
+      <div id="auth-state-login">
+        <h2>Crest Academy Student Portal</h2>
+        <p>Sign in with the details given to you by Sir Taydayo</p>
+        <div class="auth-form-group">
+          <label>Your Name</label>
+          <div class="input-wrapper"><i class="fas fa-user"></i><input type="text" id="loginName" placeholder="e.g. John Banda" autocomplete="name" /></div>
+
+          <label>Phone Number</label>
+          <div class="input-wrapper"><i class="fas fa-phone"></i><input type="text" id="loginPhone" placeholder="e.g. 0888123456" autocomplete="tel" /></div>
+
+          <label>Password</label>
+          <div class="input-wrapper"><i class="fas fa-shield-halved"></i><input type="password" id="loginPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter')handleStudentLogin()" /></div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; margin: -10px 0 20px; font-size: 12px;">
+          <span onclick="switchAuthState('forgot')" style="color: #38bdf8; cursor: pointer; font-weight: 600;">Forgot Password?</span>
+        </div>
+
+        <button class="submit-btn" id="loginBtn" onclick="handleStudentLogin()">Sign In to Dashboard</button>
+        <div class="toggle-text" style="cursor:default;">No account yet? Contact <span>Sir Taydayo on 0987112150</span></div>
+        <div style="text-align:center;margin-top:14px;font-size:12px;"><a href="admin.html" style="color:#38bdf8;font-weight:600;text-decoration:none;"><i class="fas fa-user-shield"></i> Admin? Sign in here</a></div>
+      </div>
+
+      <div id="auth-state-forgot" style="display: none;">
+        <h2>Recover Security Profile</h2>
+        <p>Enter your registered phone number. Your request goes to the admin, who will give you a new password. You can also contact Sir Taydayo on 0987112150.</p>
+        <div class="auth-form-group" id="forgot-step-1">
+          <label>Registered Phone Number</label>
+          <div class="input-wrapper"><i class="fas fa-phone"></i><input type="text" id="resetPhone" placeholder="e.g. +265888123456" /></div>
+          <button class="submit-btn" style="margin-top: 10px;" onclick="handleSendResetCode()">Send Reset Request to Admin</button>
+        </div>
+
+        <div class="auth-form-group" id="forgot-step-2" style="display: none;">
+          <div style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); padding: 10px; border-radius: 8px; color: #10b981; font-size: 12px; margin-bottom: 10px;" id="otpFeedbackMsg"></div>
+          
+          <label>Enter 6-Digit SMS Code</label>
+          <div class="input-wrapper"><i class="fas fa-key"></i><input type="text" id="resetOTP" placeholder="e.g. 482019" /></div>
+          
+          <label>New Security Password</label>
+          <div class="input-wrapper"><i class="fas fa-lock"></i><input type="password" id="resetNewPassword" placeholder="••••••••" /></div>
+          
+          <button class="submit-btn" style="margin-top: 10px;" onclick="handleVerifyAndResetPassword()">Update Profile Password</button>
+          <div style="text-align: left; margin-top: 8px;">
+            <span onclick="handleSendResetCode()" style="font-size: 12px; color: #38bdf8; cursor: pointer; font-weight: 500;"><i class="fas fa-rotate-right"></i> Resend code to number</span>
+          </div>
+        </div>
+        <div class="toggle-text" onclick="switchAuthState('login')">Return to <span>Sign In Gateway</span></div>
+      </div>
+
+      <div class="error-msg" id="loginError"></div>
+    </div>
+  </div>
+
+  <!-- CHAT WIDGET -->
+  <div id="crestChatWidget" style="display:none; position: fixed; bottom: 30px; right: 30px; z-index: 9999; font-family: inherit;">
+    <button id="chatTriggerBtn" onclick="toggleChatWindow()" style="background: linear-gradient(135deg, #0288d1, #38bdf8); color: #040714; border: none; width: 60px; height: 60px; border-radius: 50%; cursor: pointer; box-shadow: 0 8px 32px rgba(56, 189, 248, 0.4); display: flex; align-items: center; justify-content: center; font-size: 24px; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+      <i class="fas fa-comments" id="chatIcon"></i>
+    </button>
+
+    <div id="chatBoxContainer" style="display: none; position: absolute; bottom: 80px; right: 0; width: 380px; height: 520px; background: linear-gradient(145deg, #0b112c, #070b1e); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); flex-direction: column; overflow: hidden;">
+      <div style="background: rgba(15, 23, 42, 0.6); padding: 16px; border-bottom: 1px solid rgba(56, 189, 248, 0.15); display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 10px; height: 10px; background: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981;"></div>
+          <div>
+            <h4 style="font-size: 13px; font-weight: 700; color: #fff; margin: 0; letter-spacing: 0.5px;">Faculty Communication Mesh</h4>
+            <p style="font-size: 10px; color: #38bdf8; margin: 0;">Text & Voice Notes Active</p>
+          </div>
+        </div>
+        <button onclick="toggleChatWindow()" style="background: transparent; border: none; color: #64748b; cursor: pointer; font-size: 16px;"><i class="fas fa-xmark"></i></button>
+      </div>
+
+      <div id="chatMessagesLog" style="flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; background: rgba(4, 7, 20, 0.3);"></div>
+
+      <div id="voiceRadarHUD" style="display: none; padding: 12px 20px; background: rgba(239, 68, 68, 0.1); border-top: 1px solid rgba(239, 68, 68, 0.2); align-items: center; justify-content: space-between; color: #ef4444; font-size: 12px; font-weight: 600;">
+        <span style="display: flex; align-items: center; gap: 8px;">
+          <i class="fas fa-circle" style="animation: pulse 0.6s infinite alternate; font-size: 10px;"></i> 
+          Recording Audio Note...
+        </span>
+        <span id="voiceDuration">0:00</span>
+      </div>
+
+      <div id="cameraCaptureHUD" style="display: none; flex-direction: column; background: #000; border-top: 1px solid rgba(56, 189, 248, 0.2);">
+        <div style="position: relative; width: 100%; height: 220px; background: #000; overflow: hidden;">
+          <video id="cameraLivePreview" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover;"></video>
+          <canvas id="photoCaptureCanvas" style="display: none;"></canvas>
+          <div id="videoRecBadge" style="display: none; position: absolute; top: 10px; left: 10px; background: rgba(239,68,68,0.9); color: #fff; font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 8px; align-items: center; gap: 6px;">
+            <i class="fas fa-circle" style="animation: pulse 0.6s infinite alternate; font-size: 8px;"></i>
+            <span id="videoRecDuration">0:00</span>
+          </div>
+          <button onclick="closeCameraCapture()" style="position: absolute; top: 10px; right: 10px; background: rgba(4,7,20,0.6); border: none; color: #fff; width: 28px; height: 28px; border-radius: 8px; cursor: pointer; font-size: 13px;">
+            <i class="fas fa-xmark"></i>
+          </button>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 16px; padding: 12px; background: #040714;">
+          <button id="snapPhotoBtn" onclick="capturePhotoFromStream()" title="Take photo" style="background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); color: #38bdf8; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-camera"></i>
+          </button>
+          <button id="recordVideoBtn" onclick="toggleVideoRecording()" title="Record video" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; width: 54px; height: 54px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-video" id="recordVideoIcon"></i>
+          </button>
+        </div>
+      </div>
+
+      <div style="padding: 14px; background: #040714; border-top: 1px solid rgba(255,255,255,0.05); display: flex; gap: 8px; align-items: center;">
+        <button id="micBtn" onclick="handleMicToggle()" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; width: 42px; height: 42px; border-radius: 12px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0;">
+          <i class="fas fa-microphone" id="micIcon"></i>
+        </button>
+
+        <button id="cameraBtn" onclick="openCameraCapture()" title="Take a photo or video" style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); color: #a855f7; width: 42px; height: 42px; border-radius: 12px; cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0;">
+          <i class="fas fa-camera" id="cameraIcon"></i>
+        </button>
+
+        <button id="attachBtn" onclick="document.getElementById('chatFileInput').click()" title="Attach photo, video or file" style="background: rgba(234, 179, 8, 0.1); border: 1px solid rgba(234, 179, 8, 0.3); color: #eab308; width: 42px; height: 42px; border-radius: 12px; cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0;">
+          <i class="fas fa-paperclip"></i>
+        </button>
+        <input type="file" id="chatFileInput" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt" style="display:none;" onchange="handleChatFilePick(this)" />
+
+        <input type="text" id="chatInputField" placeholder="Type a message or record voice notes..." onkeydown="if(event.key === 'Enter') dispatchChatMessage()" style="flex: 1; padding: 12px 14px; background: #0f172a; border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; color: #fff; font-size: 12px; outline: none;" />
+        
+        <button onclick="dispatchChatMessage()" style="background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); color: #38bdf8; width: 42px; height: 42px; border-radius: 12px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0;">
+          <i class="fas fa-paper-plane"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PLATFORM WEB INTERFACE APPLICATION LOADER -->
+  <div class="loader" id="loader" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#040714; display:flex; align-items:center; justify-content:center; z-index:9999; transition: opacity 0.5s;">
+    <div style="text-align:center;">
+      <div style="font-size:55px; margin-bottom:15px; animation: pulse 1.5s infinite alternate;">🛡️</div>
+      <h2 style="color:#fff; font-family:'Poppins', sans-serif; font-weight:800; letter-spacing:1px;">CREST HUB</h2>
+      <p style="color:#94a3b8;">Verifying secure gateway metrics...</p>
+    </div>
+  </div>
+
+  <!-- NAVIGATION COMPONENT HEADER -->
+  <header style="position: sticky; top:0; background: rgba(4,7,20,0.95); backdrop-filter: blur(14px); border-bottom: 1px solid rgba(255,255,255,0.08); padding: 22px 5%; display: flex; justify-content: space-between; align-items: center; z-index: 999;">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span style="font-size: 26px;">🏰</span>
+      <div style="color: #fff; font-weight: 800; font-size: 21px; letter-spacing: -0.5px;">CREST <span style="color:#38bdf8;">INTERNATIONAL</span></div>
+    </div>
+    <nav style="display: flex; gap: 30px; align-items: center;">
+      <a class="nav-link active" onclick="showMainView('home')">Home Directory</a>
+      <a class="nav-link" onclick="showMainView('portal')"><i class="fas fa-file-signature" style="color:#a855f7;"></i> Assignments & Grades</a>
+      <a href="about.html" class="nav-link">About Portal</a>
+      <a href="contact.html" class="nav-link">Help Desk</a>
+      <a href="admin.html" class="nav-link" style="border: 1px solid rgba(56,189,248,0.3); padding: 8px 18px; border-radius: 10px; background: rgba(56,189,248,0.06); font-weight: 600;"><i class="fas fa-user-shield"></i> System Administration</a>
+      <button onclick="handleStudentLogout()" style="background: rgba(239,68,68,0.12); color: #f43f5e; border: 1px solid rgba(239,68,68,0.25); padding: 8px 16px; border-radius: 10px; cursor: pointer; font-weight: 700;"><i class="fas fa-right-from-bracket"></i> Leave Hub</button>
+    </nav>
+  </header>
+
+  <!-- CONTENT VIEWPORTS -->
+  <main style="padding: 40px 5%; max-width: 1450px; margin: 0 auto;">
+    
+    <!-- BRAND HERO HEADER REMARKS VIEW -->
+    <div style="background: linear-gradient(135deg, #0b112c, #091c3f); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 24px; padding: 55px 40px; margin-bottom: 30px; text-align: center; position: relative; overflow: hidden;">
+      <div style="position: absolute; top: -40px; left: -40px; font-size: 160px; color: rgba(56, 189, 248, 0.02); pointer-events: none;"><i class="fas fa-globe"></i></div>
+      <h1 style="font-size: 38px; font-weight: 800; color: #fff; margin-bottom: 12px; letter-spacing: -0.02em;">Welcome to Crest Academy, <span id="studentDisplayName" style="color:#38bdf8;">Student</span></h1>
+      <p style="color:#38bdf8;font-size:14px;font-weight:600;margin-bottom:14px;">For more info contact Sir Taydayo on <a href="tel:0987112150" style="color:inherit;">0987112150</a></p>
+      <p style="color: #94a3b8; max-width: 700px; margin: 0 auto; font-size: 15px; line-height: 1.7;">Your elite cloud access pipeline is completely synchronized. Browse syllabus material, track homework nodes, view video masterclasses, or dispatch query cards to institutional desk agents down below.</p>
+      
+      <div style="position: relative; max-width: 560px; margin: 35px auto 0;">
+        <input type="text" id="searchBox" placeholder="Try: English past papers form 2, Physics video lessons, Standard 5 maths..." oninput="searchBooks()" style="width:100%; padding: 18px 22px 18px 58px; background: #040714; border: 1px solid rgba(56,189,248,0.2); border-radius: 16px; color:#fff; outline:none; font-family:inherit; box-shadow: inset 0 2px 5px rgba(0,0,0,0.4);" />
+        <i class="fas fa-magnifying-glass" style="position: absolute; left: 22px; top: 50%; transform: translateY(-50%); color: #64748b; font-size: 16px;"></i>
+      </div>
+    </div>
+
+    <!-- CAMPUS MARQUEE FLIER SCROLL BOARD -->
+    <div class="fliers-container">
+      <div class="flier-badge"><i class="fas fa-certificate"></i> Global Campus Fliers</div>
+      <div class="flier-track">
+        <div class="flier-text-scroll">
+          <span>🌟 <strong>Academic Profile Status:</strong> Standard Cambridge IGCSE, AS/A-Levels, and MANEB assessment resources are fully operational.</span>
+          <span>⚡ <strong>Streaming Matrix Update:</strong> Premium high-definition video masterclass files have been cataloged for advanced STEM tracks.</span>
+          <span>🏆 <strong>Assignments & Grades:</strong> Access the Student Portal to submit recent work and view term marks.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 1: HOME DIRECTORY VIEW -->
+    <div id="homeMainView" style="display: block;">
+      <div id="hubView" style="display: grid; grid-template-columns: 320px 1fr; gap: 40px;">
+        
+        <!-- DIRECTORY NAVIGATION SIDEBAR CONTROLS -->
+        <aside style="display: flex; flex-direction: column;">
+          
+          <!-- QUICK LINK TO STUDENT ASSIGNMENTS PORTAL -->
+          <div class="sidebar-block" style="border: 1px solid rgba(168, 85, 247, 0.4); background: linear-gradient(145deg, #130d2a, #070b1e);">
+            <h3><i class="fas fa-graduation-cap" style="color:#a855f7;margin-right:8px;"></i> Student Workspace</h3>
+            <button class="folder-item-btn" onclick="showMainView('portal')" style="background: rgba(168, 85, 247, 0.15); border-color: rgba(168, 85, 247, 0.3); color: #fff;">
+              <span><i class="fas fa-upload left-icon" style="color:#a855f7;"></i> Assignments & Grades</span>
+              <i class="fas fa-arrow-right" style="color:#a855f7;"></i>
+            </button>
+          </div>
+
+          <!-- BLOCK 1: Academic Track Selection -->
+          <div class="sidebar-block">
+            <h3><i class="fas fa-graduation-cap" style="color:#38bdf8;margin-right:8px;"></i> Enrollment Track</h3>
+            <button class="folder-item-btn" id="btn-primary" onclick="chooseLevel('primary')"><span><i class="fas fa-child left-icon"></i> Primary School</span><i class="fas fa-chevron-right"></i></button>
+            <button class="folder-item-btn" id="btn-secondary" onclick="chooseLevel('secondary')"><span><i class="fas fa-user-graduate left-icon"></i> Secondary Tier</span><i class="fas fa-chevron-right"></i></button>
+            <button class="folder-item-btn" id="btn-tertiary" onclick="chooseLevel('tertiary')"><span><i class="fas fa-building-columns left-icon"></i> Tertiary Level</span><i class="fas fa-chevron-right"></i></button>
+          </div>
+
+          <!-- BLOCK 2: Form/Standard Allocation Mapping -->
+          <div class="sidebar-block" id="classFilterBox" style="display:none;">
+            <h3><i class="fas fa-cubes" style="color:#38bdf8;margin-right:8px;"></i> Grade Allocation</h3>
+            <div id="classContainer" style="display:flex; flex-direction:column; gap:2px;"></div>
+          </div>
+
+          <!-- BLOCK 3: Verified Subject Directory Folder Trees -->
+          <div class="sidebar-block" id="subjectFilterBox" style="display:none;">
+            <h3><i class="fas fa-folder-open" style="color:#38bdf8;margin-right:8px;"></i> Subject Directory</h3>
+            <div id="subjectContainer" style="display:flex; flex-direction:column; gap:2px;"></div>
+          </div>
+
+          <!-- SUBMISSION & CONCEPT QUERY TERMINAL -->
+          <div class="sidebar-block" style="border: 1px solid rgba(168, 85, 247, 0.3); background: linear-gradient(145deg, #0e0d28, #070b1e);">
+            <h3 style="border-color: rgba(168, 85, 247, 0.2);"><i class="fas fa-cloud-arrow-up" style="color:#a855f7;margin-right:8px;"></i> Request Desk Hub</h3>
+            
+            <div class="side-form-group">
+              <label>Student Full Name</label>
+              <i class="fas fa-user-circle"></i>
+              <input type="text" id="panelStudentName" placeholder="Name & Surname" />
+            </div>
+
+            <div class="side-form-group">
+              <label>Academic Email</label>
+              <i class="fas fa-envelope"></i>
+              <input type="email" id="panelStudentEmail" placeholder="student@crest.school" />
+            </div>
+
+            <div class="side-form-group">
+              <label>Subject Topic Stream</label>
+              <i class="fas fa-book-bookmark"></i>
+              <input type="text" id="panelRequestSubject" placeholder="e.g. Physics, Pure Math" />
+            </div>
+
+            <div class="side-form-group">
+              <label>Required Format Core</label>
+              <i class="fas fa-list-check" style="top:38px;"></i>
+              <select id="panelRequestFormat" style="padding-left:42px;">
+                <option value="Video Masterclass">📺 Video Masterclass Lecture</option>
+                <option value="Past Exam Paper">📝 Past Examination Paper</option>
+                <option value="eBook Textbook">📖 eBook / Textbook Reference</option>
+                <option value="Lecture Notes">📓 Complete Structured Notes</option>
+              </select>
+            </div>
+
+            <div class="side-form-group">
+              <label>Problem / Task Summary</label>
+              <i class="fas fa-pen-nib" style="top:38px;"></i>
+              <textarea id="panelRequestProblem" rows="3" placeholder="Describe the assignment task or topic explanation needed..." style="padding-left:42px; resize: none;"></textarea>
+            </div>
+
+            <button id="panelRequestSubmitBtn" onclick="submitPanelRequestTicket()" style="width:100%; padding:12px; background:linear-gradient(135deg, #a855f7, #6366f1); border:none; border-radius:10px; color:#fff; font-weight:700; cursor:pointer; font-size:12px; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow: 0 4px 15px rgba(168,85,247,0.2); margin-top:5px;">
+              <i class="fas fa-paper-plane"></i> Transmit Work Request
+            </button>
+            <p id="panelFormStatus" style="font-size:11px; font-weight:600; text-align:center; margin-top:10px; display:none;"></p>
+          </div>
+        </aside>
+
+        <!-- ASSET DATA INTERACTIVE STREAMS SECTION -->
+        <section>
+          <div class="repo-panel">
+            <div class="breadcrumb" id="breadcrumb"></div>
+            <h2 class="repo-title" id="repoTitle"></h2>
+            <p class="repo-sub" id="repoSub"></p>
+            <div id="repoGrid"></div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- VIEW 2: STUDENT ASSIGNMENTS & GRADEBOOK PORTAL VIEW -->
+    <div id="studentPortalView" style="display: none;">
+      
+      <!-- PORTAL NAVIGATION CONTROLS -->
+      <div class="portal-section-header">
+        <div>
+          <h2 style="font-size: 22px; font-weight: 800; color: #fff; margin: 0 0 6px 0;"><i class="fas fa-laptop-code" style="color: #a855f7;"></i> Student Academic Hub</h2>
+          <p style="font-size: 13px; color: #94a3b8; margin: 0;">Access teacher-assigned tasks, submit completed work, and monitor your academic transcripts.</p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button class="portal-tab-btn active" id="btnTabAssignments" onclick="switchPortalTab('assignments')"><i class="fas fa-tasks"></i> Active Assignments</button>
+          <button class="portal-tab-btn" id="btnTabGrades" onclick="switchPortalTab('grades')"><i class="fas fa-award"></i> My Grades & Report</button>
+        </div>
+      </div>
+
+      <!-- TAB 1: ASSIGNMENTS & WORK SUBMISSION -->
+      <div id="portalTabAssignmentsContent">
+        <div class="portal-grid" id="assignmentsGrid"></div>
+      </div>
+
+      <!-- TAB 2: PUBLISHED GRADES & ACADEMIC TRANSCRIPT -->
+      <div id="portalTabGradesContent" style="display: none;">
+        <div style="background: linear-gradient(145deg, #0b112c, #070b1e); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 20px; padding: 25px; margin-bottom: 25px;">
+          <h3 style="color: #fff; font-size: 16px; font-weight: 700; margin-bottom: 18px;"><i class="fas fa-graduation-cap" style="color: #38bdf8;"></i> Posted Academic Results & Assessment Summary</h3>
+          
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
+              <thead>
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); color: #38bdf8; text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em;">
+                  <th style="padding: 12px;">Subject / Assessment Task</th>
+                  <th style="padding: 12px;">Submission Date</th>
+                  <th style="padding: 12px;">Status</th>
+                  <th style="padding: 12px;">Score Rate</th>
+                  <th style="padding: 12px;">Grade</th>
+                  <th style="padding: 12px;">Instructor Remarks</th>
+                </tr>
+              </thead>
+              <tbody id="gradesBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script>
+    /* ===================== ERROR COLLECTOR =====================
+       Keeps the last 50 problems (script errors + failed Supabase calls) in this browser.
+       View them: open the page with ?debug at the end of the address (a small "Errors" button appears),
+       or type  portalErrors()  in the browser console. */
+    const ERROR_LOG_KEY = 'crestErrorLog';
+    function logPortalError(source, message, extra) {
+      try {
+        const list = JSON.parse(localStorage.getItem(ERROR_LOG_KEY) || '[]');
+        list.push(Object.assign({ at: new Date().toISOString(), source: source, message: String(message || '') }, extra || {}));
+        localStorage.setItem(ERROR_LOG_KEY, JSON.stringify(list.slice(-50)));
+      } catch (e) {}
+      if (window.updateErrorBadge) window.updateErrorBadge();
+    }
+    function portalErrors() {
+      let list = []; try { list = JSON.parse(localStorage.getItem(ERROR_LOG_KEY) || '[]'); } catch (e) {}
+      console.table(list); return list;
+    }
+    window.addEventListener('error', e => logPortalError('script', e.message, { where: (e.filename || '').split('/').pop() + ':' + e.lineno }));
+    window.addEventListener('unhandledrejection', e => logPortalError('promise', e.reason && e.reason.message ? e.reason.message : e.reason));
+    window.updateErrorBadge = function () {
+      if (!/[?&]debug\b/.test(location.search) || !document.body) return;
+      let list = []; try { list = JSON.parse(localStorage.getItem(ERROR_LOG_KEY) || '[]'); } catch (e) {}
+      let b = document.getElementById('errBadge');
+      if (!b) {
+        b = document.createElement('button'); b.id = 'errBadge';
+        b.style.cssText = 'position:fixed;left:16px;bottom:16px;z-index:100000;padding:8px 14px;border:none;border-radius:10px;background:#7f1d1d;color:#fff;font-size:12px;font-weight:700;cursor:pointer;';
+        b.onclick = () => {
+          const l = portalErrors();
+          alert(l.length ? l.slice(-15).map(x => x.at.slice(11, 19) + ' [' + x.source + (x.fn ? ' ' + x.fn : '') + '] ' + x.message).join('\n') : 'No errors logged.');
+        };
+        document.body.appendChild(b);
+      }
+      b.textContent = 'Errors: ' + list.length;
+    };
+    window.addEventListener('DOMContentLoaded', () => window.updateErrorBadge());
+
+    /* HIDE LOADER OVERLAY ON PAGE LOAD */
+    window.addEventListener('load', function() {
+      const loader = document.getElementById('loader');
+      if (loader) {
+        loader.style.opacity = '0';
+        setTimeout(() => loader.style.display = 'none', 500);
+      }
+    });
+
+    /* VIEW SWITCHING LOGIC */
+    function showMainView(viewName) {
+      const homeView = document.getElementById('homeMainView');
+      const portalView = document.getElementById('studentPortalView');
+      
+      if(viewName === 'portal') {
+        homeView.style.display = 'none';
+        portalView.style.display = 'block';
+        loadWork();
+      } else {
+        homeView.style.display = 'block';
+        portalView.style.display = 'none';
+      }
+    }
+
+    /* STUDENT PORTAL TAB SWITCHER */
+    function switchPortalTab(tab) {
+      const btnAssign = document.getElementById('btnTabAssignments');
+      const btnGrades = document.getElementById('btnTabGrades');
+      const contentAssign = document.getElementById('portalTabAssignmentsContent');
+      const contentGrades = document.getElementById('portalTabGradesContent');
+
+      if(tab === 'assignments') {
+        btnAssign.classList.add('active');
+        btnGrades.classList.remove('active');
+        contentAssign.style.display = 'block';
+        contentGrades.style.display = 'none';
+      } else {
+        btnGrades.classList.add('active');
+        btnAssign.classList.remove('active');
+        contentGrades.style.display = 'block';
+        contentAssign.style.display = 'none';
+      }
+    }
+
+    /* FILE INPUT DISPLAY HELPER */
+    function updateFileNameDisplay(input, targetId) {
+      if(input.files && input.files[0]) {
+        document.getElementById(targetId).innerText = "Selected: " + input.files[0].name;
+      }
+    }
+
+    /* ===================== LIBRARY FOLDER TREE =====================
+       Level  ->  Class (Form / Standard)  ->  Subject  ->  Books | Papers | Videos
+       Edit the lists below to change what appears in the portal.
+    ================================================================ */
+    const SECONDARY_SUBJECTS = ['English','Bible Knowledge','Biology','Physics','Chemistry','Agriculture','Mathematics','Computer Studies','Business Studies','Chichewa'];
+    const PRIMARY_SUBJECTS   = ['English','Chichewa','Mathematics','Science & Technology','Social Studies','Agriculture','Bible Knowledge','Life Skills'];
+
+    const CURRICULUM = {
+      primary:   { label: 'Primary School',  icon: 'fa-child',
+                   classes: [1,2,3,4,5,6,7,8].map(n => 'Standard ' + n), subjects: PRIMARY_SUBJECTS },
+      secondary: { label: 'Secondary Tier',  icon: 'fa-user-graduate',
+                   classes: ['Form 1','Form 2','Form 3','Form 4'], subjects: SECONDARY_SUBJECTS },
+      tertiary:  { label: 'Tertiary Level',  icon: 'fa-building-columns',
+                   classes: ['Year 1','Year 2','Year 3','Year 4'],
+                   subjects: ['Computer Engineering','Advanced Calculus','Data Structures','Business Management','Medicine & Health','Education'] }
+    };
+
+    const FOLDER_TYPES = [
+      { key: 'books',  label: 'Books',  icon: 'fa-book',        color: '#38bdf8' },
+      { key: 'papers', label: 'Papers', icon: 'fa-file-lines',  color: '#eab308' },
+      { key: 'videos', label: 'Videos', icon: 'fa-circle-play', color: '#ef4444' }
+    ];
+
+    /* Add files here. Key format: 'level|class|subject|folder'
+       Example:
+       RESOURCES['secondary|Form 1|Physics|books'] = [{ title: 'Physics Form 1 Textbook', url: 'files/physics-f1.pdf' }];
+    */
+    const RESOURCES = {};
+
+    const nav = { level: null, cls: null, subject: null, folder: null };
+    let currentLevel = null;
+
+    function resKey(l, c, s, f) { return [l, c, s, f].join('|'); }
+    function fileCount(l, c, s, f) { return (RESOURCES[resKey(l, c, s, f)] || []).length; }
+
+    function chooseLevel(level) {
+      nav.level = level; nav.cls = null; nav.subject = null; nav.folder = null;
+      currentLevel = level;
+      Object.keys(CURRICULUM).forEach(k => {
+        const b = document.getElementById('btn-' + k);
+        if (b) b.classList.toggle('active', k === level);
+      });
+      const sb = document.getElementById('searchBox'); if (sb) sb.value = '';
+      renderLibrary();
+    }
+    function chooseClass(cls)     { nav.cls = cls; nav.subject = null; nav.folder = null; renderLibrary(); }
+    function chooseSubject(subj)  { nav.subject = subj; nav.folder = null; renderLibrary(); }
+    function chooseFolder(folder) { nav.folder = folder; renderLibrary(); }
+
+    function goTo(depth) {            /* breadcrumb jump: 0=home, 1=level, 2=class, 3=subject */
+      if (depth < 3) nav.folder = null;
+      if (depth < 3) nav.subject = null;
+      if (depth < 2) nav.cls = null;
+      if (depth < 1) { nav.level = null; currentLevel = null;
+        Object.keys(CURRICULUM).forEach(k => document.getElementById('btn-' + k).classList.remove('active')); }
+      renderLibrary();
+    }
+
+    function sideButton(container, iconClass, text, active, handler) {
+      const b = document.createElement('button');
+      b.className = 'folder-item-btn' + (active ? ' active' : '');
+      b.innerHTML = '<span><i class="fas ' + iconClass + ' left-icon"></i> ' + esc(text) + '</span><i class="fas fa-chevron-right"></i>';
+      b.onclick = handler;
+      container.appendChild(b);
+    }
+
+    function renderSidebar() {
+      const cBox = document.getElementById('classFilterBox'), sBox = document.getElementById('subjectFilterBox');
+      const cC = document.getElementById('classContainer'), sC = document.getElementById('subjectContainer');
+      cC.innerHTML = ''; sC.innerHTML = '';
+      const cur = nav.level && CURRICULUM[nav.level];
+      cBox.style.display = (cur && cur.classes.length) ? 'block' : 'none';
+      sBox.style.display = (cur && nav.cls) ? 'block' : 'none';
+      if (!cur) return;
+      cur.classes.forEach(c => sideButton(cC, 'fa-folder', c, c === nav.cls, () => chooseClass(c)));
+      if (nav.cls) subjectsFor(nav.level, nav.cls).forEach(s => sideButton(sC, 'fa-book-open', s, s === nav.subject, () => chooseSubject(s)));
+    }
+
+    function folderCard(grid, icon, color, name, meta, handler) {
+      const c = document.createElement('button');
+      c.className = 'folder-card';
+      c.innerHTML = '<i class="fas ' + icon + '" style="color:' + color + ';"></i><div class="fc-name">' + esc(name) + '</div>' + (meta ? '<div class="fc-meta">' + esc(meta) + '</div>' : '');
+      c.onclick = handler;
+      grid.appendChild(c);
+    }
+
+    function renderLibrary() {
+      renderSidebar();
+      const cur = nav.level && CURRICULUM[nav.level];
+      const bc = document.getElementById('breadcrumb');
+      const title = document.getElementById('repoTitle'), sub = document.getElementById('repoSub');
+      const gridHost = document.getElementById('repoGrid');
+      gridHost.innerHTML = '';
+
+      /* breadcrumb */
+      const crumbs = [{ t: 'Library', d: 0 }];
+      if (cur) crumbs.push({ t: cur.label, d: 1 });
+      if (nav.cls) crumbs.push({ t: nav.cls, d: 2 });
+      if (nav.subject) crumbs.push({ t: nav.subject, d: 3 });
+      if (nav.folder) crumbs.push({ t: FOLDER_TYPES.find(f => f.key === nav.folder).label, d: 4 });
+      bc.innerHTML = '';
+      crumbs.forEach((c, i) => {
+        if (i) { const sep = document.createElement('i'); sep.className = 'fas fa-chevron-right'; sep.style.fontSize = '10px'; bc.appendChild(sep); }
+        if (i === crumbs.length - 1) { const sp = document.createElement('span'); sp.className = 'crumb-current'; sp.textContent = c.t; bc.appendChild(sp); }
+        else { const a = document.createElement('a'); a.textContent = c.t; a.onclick = () => goTo(c.d); bc.appendChild(a); }
+      });
+
+      const grid = document.createElement('div'); grid.className = 'repo-grid';
+
+      if (!cur) {
+        title.textContent = 'Choose your enrollment track';
+        sub.textContent = 'Pick Primary, Secondary or Tertiary from the sidebar to open its folders.';
+        Object.keys(CURRICULUM).forEach(k => folderCard(grid, CURRICULUM[k].icon, '#eab308', CURRICULUM[k].label, '', () => chooseLevel(k)));
+      } else if (!cur.classes.length) {
+        title.textContent = cur.label;
+        sub.textContent = '';
+        gridHost.innerHTML = '<div class="repo-empty"><i class="fas fa-hammer"></i>Tertiary folders are not set up yet.</div>';
+        return;
+      } else if (!nav.cls) {
+        title.textContent = cur.label + ' — Classes';
+        sub.textContent = 'Select a class to see its subjects.';
+        cur.classes.forEach(c => folderCard(grid, 'fa-folder', '#eab308', c, subjectsFor(nav.level, c).length + ' subjects', () => chooseClass(c)));
+      } else if (!nav.subject) {
+        title.textContent = nav.cls + ' — Subjects';
+        sub.textContent = 'Select a subject to open its Books, Papers and Videos.';
+        subjectsFor(nav.level, nav.cls).forEach(s => folderCard(grid, 'fa-folder', '#eab308', s, '', () => chooseSubject(s)));
+      } else if (!nav.folder) {
+        title.textContent = nav.subject + ' — ' + nav.cls;
+        sub.textContent = 'Choose a folder.';
+        FOLDER_TYPES.forEach(f => {
+          const n = fileCount(nav.level, nav.cls, nav.subject, f.key);
+          folderCard(grid, f.icon, f.color, f.label, n + (n === 1 ? ' file' : ' files'), () => chooseFolder(f.key));
+        });
+      } else {
+        const f = FOLDER_TYPES.find(x => x.key === nav.folder);
+        title.textContent = f.label + ' — ' + nav.subject + ', ' + nav.cls;
+        sub.textContent = '';
+        const files = RESOURCES[resKey(nav.level, nav.cls, nav.subject, nav.folder)] || [];
+        if (!files.length) {
+          gridHost.innerHTML = '<div class="repo-empty"><i class="fas ' + f.icon + '"></i>No ' + f.label.toLowerCase() + ' have been added to this folder yet.</div>';
+        } else {
+          files.forEach(file => {
+            const row = document.createElement('div'); row.className = 'file-row';
+            row.innerHTML = '<span><i class="fas ' + f.icon + '" style="color:' + f.color + ';margin-right:10px;"></i>' + esc(file.title) + '</span><a href="' + esc(file.url) + '" target="_blank" rel="noopener"><i class="fas fa-arrow-up-right-from-square"></i> Open</a>';
+            gridHost.appendChild(row);
+          });
+        }
+        return;
+      }
+      gridHost.appendChild(grid);
+    }
+
+    /* ===================== SMART SEARCH =====================
+       Understands things like:
+         "english past papers form 2"   "physics video lessons"   "standard 5 maths books"
+       It reads level, class, subject and folder type from the words typed,
+       then lists matching files and the matching folders.
+    ========================================================== */
+    const SEARCH_TYPE_PHRASES = [
+      ['papers', ['past examination papers','past exam papers','question papers','question paper','past papers','past paper','examination','exams','exam','papers','paper']],
+      ['videos', ['video lessons','video lesson','masterclass','tutorials','tutorial','videos','video','lessons','lesson']],
+      ['books',  ['textbooks','textbook','ebooks','ebook','novels','novel','books','book','notes']]
+    ];
+    const SUBJECT_ALIASES = { maths:'Mathematics', math:'Mathematics', agric:'Agriculture', bio:'Biology', chem:'Chemistry', phys:'Physics',
+                              ict:'Computer Studies', computers:'Computer Studies', bk:'Bible Knowledge', rs:'Bible Knowledge', sst:'Social Studies', science:'Science & Technology' };
+    const SEARCH_STOP = new Set(['the','a','an','of','for','in','on','and','or','to','my','me','please','show','find','get','all','past','school','tier','level','grade','class','subject','subjects','studies','study','with','from']);
+    const GENERIC_SUBJECT_WORDS = new Set(['studies','and','&','life','skills']);
+
+    function parseSearch(raw) {
+      let q = ' ' + raw.toLowerCase().replace(/[^a-z0-9&]+/g, ' ') + ' ';
+      const out = { levels: new Set(), classes: new Set(), subjects: new Set(), types: new Set(), left: [] };
+
+      SEARCH_TYPE_PHRASES.forEach(([key, phrases]) => phrases.forEach(ph => {
+        if (q.includes(' ' + ph + ' ')) { out.types.add(key); q = q.split(' ' + ph + ' ').join(' '); }
+      }));
+
+      let m;
+      const reForm = /\b(?:form|f)\s*([1-4])\b/g;
+      while ((m = reForm.exec(q))) out.classes.add('Form ' + m[1]);
+      q = q.replace(reForm, ' ');
+      const reStd = /\b(?:standard|std|st)\s*([1-8])\b/g;
+      while ((m = reStd.exec(q))) out.classes.add('Standard ' + m[1]);
+      q = q.replace(reStd, ' ');
+
+      const reYear = /\b(?:year|yr)\s*([1-4])\b/g;
+      while ((m = reYear.exec(q))) out.classes.add('Year ' + m[1]);
+      q = q.replace(reYear, ' ');
+
+      if (/\bprimary\b/.test(q)) out.levels.add('primary');
+      if (/\bsecondary\b/.test(q)) out.levels.add('secondary');
+      if (/\btertiary\b/.test(q)) out.levels.add('tertiary');
+      q = q.replace(/\b(primary|secondary|tertiary)\b/g, ' ');
+
+      const allSubjects = allKnownSubjects();
+      allSubjects.forEach(name => { const n = name.toLowerCase().replace(/[^a-z0-9& ]/g, ' ').replace(/\s+/g, ' ').trim();
+        if (q.includes(' ' + n + ' ')) { out.subjects.add(name); q = q.split(' ' + n + ' ').join(' '); } });
+
+      q.split(/\s+/).filter(Boolean).forEach(tok => {
+        if (SEARCH_STOP.has(tok) && !SUBJECT_ALIASES[tok]) return;
+        let hit = false;
+        if (SUBJECT_ALIASES[tok]) { out.subjects.add(SUBJECT_ALIASES[tok]); hit = true; }
+        else allSubjects.forEach(name => {
+          const words = name.toLowerCase().split(/[^a-z0-9&]+/).filter(w => w && !GENERIC_SUBJECT_WORDS.has(w));
+          if (words.some(w => w === tok || (tok.length >= 4 && w.startsWith(tok)))) { out.subjects.add(name); hit = true; }
+        });
+        if (!hit) out.left.push(tok);
+      });
+      return out;
+    }
+
+    function openFolderPath(level, cls, subj, folder) {
+      nav.level = level; nav.cls = cls; nav.subject = subj; nav.folder = folder; currentLevel = level;
+      Object.keys(CURRICULUM).forEach(k => { const b = document.getElementById('btn-' + k); if (b) b.classList.toggle('active', k === level); });
+      document.getElementById('searchBox').value = '';
+      renderLibrary();
+    }
+
+    function searchBooks() {
+      const raw = document.getElementById('searchBox').value.trim();
+      if (!raw) { renderLibrary(); return; }
+      const p = parseSearch(raw);
+      const hasFilter = p.levels.size || p.classes.size || p.subjects.size || p.types.size;
+
+      /* matching folders */
+      const folders = [];
+      ['primary', 'secondary', 'tertiary'].forEach(level => {
+        if (p.levels.size && !p.levels.has(level)) return;
+        const cur = CURRICULUM[level];
+        cur.classes.forEach(cls => {
+          if (p.classes.size && !p.classes.has(cls)) return;
+          subjectsFor(level, cls).forEach(subj => {
+            if (p.subjects.size && !p.subjects.has(subj)) return;
+            FOLDER_TYPES.forEach(ft => {
+              if (p.types.size && !p.types.has(ft.key)) return;
+              folders.push({ level, cls, subj, ft });
+            });
+          });
+        });
+      });
+
+      /* matching files */
+      const files = [];
+      Object.keys(RESOURCES).forEach(key => {
+        const [level, cls, subj, fk] = key.split('|');
+        if (hasFilter && !folders.some(f => f.level === level && f.cls === cls && f.subj === subj && f.ft.key === fk)) return;
+        RESOURCES[key].forEach(file => {
+          const title = file.title.toLowerCase();
+          if (p.left.every(t => title.includes(t))) files.push({ level, cls, subj, fk, file });
+        });
+      });
+
+      /* draw */
+      const bc = document.getElementById('breadcrumb'), title = document.getElementById('repoTitle'),
+            sub = document.getElementById('repoSub'), host = document.getElementById('repoGrid');
+      bc.innerHTML = ''; const cr = document.createElement('span'); cr.className = 'crumb-current'; cr.textContent = 'Search results'; bc.appendChild(cr);
+      title.textContent = 'Results for "' + raw + '"';
+      host.innerHTML = '';
+      const showFolders = hasFilter && p.left.length === 0;
+
+      sub.textContent = files.length + (files.length === 1 ? ' file' : ' files') + (showFolders ? ' and ' + folders.length + (folders.length === 1 ? ' folder' : ' folders') : '') + ' found';
+
+      if (files.length) {
+        const h = document.createElement('div'); h.style.cssText = 'font-size:12px;font-weight:700;color:#38bdf8;text-transform:uppercase;letter-spacing:.05em;margin:6px 0 10px;'; h.textContent = 'Files'; host.appendChild(h);
+        files.forEach(r => {
+          const ft = FOLDER_TYPES.find(f => f.key === r.fk);
+          const row = document.createElement('div'); row.className = 'file-row';
+          row.innerHTML = '<span><i class="fas ' + ft.icon + '" style="color:' + ft.color + ';margin-right:10px;"></i>' + esc(r.file.title) +
+            '<br><small style="color:#64748b;margin-left:24px;">' + esc(CURRICULUM[r.level].label + ' › ' + r.cls + ' › ' + r.subj + ' › ' + ft.label) + '</small></span>' +
+            '<a href="' + esc(r.file.url) + '" target="_blank" rel="noopener"><i class="fas fa-arrow-up-right-from-square"></i> Open</a>';
+          host.appendChild(row);
+        });
+      }
+
+      if (showFolders && folders.length) {
+        const h = document.createElement('div'); h.style.cssText = 'font-size:12px;font-weight:700;color:#eab308;text-transform:uppercase;letter-spacing:.05em;margin:18px 0 10px;'; h.textContent = 'Matching folders'; host.appendChild(h);
+        const grid = document.createElement('div'); grid.className = 'repo-grid';
+        folders.slice(0, 24).forEach(f => {
+          const n = fileCount(f.level, f.cls, f.subj, f.ft.key);
+          folderCard(grid, f.ft.icon, f.ft.color, f.subj + ' ' + f.ft.label, f.cls + ' · ' + n + (n === 1 ? ' file' : ' files'), () => openFolderPath(f.level, f.cls, f.subj, f.ft.key));
+        });
+        host.appendChild(grid);
+        if (folders.length > 24) {
+          const more = document.createElement('div'); more.className = 'repo-sub'; more.style.marginTop = '14px';
+          more.textContent = 'Showing 24 of ' + folders.length + ' folders. Add a class, e.g. "form 2", to narrow it down.'; host.appendChild(more);
+        }
+      }
+
+      if (!files.length && !(showFolders && folders.length)) {
+        host.innerHTML = '<div class="repo-empty"><i class="fas fa-magnifying-glass"></i>Nothing found for "' + esc(raw) + '".<br>Try something like "English past papers form 2" or "Physics video lessons".</div>';
+      }
+
+      addRequestPrompt(host, raw, p);
+    }
+
+    /* "Can't find it?" card shown under every search */
+    function addRequestPrompt(host, raw, p) {
+      const box = document.createElement('div');
+      box.style.cssText = 'margin-top:22px;padding:16px;border:1px dashed rgba(168,85,247,0.45);border-radius:14px;background:rgba(168,85,247,0.06);display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;';
+      box.innerHTML = '<div style="font-size:13px;color:#cbd5e1;line-height:1.5;"><strong style="color:#fff;">Can\'t find what you need?</strong><br>Ask the admin to add it for you.</div>';
+      const btn = document.createElement('button');
+      btn.innerHTML = '<i class="fas fa-paper-plane"></i> Request this resource';
+      btn.style.cssText = 'padding:11px 18px;background:linear-gradient(135deg,#a855f7,#6366f1);border:none;border-radius:10px;color:#fff;font-weight:700;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:8px;font-family:inherit;';
+      btn.onclick = () => prefillRequestFromSearch(raw, p);
+      box.appendChild(btn);
+      host.appendChild(box);
+    }
+
+    function prefillRequestFromSearch(raw, p) {
+      const typeToFormat = { papers: 'Past Exam Paper', videos: 'Video Masterclass', books: 'eBook Textbook' };
+      const subj = [...p.subjects].join(', '), cls = [...p.classes].join(', ');
+      const subjectText = (subj || raw) + (subj && cls ? ' - ' + cls : (!subj && cls ? '' : ''));
+      document.getElementById('panelRequestSubject').value = subjectText;
+      const firstType = [...p.types][0];
+      if (firstType) document.getElementById('panelRequestFormat').value = typeToFormat[firstType];
+      document.getElementById('panelRequestProblem').value = 'I searched for "' + raw + '" but could not find it. Please add this resource.';
+      const st = document.getElementById('panelFormStatus'); st.style.display = 'none';
+      const field = document.getElementById('panelRequestSubject');
+      field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const blk = field.closest('.sidebar-block');
+      if (blk) { blk.style.transition = 'box-shadow .3s'; blk.style.boxShadow = '0 0 0 2px #a855f7'; setTimeout(() => { blk.style.boxShadow = ''; }, 1800); }
+      const nameField = document.getElementById('panelStudentName');
+      (nameField.value.trim() ? document.getElementById('panelRequestProblem') : nameField).focus({ preventScroll: true });
+    }
+
+    /* ---------- Request Desk form ---------- */
+    const REQUEST_STORE_KEY = 'crestRequestTickets';
+    async function deliverRequestToAdmin(t) {
+      const me = studentSession || { name: t.name, phone: '' };
+      const node = { id: newId('m'), phone: me.phone, sender: t.name || me.name, isTeacher: false, ts: Date.now(), time: nowHHMM(),
+        message: '📥 RESOURCE REQUEST: ' + t.subject + ' (' + t.format + ')\n' + (t.problem || '') + '\nFrom: ' + t.name + ' <' + t.email + '>' };
+      await sbPut('chat', node);
+    }
+
+    function submitPanelRequestTicket() {
+      const g = id => document.getElementById(id);
+      const ticket = {
+        name: g('panelStudentName').value.trim(), email: g('panelStudentEmail').value.trim(),
+        subject: g('panelRequestSubject').value.trim(), format: g('panelRequestFormat').value,
+        problem: g('panelRequestProblem').value.trim(), time: Date.now(), status: 'open'
+      };
+      const st = g('panelFormStatus'); st.style.display = 'block';
+      const fail = msg => { st.style.color = '#f43f5e'; st.textContent = msg; };
+      if (!ticket.name) return fail('Please enter your full name.');
+      if (!/^\S+@\S+\.\S+$/.test(ticket.email)) return fail('Please enter a valid email address.');
+      if (!ticket.subject) return fail('Please enter the subject you need.');
+      try {
+        const all = JSON.parse(localStorage.getItem(REQUEST_STORE_KEY) || '[]'); all.push(ticket);
+        localStorage.setItem(REQUEST_STORE_KEY, JSON.stringify(all));
+      } catch (e) {}
+      deliverRequestToAdmin(ticket).then(() => {
+        st.style.color = '#10b981'; st.textContent = 'Request sent. The admin will add it soon.';
+        g('panelRequestSubject').value = ''; g('panelRequestProblem').value = '';
+      }).catch(() => fail('Could not send your request. Please try again.'));
+    }
+
+    renderLibrary();
+  
+    /* ===================== CHAT WIDGET (cloud) =====================
+       Messages go to the shared chat bin, so the admin console receives them.
+    ================================================================ */
+    const CHAT_MAX_FILE_MB = 25, CHAT_KEEP = 250;
+    let chatOpen = false, chatThread = [], chatPoll = null;
+    let micRecorder = null, micStream = null, micChunks = [], micTimer = null, micDiscard = false;
+    let camStream = null, vidRecorder = null, vidChunks = [], vidTimer = null, vidDiscard = false;
+
+    function fmtClock(sec) { return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0'); }
+    function pickMime(list) { return (window.MediaRecorder && list.find(t => MediaRecorder.isTypeSupported(t))) || ''; }
+    function mediaSupported() { return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder); }
+    function extFor(type) { type = (type || '').toLowerCase(); return type.includes('webm') ? 'webm' : type.includes('ogg') ? 'ogg' : type.includes('mp4') ? 'mp4' : type.includes('jpeg') ? 'jpg' : type.includes('png') ? 'png' : ''; }
+
+    function chatNotice(text) {
+      const log = document.getElementById('chatMessagesLog');
+      const n = document.createElement('div');
+      n.style.cssText = 'align-self:center;text-align:center;font-size:11px;color:#94a3b8;background:rgba(255,255,255,0.04);padding:6px 12px;border-radius:10px;max-width:90%;';
+      n.textContent = text;
+      log.appendChild(n);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function chatBubble(m) {
+      const mine = !m.isTeacher;
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'display:flex;flex-direction:column;gap:4px;align-items:' + (mine ? 'flex-end' : 'flex-start') + ';';
+      if (!mine) { const who = document.createElement('div'); who.style.cssText = 'font-size:10px;font-weight:700;color:#38bdf8;text-transform:uppercase;'; who.textContent = 'Admin'; wrap.appendChild(who); }
+      const b = document.createElement('div');
+      b.style.cssText = 'max-width:85%;padding:10px 12px;border-radius:14px;font-size:13px;line-height:1.5;word-break:break-word;white-space:pre-wrap;' +
+        (mine ? 'background:linear-gradient(135deg,#0288d1,#38bdf8);color:#040714;border-bottom-right-radius:4px;'
+              : 'background:#0f172a;color:#f1f5f9;border:1px solid rgba(255,255,255,0.06);border-bottom-left-radius:4px;');
+      if (m.recordData) {
+        const h = document.createElement('div'); h.style.cssText = 'font-size:11px;font-weight:800;color:#10b981;text-transform:uppercase;margin-bottom:6px;'; h.textContent = m.recordData.header;
+        const n = document.createElement('div'); n.textContent = m.recordData.notes; b.appendChild(h); b.appendChild(n);
+      } else if (m.image && safeUrl(m.image)) {
+        const i = document.createElement('img'); i.src = m.image; i.style.cssText = 'max-width:100%;border-radius:10px;display:block;cursor:pointer;'; i.onclick = () => window.open(m.image, '_blank'); b.appendChild(i);
+      } else if (m.audio && safeUrl(m.audio)) {
+        const a = document.createElement('audio'); a.controls = true; a.src = m.audio; a.style.cssText = 'width:220px;max-width:100%;'; b.appendChild(a);
+      } else if (m.video && safeUrl(m.video)) {
+        const v = document.createElement('video'); v.controls = true; v.playsInline = true; v.src = m.video; v.style.cssText = 'max-width:100%;border-radius:10px;display:block;'; b.appendChild(v);
+      } else if (m.document && safeUrl(m.document)) {
+        const a = document.createElement('a'); a.href = m.document; a.target = '_blank'; a.rel = 'noopener'; a.textContent = '📎 ' + (m.message || 'Document');
+        a.style.cssText = 'color:inherit;font-weight:600;text-decoration:underline;'; b.appendChild(a);
+      } else { b.textContent = m.message || ''; }
+      const t = document.createElement('div');
+      t.style.cssText = 'font-size:10px;color:#64748b;';
+      t.textContent = m.pending ? 'sending...' : (m.time || '');
+      wrap.appendChild(b); wrap.appendChild(t);
+      return wrap;
+    }
+
+    function renderChat() {
+      const log = document.getElementById('chatMessagesLog');
+      log.innerHTML = '';
+      if (!chatThread.length) chatNotice('Hello! Send a message, voice note, photo or video and the admin will reply here.');
+      chatThread.forEach(m => log.appendChild(chatBubble(m)));
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function myChatFilter(m) {
+      const me = studentSession;
+      return !!me && (m.phone === me.phone || (m.isTeacher && (!m.to || m.to === 'all' || m.to === me.phone)));
+    }
+
+    async function pullChat() {
+      if (!studentSession) return;
+      try {
+        const pending = chatThread.filter(x => x.pending);
+        chatThread = (await sbItems('chat')).filter(myChatFilter).concat(pending);
+        if (chatOpen) renderChat();
+      } catch (e) { /* stay quiet, retry on next poll */ }
+    }
+
+    async function sendChatNode(node) {
+      const me = studentSession;
+      if (!me) { chatNotice('Please sign in first.'); return; }
+      node.id = newId('m'); node.phone = me.phone; node.sender = me.name; node.isTeacher = false; node.ts = Date.now(); node.time = nowHHMM();
+      chatThread.push(Object.assign({ pending: true }, node)); renderChat();
+      try {
+        await sbPut('chat', node);
+        chatThread = chatThread.filter(x => x.id !== node.id);
+        await pullChat(); renderChat();
+      } catch (e) {
+        chatThread = chatThread.filter(x => x.id !== node.id); renderChat();
+        chatNotice('Message not sent. Check your internet connection and try again.');
+      }
+    }
+
+    function addChatMessage(m) { sendChatNode({ message: m.text }); }
+
+    async function blobToChat(blob, kind, name) {
+      chatNotice('Uploading ' + kind + '...');
+      try {
+        let fname = name || kind;
+        if (!/\.[a-z0-9]{2,4}$/i.test(fname)) { const e = extFor(blob.type); if (e) fname += '.' + e; }
+        const url = await cloudUpload(blob, fname);
+        const node = { message: fname };
+        node[kind === 'file' ? 'document' : kind] = url;
+        await sendChatNode(node);
+      } catch (e) { chatNotice('Upload failed. Please try again.'); }
+    }
+
+    function toggleChatWindow() {
+      chatOpen = !chatOpen;
+      document.getElementById('chatBoxContainer').style.display = chatOpen ? 'flex' : 'none';
+      document.getElementById('chatIcon').className = chatOpen ? 'fas fa-xmark' : 'fas fa-comments';
+      if (chatOpen) {
+        renderChat(); pullChat();
+        chatPoll = setInterval(() => { if (document.visibilityState === 'visible') pullChat(); }, 20000);
+        const f = document.getElementById('chatInputField'); if (f) f.focus();
+      } else {
+        clearInterval(chatPoll);
+        if (micRecorder && micRecorder.state === 'recording') { micDiscard = true; micRecorder.stop(); }
+        closeCameraCapture();
+      }
+    }
+
+    function dispatchChatMessage() {
+      const f = document.getElementById('chatInputField');
+      const text = f.value.trim();
+      if (!text) return;
+      f.value = '';
+      addChatMessage({ kind: 'text', text: text });
+    }
+
+    function handleChatFilePick(input) {
+      const file = input.files && input.files[0];
+      input.value = '';
+      if (!file) return;
+      if (file.size > CHAT_MAX_FILE_MB * 1024 * 1024) { chatNotice('That file is larger than ' + CHAT_MAX_FILE_MB + ' MB.'); return; }
+      const kind = file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : file.type.startsWith('audio/') ? 'audio' : 'file';
+      blobToChat(file, kind, file.name);
+    }
+
+    /* ---------- Voice notes ---------- */
+    async function handleMicToggle() {
+      if (micRecorder && micRecorder.state === 'recording') { micRecorder.stop(); return; }
+      if (!mediaSupported()) { chatNotice('Voice notes are not supported here. Open the site over HTTPS in an up-to-date browser.'); return; }
+      if (vidRecorder && vidRecorder.state === 'recording') { chatNotice('Stop the video recording first.'); return; }
+      closeCameraCapture();
+      try { micStream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+      catch (e) { chatNotice('Microphone blocked. Allow microphone access in your browser settings, then try again.'); return; }
+
+      const mime = pickMime(['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus']);
+      micRecorder = mime ? new MediaRecorder(micStream, { mimeType: mime }) : new MediaRecorder(micStream);
+      micChunks = []; micDiscard = false;
+      micRecorder.ondataavailable = e => { if (e.data && e.data.size) micChunks.push(e.data); };
+      micRecorder.onstop = () => {
+        clearInterval(micTimer);
+        micStream.getTracks().forEach(t => t.stop());
+        document.getElementById('voiceRadarHUD').style.display = 'none';
+        document.getElementById('micIcon').className = 'fas fa-microphone';
+        const blob = new Blob(micChunks, { type: micRecorder.mimeType || 'audio/webm' });
+        if (!micDiscard && blob.size) blobToChat(blob, 'audio', 'voice-note');
+      };
+      micRecorder.start();
+      document.getElementById('voiceRadarHUD').style.display = 'flex';
+      document.getElementById('micIcon').className = 'fas fa-stop';
+      const t0 = Date.now(), d = document.getElementById('voiceDuration'); d.textContent = '0:00';
+      micTimer = setInterval(() => { d.textContent = fmtClock(Math.floor((Date.now() - t0) / 1000)); }, 500);
+    }
+
+    /* ---------- Camera: photo + video ---------- */
+    async function openCameraCapture() {
+      if (!mediaSupported()) { chatNotice('Camera is not supported here. Use the paperclip to attach a photo or video instead.'); return; }
+      if (micRecorder && micRecorder.state === 'recording') { chatNotice('Stop the voice note first.'); return; }
+      if (camStream) return;
+      try { camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: true }); }
+      catch (e) {
+        try { camStream = await navigator.mediaDevices.getUserMedia({ video: true }); }
+        catch (e2) { chatNotice('Camera blocked. Allow camera access in your browser settings, or use the paperclip to attach a file.'); return; }
+      }
+      document.getElementById('cameraLivePreview').srcObject = camStream;
+      document.getElementById('cameraCaptureHUD').style.display = 'flex';
+    }
+
+    function closeCameraCapture() {
+      if (vidRecorder && vidRecorder.state === 'recording') { vidDiscard = true; vidRecorder.stop(); }
+      clearInterval(vidTimer);
+      if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+      const v = document.getElementById('cameraLivePreview'); if (v) v.srcObject = null;
+      const hud = document.getElementById('cameraCaptureHUD'); if (hud) hud.style.display = 'none';
+      const badge = document.getElementById('videoRecBadge'); if (badge) badge.style.display = 'none';
+      const ic = document.getElementById('recordVideoIcon'); if (ic) ic.className = 'fas fa-video';
+    }
+
+    function capturePhotoFromStream() {
+      const v = document.getElementById('cameraLivePreview'), c = document.getElementById('photoCaptureCanvas');
+      if (!camStream || !v.videoWidth) { chatNotice('Camera is not ready yet.'); return; }
+      c.width = v.videoWidth; c.height = v.videoHeight;
+      c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+      c.toBlob(b => { if (b) blobToChat(b, 'image', 'photo.jpg'); closeCameraCapture(); }, 'image/jpeg', 0.85);
+    }
+
+    function toggleVideoRecording() {
+      if (!camStream) return;
+      if (vidRecorder && vidRecorder.state === 'recording') { vidDiscard = false; vidRecorder.stop(); return; }
+      const mime = pickMime(['video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4']);
+      vidRecorder = mime ? new MediaRecorder(camStream, { mimeType: mime }) : new MediaRecorder(camStream);
+      vidChunks = []; vidDiscard = false;
+      vidRecorder.ondataavailable = e => { if (e.data && e.data.size) vidChunks.push(e.data); };
+      vidRecorder.onstop = () => {
+        const blob = new Blob(vidChunks, { type: vidRecorder.mimeType || 'video/webm' });
+        const discard = vidDiscard;
+        closeCameraCapture();
+        if (!discard && blob.size) blobToChat(blob, 'video', 'video-message');
+      };
+      vidRecorder.start();
+      document.getElementById('videoRecBadge').style.display = 'flex';
+      document.getElementById('recordVideoIcon').className = 'fas fa-stop';
+      const t0 = Date.now(), d = document.getElementById('videoRecDuration'); d.textContent = '0:00';
+      vidTimer = setInterval(() => { d.textContent = fmtClock(Math.floor((Date.now() - t0) / 1000)); }, 500);
+    }
+    /* ===== CLOUD SETTINGS ===== */
+    const CLOUD_URL = "https://api.cloudinary.com/v1_1/dfrnpdnld/auto/upload";
+    const CLOUD_PRESET = "taydayo";
+    // >>> PASTE YOUR SUPABASE DETAILS HERE (Supabase > Project Settings > API) <<<
+    const SUPABASE_URL = "https://otjybdiyoqnsynjbofuj.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90anliZGl5b3Fuc3luamJvZnVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI0ODk1OTgsImV4cCI6MjEwODA2NTU5OH0.itwB7UrJNSNIGj2VN82PniqX9fccquf0d9fBwGB05Jc"; // anon / publishable key (same project as admin.html)
+
+    async function rpc(fn, args) {
+      if (/PASTE_YOUR/.test(SUPABASE_URL + SUPABASE_KEY)) throw new Error('Supabase is not connected yet: paste your project URL and anon key at the top of this script.');
+      const headers = { 'Content-Type': 'application/json', apikey: SUPABASE_KEY };
+      if (SUPABASE_KEY.startsWith('eyJ')) headers.Authorization = 'Bearer ' + SUPABASE_KEY;
+      let r;
+      try { r = await fetch(SUPABASE_URL.replace(/\/+$/, '') + '/rest/v1/rpc/' + fn, { method: 'POST', headers: headers, body: JSON.stringify(args || {}) }); }
+      catch (e) { logPortalError('network', e.message, { fn: fn }); throw e; }
+      const txt = await r.text(); let data = null; try { data = txt ? JSON.parse(txt) : null; } catch (e) {}
+      if (!r.ok) {
+        const msg = (data && (data.message || data.hint)) || ('Request failed (' + r.status + ')');
+        logPortalError('supabase', msg, { fn: fn, status: r.status, code: data && data.code });
+        const err = new Error(msg); err.fn = fn; err.status = r.status; err.code = data && data.code;
+        throw err;
+      }
+      return data;
+    }
+    // 404 / PGRST202 means the SQL function is missing or its parameter names differ from what this page sends
+    function isMissingFunction(e) { return !!e && (e.status === 404 || e.code === 'PGRST202' || /Could not find the function|schema cache/i.test(e.message || '')); }
+    function myToken() { return studentSession ? studentSession.token : null; }
+    async function sbItems(coll) { return (await rpc('student_items', { p_token: myToken(), p_coll: coll })) || []; }
+    async function sbPut(coll, item) { await rpc('student_put_item', { p_token: myToken(), p_coll: coll, p_item: item }); }
+
+    async function cloudUpload(blob, filename) {
+      const fd = new FormData();
+      fd.append("file", blob, filename || "upload");
+      fd.append("upload_preset", CLOUD_PRESET);
+      const r = await fetch(CLOUD_URL, { method: "POST", body: fd });
+      if (!r.ok) throw new Error("Upload failed (" + r.status + ")");
+      return (await r.json()).secure_url;
+    }
+
+    function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+    function safeUrl(u) { return /^https:\/\//i.test(u || "") ? u : ""; }
+    function normName(s) { return String(s).toLowerCase().replace(/\s+/g, " ").trim(); }
+    function normPhone(s) { return String(s).replace(/[^\d+]/g, ""); }
+    function newId(p) { return p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+    function nowHHMM() { return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); }
+
+
+    /* ===================== CATALOG (books uploaded in admin) ===================== */
+    const EXTRA_SUBJECTS = {};
+
+    function subjectsFor(level, cls) {
+      const base = CURRICULUM[level].subjects, ex = EXTRA_SUBJECTS[level + '|' + cls] || [];
+      return base.concat(ex.filter(x => !base.includes(x)));
+    }
+    function allKnownSubjects() {
+      const set = new Set();
+      Object.values(CURRICULUM).forEach(c => c.subjects.forEach(x => set.add(x)));
+      Object.values(EXTRA_SUBJECTS).forEach(a => a.forEach(x => set.add(x)));
+      return [...set];
+    }
+    function folderKeyForType(t) {
+      t = String(t || '').toLowerCase();
+      if (t.includes('paper') || t.includes('exam')) return 'papers';
+      if (t.includes('video') || t.includes('lesson') || t.includes('lecture')) return 'videos';
+      return 'books';
+    }
+    function rebuildResources(books) {
+      Object.keys(RESOURCES).forEach(k => delete RESOURCES[k]);
+      Object.keys(EXTRA_SUBJECTS).forEach(k => delete EXTRA_SUBJECTS[k]);
+      (books || []).forEach(b => {
+        const level = b.level || 'secondary', cls = b.className, subj = b.subject;
+        if (!CURRICULUM[level] || !cls || !subj || !safeUrl(b.link)) return;
+        const key = resKey(level, cls, subj, folderKeyForType(b.type));
+        (RESOURCES[key] = RESOURCES[key] || []).push({ title: b.title || 'Untitled', url: b.link });
+        const base = CURRICULUM[level].subjects, ek = level + '|' + cls;
+        if (!base.includes(subj)) { EXTRA_SUBJECTS[ek] = EXTRA_SUBJECTS[ek] || []; if (!EXTRA_SUBJECTS[ek].includes(subj)) EXTRA_SUBJECTS[ek].push(subj); }
+      });
+      const sb = document.getElementById('searchBox');
+      if (sb && sb.value.trim()) searchBooks(); else renderLibrary();
+    }
+    async function loadCatalog() {
+      if (!studentSession) return;
+      try {
+        const books = (await rpc('get_books', { p_token: myToken() })) || [];
+        try { localStorage.setItem('crestCatalogCache', JSON.stringify(books)); } catch (e) {}
+        rebuildResources(books);
+      } catch (e) { console.error('Catalog load failed', e); if (/session/i.test(e.message)) validateSession(); }
+    }
+
+    /* ===================== STUDENT SIGN-IN ===================== */
+    function readSession() {
+      try { return JSON.parse(localStorage.getItem('crestStudentSession') || sessionStorage.getItem('crestStudentSession') || 'null'); } catch (e) { return null; }
+    }
+    let studentSession = readSession();
+
+    function authMsg(text, ok) {
+      const e = document.getElementById('loginError');
+      e.textContent = text || ''; e.style.display = text ? 'block' : 'none';
+      e.style.color = ok ? '#10b981' : '';
+    }
+    function switchAuthState(state) {
+      ['login', 'forgot'].forEach(x => { document.getElementById('auth-state-' + x).style.display = x === state ? 'block' : 'none'; });
+      authMsg('');
+    }
+    function toggleAuthState(state) { switchAuthState(state); }
+
+    function applySession() {
+      const on = !!studentSession;
+      document.getElementById('studentAuthOverlay').style.display = on ? 'none' : 'flex';
+      document.getElementById('crestChatWidget').style.display = on ? 'block' : 'none';
+      if (on) {
+        document.getElementById('studentDisplayName').textContent = studentSession.name;
+        const n = document.getElementById('panelStudentName'); if (n && !n.value) n.value = studentSession.name;
+      }
+    }
+    function startSession(sess) {
+      // always saved on this device, so the student stays signed in
+      studentSession = sess;
+      sessionStorage.removeItem('crestStudentSession');
+      localStorage.setItem('crestStudentSession', JSON.stringify(sess));
+      ['loginName', 'loginPhone', 'loginPassword'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+      authMsg(''); applySession(); loadCatalog(); loadWork(); pullChat();
+    }
+
+    async function handleStudentLogin() {
+      const nameRaw = document.getElementById('loginName').value, idv = document.getElementById('loginPhone').value.trim(), pw = document.getElementById('loginPassword').value;
+      if (!nameRaw.trim() || !pw) return authMsg('Enter your name, phone number and password.');
+      authMsg('Signing in...', true);
+      try {
+        if (idv) {
+          const me = await rpc('student_login', { p_name: nameRaw, p_phone: normPhone(idv), p_password: pw });
+          if (me) return startSession({ name: me.name, phone: me.phone, token: me.token });
+        }
+        // not a student: is this the admin?
+        const key = normName(nameRaw) + '|' + pw;
+        if (await rpc('admin_check', { p_key: key })) { sessionStorage.setItem('crestAdminOK', '1'); sessionStorage.setItem('crestAdminKey', key); location.href = 'admin.html'; return; }
+        authMsg(idv ? 'Wrong name, phone number or password. Contact Sir Taydayo on 0987112150.' : 'Enter your phone number.');
+      } catch (e) { authMsg(/Failed to fetch|NetworkError|Load failed/i.test(e.message) ? 'Could not connect. Check your internet and try again.' : isMissingFunction(e) ? 'The portal database is not fully set up yet. Please contact Sir Taydayo on 0987112150.' : e.message); }
+    }
+
+    function forceLogout() {
+      localStorage.removeItem('crestStudentSession'); sessionStorage.removeItem('crestStudentSession'); localStorage.removeItem('crestCatalogCache');
+      studentSession = null; applySession();
+      authMsg('Your access changed. Please sign in again or contact Sir Taydayo on 0987112150.');
+    }
+    // if the admin removed this participant or changed their password, sign the device out
+    async function validateSession() {
+      if (!studentSession) return;
+      if (!studentSession.token) return forceLogout();
+      try { const me = await rpc('student_me', { p_token: studentSession.token }); if (!me) forceLogout(); }
+      catch (e) { /* offline: keep the saved login */ }
+    }
+
+    async function handleSendResetCode() {
+      const phone = normPhone(document.getElementById('resetPhone').value);
+      if (!phone) return authMsg('Enter your registered phone number.');
+      try {
+        const ok = await rpc('request_password_reset', { p_phone: phone });
+        if (!ok) return authMsg('No account found with that phone number.');
+        authMsg('Request sent. The admin will give you a new password. You can also contact Sir Taydayo on 0987112150.', true);
+      } catch (e) { authMsg('Could not send the request. Try again.'); }
+    }
+    function handleVerifyAndResetPassword() { switchAuthState('login'); }
+
+    async function handleStudentLogout() {
+      try { if (studentSession && studentSession.token) await rpc('student_logout', { p_token: studentSession.token }); } catch (e) {}
+      localStorage.removeItem('crestStudentSession'); sessionStorage.removeItem('crestStudentSession'); localStorage.removeItem('crestCatalogCache');
+      location.reload();
+    }
+
+    /* ===================== ASSIGNMENTS & GRADES (posted by admin) ===================== */
+    let workItems = [];
+    function fmtDate(ts) { try { return new Date(ts).toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' }); } catch (e) { return ''; } }
+
+    async function loadWork() {
+      if (!studentSession) return;
+      try {
+        workItems = await sbItems('work');
+      } catch (e) { /* keep what we have */ }
+      renderWork();
+    }
+
+    function renderWork() {
+      const me = studentSession; if (!me) return;
+      const grid = document.getElementById('assignmentsGrid'); grid.innerHTML = '';
+      const mine = workItems.filter(w => w.kind === 'assignment' && (w.to === 'all' || w.to === me.phone)).sort((a, b) => b.ts - a.ts);
+      const subs = workItems.filter(w => w.kind === 'submission' && w.phone === me.phone);
+      if (!mine.length) grid.innerHTML = '<div class="repo-empty" style="grid-column:1/-1;"><i class="fas fa-clipboard-check"></i>No assignments have been posted for you yet.</div>';
+      mine.forEach(a => {
+        const sub = subs.find(x => x.assignmentId === a.id);
+        const card = document.createElement('div'); card.className = 'portal-card';
+        const badge = sub ? '<span class="status-badge status-submitted"><i class="fas fa-check-circle"></i> Submitted</span>'
+                          : '<span class="status-badge status-pending"><i class="fas fa-clock"></i> ' + (a.due ? 'Due ' + esc(a.due) : 'Open') + '</span>';
+        let html = '<div style="display:flex;justify-content:space-between;align-items:center;">' + badge +
+          '<span style="font-size:11px;color:#38bdf8;font-weight:700;text-transform:uppercase;">' + esc(a.subject || '') + '</span></div>' +
+          '<h3 style="font-size:16px;font-weight:700;color:#fff;margin:0;">' + esc(a.title) + '</h3>' +
+          (a.description ? '<p style="font-size:12px;color:#94a3b8;line-height:1.5;margin:0;white-space:pre-wrap;">' + esc(a.description) + '</p>' : '');
+        if (safeUrl(a.fileUrl)) html += '<div style="background:rgba(255,255,255,0.03);padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;"><span style="font-size:12px;color:#f1f5f9;"><i class="fas fa-file" style="color:#ef4444;margin-right:8px;"></i>' + esc(a.fileName || 'Attachment') + '</span><a href="' + esc(a.fileUrl) + '" target="_blank" rel="noopener" style="color:#38bdf8;font-size:12px;font-weight:600;text-decoration:none;"><i class="fas fa-download"></i> Download</a></div>';
+        if (sub) {
+          html += '<div style="background:rgba(16,185,129,0.05);padding:12px;border-radius:10px;border:1px solid rgba(16,185,129,0.2);margin-top:auto;"><div style="font-size:12px;color:#10b981;font-weight:700;"><i class="fas fa-circle-check"></i> Work submitted</div><div style="font-size:11px;color:#94a3b8;margin-top:4px;">Sent on ' + esc(fmtDate(sub.ts)) + '. Awaiting grading.</div></div>';
+        } else {
+          html += '<div style="margin-top:10px;border-top:1px solid rgba(255,255,255,0.05);padding-top:15px;">' +
+            '<label style="font-size:11px;font-weight:700;color:#a855f7;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:8px;">Submit your work</label>' +
+            '<div class="file-input-wrapper" onclick="document.getElementById(\'af-' + a.id + '\').click()"><i class="fas fa-cloud-arrow-up" style="font-size:20px;color:#38bdf8;margin-bottom:6px;"></i><div style="font-size:12px;color:#fff;font-weight:600;" id="afn-' + a.id + '">Click to attach your file (PDF, DOCX, image)</div>' +
+            '<input type="file" id="af-' + a.id + '" style="display:none;" onchange="updateFileNameDisplay(this, \'afn-' + a.id + '\')" /></div>' +
+            '<textarea id="an-' + a.id + '" placeholder="Optional note or written answer..." rows="2" style="margin-top:10px;padding:10px;font-size:12px;resize:none;"></textarea>' +
+            '<button id="ab-' + a.id + '" onclick="submitAssignment(\'' + a.id + '\')" style="width:100%;margin-top:12px;padding:12px;background:linear-gradient(135deg,#10b981,#059669);border:none;border-radius:10px;color:#fff;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;"><i class="fas fa-paper-plane"></i> Transmit Assignment</button></div>';
+        }
+        card.innerHTML = html; grid.appendChild(card);
+      });
+
+      const body = document.getElementById('gradesBody');
+      const grades = workItems.filter(w => w.kind === 'grade' && w.to === me.phone).sort((a, b) => b.ts - a.ts);
+      if (!grades.length) { body.innerHTML = '<tr><td colspan="6" style="padding:24px 12px;color:#64748b;text-align:center;">No results have been posted for you yet.</td></tr>'; return; }
+      body.innerHTML = grades.map(g => {
+        const pct = g.outOf ? (g.score / g.outOf) * 100 : 0;
+        const col = pct >= 70 ? '#10b981' : pct >= 50 ? '#38bdf8' : pct >= 40 ? '#eab308' : '#f43f5e';
+        return '<tr style="border-bottom:1px solid rgba(255,255,255,0.05);color:#f1f5f9;">' +
+          '<td style="padding:16px 12px;font-weight:600;">' + esc((g.subject ? g.subject + ' - ' : '') + g.title) + '</td>' +
+          '<td style="padding:16px 12px;color:#94a3b8;">' + esc(g.date || fmtDate(g.ts)) + '</td>' +
+          '<td style="padding:16px 12px;"><span class="status-badge status-graded">Graded</span></td>' +
+          '<td style="padding:16px 12px;font-weight:700;color:' + col + ';">' + esc(g.score) + ' / ' + esc(g.outOf) + '</td>' +
+          '<td style="padding:16px 12px;"><span style="background:' + col + '33;color:' + col + ';padding:4px 10px;border-radius:6px;font-weight:800;">' + esc(g.grade || '') + '</span></td>' +
+          '<td style="padding:16px 12px;color:#94a3b8;font-size:12px;">' + esc(g.remarks || '') + '</td></tr>';
+      }).join('');
+    }
+
+    async function submitAssignment(id) {
+      const fileEl = document.getElementById('af-' + id), noteEl = document.getElementById('an-' + id), btn = document.getElementById('ab-' + id);
+      const file = fileEl.files && fileEl.files[0], note = noteEl.value.trim();
+      if (!file && !note) { alert('Attach your work or write an answer first.'); return; }
+      if (file && file.size > 25 * 1024 * 1024) { alert('That file is larger than 25 MB.'); return; }
+      const label = btn.innerHTML; btn.disabled = true; btn.textContent = 'Sending...';
+      try {
+        let url = '';
+        if (file) url = await cloudUpload(file, file.name);
+        const node = { id: newId('s'), kind: 'submission', assignmentId: id, phone: studentSession.phone, name: studentSession.name, fileUrl: url, fileName: file ? file.name : '', note: note, ts: Date.now() };
+        await sbPut('work', node);
+        await loadWork();
+      } catch (e) { alert('Could not send your work: ' + e.message); btn.disabled = false; btn.innerHTML = label; }
+    }
+
+    /* ===================== START-UP ===================== */
+    (function startUp() {
+      try { const c = JSON.parse(localStorage.getItem('crestCatalogCache') || 'null'); if (c) rebuildResources(c); } catch (e) {}
+      applySession();
+      if (studentSession) { validateSession(); loadCatalog(); loadWork(); }
+      setInterval(() => { if (document.visibilityState === 'visible' && studentSession) loadCatalog(); }, 120000);
+    })();
+  </script>
+
+</body>
+</html>
