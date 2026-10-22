@@ -365,6 +365,7 @@
       <a class="nav-link" onclick="showMainView('portal')"><i class="fas fa-file-signature" style="color:#a855f7;"></i> Assignments & Grades</a>
       <a href="about.html" class="nav-link">About Portal</a>
       <a href="contact.html" class="nav-link">Help Desk</a>
+      <a id="ytChannelLink" href="https://www.youtube.com/" target="_blank" rel="noopener" class="nav-link" title="Watch our YouTube channel" aria-label="YouTube channel" style="color:#ef4444; font-size:26px; line-height:1;"><i class="fab fa-youtube"></i></a>
       <a href="admin.html" class="nav-link" style="border: 1px solid rgba(56,189,248,0.3); padding: 8px 18px; border-radius: 10px; background: rgba(56,189,248,0.06); font-weight: 600;"><i class="fas fa-user-shield"></i> System Administration</a>
       <button onclick="handleStudentLogout()" style="background: rgba(239,68,68,0.12); color: #f43f5e; border: 1px solid rgba(239,68,68,0.25); padding: 8px 16px; border-radius: 10px; cursor: pointer; font-weight: 700;"><i class="fas fa-right-from-bracket"></i> Leave Hub</button>
     </nav>
@@ -1245,6 +1246,8 @@
 
     /* ===================== CATALOG (books uploaded in admin) ===================== */
     const EXTRA_SUBJECTS = {};
+    let LAST_BOOKS = [], DRIVE_ITEMS = [], YT_ITEMS = [];   // LAST_BOOKS = books uploaded in admin; the others come from Google
+    function externalItems() { return DRIVE_ITEMS.concat(YT_ITEMS); }
 
     function subjectsFor(level, cls) {
       const base = CURRICULUM[level].subjects, ex = EXTRA_SUBJECTS[level + '|' + cls] || [];
@@ -1263,9 +1266,10 @@
       return 'books';
     }
     function rebuildResources(books) {
+      LAST_BOOKS = books || [];
       Object.keys(RESOURCES).forEach(k => delete RESOURCES[k]);
       Object.keys(EXTRA_SUBJECTS).forEach(k => delete EXTRA_SUBJECTS[k]);
-      (books || []).forEach(b => {
+      LAST_BOOKS.concat(externalItems()).forEach(b => {
         const level = b.level || 'secondary', cls = b.className, subj = b.subject;
         if (!CURRICULUM[level] || !cls || !subj || !safeUrl(b.link)) return;
         const key = resKey(level, cls, subj, folderKeyForType(b.type));
@@ -1317,7 +1321,7 @@
       sessionStorage.removeItem('crestStudentSession');
       localStorage.setItem('crestStudentSession', JSON.stringify(sess));
       ['loginName', 'loginPhone', 'loginPassword'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-      authMsg(''); applySession(); loadCatalog(); loadWork(); pullChat();
+      authMsg(''); applySession(); loadCatalog(); loadWork(); pullChat(); syncGoogleContent();
     }
 
     async function handleStudentLogin() {
@@ -1337,7 +1341,7 @@
     }
 
     function forceLogout() {
-      localStorage.removeItem('crestStudentSession'); sessionStorage.removeItem('crestStudentSession'); localStorage.removeItem('crestCatalogCache');
+      localStorage.removeItem('crestStudentSession'); sessionStorage.removeItem('crestStudentSession'); localStorage.removeItem('crestCatalogCache'); localStorage.removeItem('crestExternalCache'); DRIVE_ITEMS = []; YT_ITEMS = [];
       studentSession = null; applySession();
       authMsg('Your access changed. Please sign in again or contact Sir Taydayo on 0987112150.');
     }
@@ -1362,7 +1366,7 @@
 
     async function handleStudentLogout() {
       try { if (studentSession && studentSession.token) await rpc('student_logout', { p_token: studentSession.token }); } catch (e) {}
-      localStorage.removeItem('crestStudentSession'); sessionStorage.removeItem('crestStudentSession'); localStorage.removeItem('crestCatalogCache');
+      localStorage.removeItem('crestStudentSession'); sessionStorage.removeItem('crestStudentSession'); localStorage.removeItem('crestCatalogCache'); localStorage.removeItem('crestExternalCache'); DRIVE_ITEMS = []; YT_ITEMS = [];
       location.reload();
     }
 
@@ -1438,11 +1442,153 @@
       } catch (e) { alert('Could not send your work: ' + e.message); btn.disabled = false; btn.innerHTML = label; }
     }
 
+    /* ===================== GOOGLE DRIVE + YOUTUBE AUTO-SYNC =====================
+       Files in your Drive folder and videos on your YouTube channel are read automatically and
+       placed in the right folder (Level > Class > Subject > Books / Papers / Videos).
+       The class and subject are worked out from the NAME (and, for Drive, the folder names).
+         Drive file:     "Form 2 Biology Textbook.pdf"   "Form 4 Physics Past Paper 2019.pdf"
+         YouTube title:  "Biology Form 4 - Photosynthesis"
+       Needs: Drive folder shared as "Anyone with the link - Viewer", YouTube videos Public.
+    ============================================================================ */
+    const DRIVE_API_KEY       = "AIzaSyDWSpCEuqdOaHOv61zEoPmsS8-PUyi27z4";   // key for the Google Drive API
+    const YOUTUBE_API_KEY     = "AIzaSyC5jRmDBiR5mSOEulzv7m15hvUjo_ds8hw";   // key for the YouTube Data API
+    const DRIVE_FOLDER_ID     = "1LuP_JJpRGlavQvOEvcePJcZzE93lWWXy";         // the long code at the end of the Drive folder link
+    const YOUTUBE_CHANNEL     = "@sirtaydayo";                               // channel @handle (or UCxxxx channel id)
+    const YOUTUBE_CHANNEL_URL = "https://www.youtube.com/@sirtaydayo";       // used by the YouTube icon
+
+    const googleSet = v => !!v && !/PASTE_YOUR/.test(v);
+
+    function setupYouTubeLink() {
+      const a = document.getElementById('ytChannelLink'); if (!a) return;
+      let url = YOUTUBE_CHANNEL_URL;
+      if (!url && googleSet(YOUTUBE_CHANNEL)) url = 'https://www.youtube.com/' + (YOUTUBE_CHANNEL.charAt(0) === '@' ? YOUTUBE_CHANNEL : 'channel/' + YOUTUBE_CHANNEL);
+      if (safeUrl(url)) a.href = url;
+    }
+
+    /* work out level / class / subject / folder from a piece of text */
+    function readParts(text) {
+      if (!text) return null;
+      const p = parseSearch(text), one = set => set.size === 1 ? [...set][0] : null;
+      return { cls: one(p.classes), subj: one(p.subjects), folder: one(p.types) };
+    }
+    function placeItem(mainText, otherText, defaultFolder) {
+      const a = readParts(mainText) || {}, b = readParts(otherText) || {};
+      const cls = a.cls || b.cls, subj = a.subj || b.subj, folder = a.folder || b.folder || defaultFolder || 'books';
+      if (!cls || !subj) return null;
+      const level = /^Form/.test(cls) ? 'secondary' : /^Standard/.test(cls) ? 'primary' : /^Year/.test(cls) ? 'tertiary' : null;
+      if (!level || !CURRICULUM[level].classes.includes(cls)) return null;
+      return { level: level, className: cls, subject: subj, folder: folder };
+    }
+    const FOLDER_TO_TYPE = { books: 'Book', papers: 'Past Paper', videos: 'Video Lesson' };
+
+    /* build(key) returns the full URL; the preferred key is tried first, the other one if Google rejects it */
+    async function googleGet(build, source, fn) {
+      const keys = (source === 'drive' ? [DRIVE_API_KEY, YOUTUBE_API_KEY] : [YOUTUBE_API_KEY, DRIVE_API_KEY]).filter((k, i, a) => googleSet(k) && a.indexOf(k) === i);
+      let lastErr = null;
+      for (const key of keys) {
+        let r, d = null;
+        try { r = await fetch(build(key)); } catch (e) { logPortalError(source, e.message, { fn: fn }); throw e; }
+        try { d = await r.json(); } catch (e) {}
+        if (r.ok) return d || {};
+        const msg = (d && d.error && d.error.message) || ('Request failed (' + r.status + ')');
+        logPortalError(source, msg, { fn: fn, status: r.status });
+        lastErr = new Error(msg);
+        if (r.status !== 400 && r.status !== 403) break;   // only a key/API problem is worth retrying with the other key
+      }
+      throw lastErr || new Error('No Google API key set');
+    }
+
+    /* ---------- Google Drive ---------- */
+    async function driveList(folderId) {
+      let out = [], token = '';
+      do {
+        const build = key => 'https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent("'" + folderId + "' in parents and trashed = false") +
+          '&fields=' + encodeURIComponent('nextPageToken,files(id,name,mimeType,webViewLink)') +
+          '&pageSize=1000&supportsAllDrives=true&includeItemsFromAllDrives=true&key=' + encodeURIComponent(key) +
+          (token ? '&pageToken=' + encodeURIComponent(token) : '');
+        const d = await googleGet(build, 'drive', 'files.list');
+        out = out.concat(d.files || []); token = d.nextPageToken || '';
+      } while (token);
+      return out;
+    }
+    async function fetchDriveItems() {
+      const items = [], unplaced = [], queue = [{ id: DRIVE_FOLDER_ID, path: '' }];
+      let guard = 0;
+      while (queue.length && guard++ < 60) {
+        const folder = queue.shift(), files = await driveList(folder.id);
+        files.forEach(x => {
+          if (x.mimeType === 'application/vnd.google-apps.folder') { queue.push({ id: x.id, path: folder.path + ' ' + x.name }); return; }
+          if (x.mimeType === 'application/vnd.google-apps.shortcut') return;
+          const title = String(x.name || '').replace(/\.[a-z0-9]{2,5}$/i, '');
+          const link = x.webViewLink || ('https://drive.google.com/file/d/' + x.id + '/view');
+          const pl = placeItem(title, folder.path, /^video\//.test(x.mimeType || '') ? 'videos' : 'books');
+          if (pl && safeUrl(link)) items.push({ level: pl.level, className: pl.className, subject: pl.subject, type: FOLDER_TO_TYPE[pl.folder], title: title, link: link });
+          else unplaced.push((folder.path.trim() ? folder.path.trim() + ' / ' : '') + x.name);
+        });
+      }
+      return { items: items, unplaced: unplaced };
+    }
+
+    /* ---------- YouTube ---------- */
+    async function ytGet(path, params) {
+      return googleGet(key => 'https://www.googleapis.com/youtube/v3/' + path + '?' + new URLSearchParams(Object.assign({ key: key }, params)).toString(), 'youtube', path);
+    }
+    async function fetchYouTubeItems() {
+      let uploads;
+      if (/^UC/.test(YOUTUBE_CHANNEL)) uploads = 'UU' + YOUTUBE_CHANNEL.slice(2);
+      else {
+        const d = await ytGet('channels', { part: 'contentDetails', forHandle: '@' + YOUTUBE_CHANNEL.replace(/^@/, '') });
+        uploads = d.items && d.items[0] && d.items[0].contentDetails.relatedPlaylists.uploads;
+        if (!uploads) { logPortalError('youtube', 'Channel not found: ' + YOUTUBE_CHANNEL, { fn: 'channels' }); throw new Error('YouTube channel not found'); }
+      }
+      const items = [], unplaced = [];
+      let token = '', pages = 0;
+      do {
+        const params = { part: 'snippet', playlistId: uploads, maxResults: 50 };
+        if (token) params.pageToken = token;
+        const d = await ytGet('playlistItems', params);
+        (d.items || []).forEach(it => {
+          const sn = it.snippet || {}, id = sn.resourceId && sn.resourceId.videoId;
+          if (!id || /^(Private|Deleted) video$/i.test(sn.title || '')) return;
+          const pl = placeItem(sn.title || '', String(sn.description || '').slice(0, 300), 'videos');
+          if (pl) items.push({ level: pl.level, className: pl.className, subject: pl.subject, type: 'Video Lesson', title: sn.title, link: 'https://www.youtube.com/watch?v=' + id });
+          else unplaced.push(sn.title || id);
+        });
+        token = d.nextPageToken || '';
+      } while (token && ++pages < 10);
+      return { items: items, unplaced: unplaced };
+    }
+
+    /* ---------- run both and refresh the folders ---------- */
+    let googleBusy = false, lastUnplacedSig = '';
+    window.portalUnplaced = [];
+    async function syncGoogleContent() {
+      if (!studentSession || googleBusy) return;
+      const useDrive = (googleSet(DRIVE_API_KEY) || googleSet(YOUTUBE_API_KEY)) && googleSet(DRIVE_FOLDER_ID);
+      const useYT = (googleSet(YOUTUBE_API_KEY) || googleSet(DRIVE_API_KEY)) && googleSet(YOUTUBE_CHANNEL);
+      if (!useDrive && !useYT) return;
+      googleBusy = true;
+      const unplaced = [];
+      try {
+        if (useDrive) { try { const r = await fetchDriveItems(); DRIVE_ITEMS = r.items; r.unplaced.forEach(n => unplaced.push('Drive: ' + n)); } catch (e) { console.error('Drive sync failed', e); } }
+        if (useYT)    { try { const r = await fetchYouTubeItems(); YT_ITEMS = r.items; r.unplaced.forEach(n => unplaced.push('YouTube: ' + n)); } catch (e) { console.error('YouTube sync failed', e); } }
+        try { localStorage.setItem('crestExternalCache', JSON.stringify({ drive: DRIVE_ITEMS, youtube: YT_ITEMS })); } catch (e) {}
+        window.portalUnplaced = unplaced;
+        const sig = unplaced.join('|');
+        if (unplaced.length && sig !== lastUnplacedSig) logPortalError('sync', unplaced.length + ' item(s) not placed (add class + subject to the name, e.g. "Form 2 Biology Notes"): ' + unplaced.slice(0, 8).join(' ; '), { fn: 'classify' });
+        lastUnplacedSig = sig;
+        rebuildResources(LAST_BOOKS);
+      } finally { googleBusy = false; }
+    }
+
     /* ===================== START-UP ===================== */
     (function startUp() {
-      try { const c = JSON.parse(localStorage.getItem('crestCatalogCache') || 'null'); if (c) rebuildResources(c); } catch (e) {}
+      try { const x = JSON.parse(localStorage.getItem('crestExternalCache') || 'null'); if (x) { DRIVE_ITEMS = x.drive || []; YT_ITEMS = x.youtube || []; } } catch (e) {}
+      try { const c = JSON.parse(localStorage.getItem('crestCatalogCache') || 'null'); if (c) rebuildResources(c); else if (externalItems().length) rebuildResources([]); } catch (e) {}
+      setupYouTubeLink();
       applySession();
-      if (studentSession) { validateSession(); loadCatalog(); loadWork(); }
+      if (studentSession) { validateSession(); loadCatalog(); loadWork(); syncGoogleContent(); }
+      setInterval(() => { if (document.visibilityState === 'visible' && studentSession) syncGoogleContent(); }, 600000);
       setInterval(() => { if (document.visibilityState === 'visible' && studentSession) loadCatalog(); }, 120000);
     })();
   </script>
