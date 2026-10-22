@@ -210,6 +210,49 @@
     .repo-empty { text-align: center; color: #64748b; padding: 50px 20px; font-size: 13px; line-height: 1.7; }
     .repo-empty i { font-size: 34px; display: block; margin-bottom: 12px; color: #334155; }
       #chatBoxContainer { max-width: calc(100vw - 40px); }
+
+    /* ===================== RESPONSIVE LAYOUT =====================
+       Fits PCs, tablets and phones. Nothing moves sideways, text does not jump in size,
+       and the big screens keep the design exactly as before. */
+    html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    body { overflow-x: hidden; }
+    @supports (overflow: clip) { body { overflow-x: clip; } }
+    img, video, iframe, canvas, svg { max-width: 100%; }
+    main, .repo-panel, .sidebar-block, .portal-card, #hubView > * { min-width: 0; }
+    .file-row > span, .folder-card .fc-name, .breadcrumb, .repo-title, .repo-sub { overflow-wrap: anywhere; }
+
+    /* laptops and small desktops */
+    @media (max-width: 1100px) {
+      #hubView { grid-template-columns: 260px minmax(0, 1fr) !important; gap: 24px !important; }
+    }
+
+    /* tablets and phones */
+    @media (max-width: 900px) {
+      body > header { position: static !important; padding: 12px 4% !important; flex-wrap: wrap; gap: 10px; }
+      body > header nav { width: 100%; flex-wrap: wrap; gap: 8px !important; justify-content: flex-start; }
+      body > header nav a:not(#ytChannelLink), body > header nav button { font-size: 13px !important; padding: 8px 12px !important; }
+      #ytChannelLink { font-size: 24px !important; padding: 0 6px !important; }
+      main { padding: 20px 4% !important; }
+      main > div:first-child { padding: 30px 18px !important; border-radius: 18px !important; margin-bottom: 20px !important; }
+      main > div:first-child h1 { font-size: clamp(22px, 6vw, 30px) !important; line-height: 1.25; }
+      main > div:first-child input { padding: 14px 16px 14px 48px !important; font-size: 14px !important; }
+      #hubView { grid-template-columns: minmax(0, 1fr) !important; gap: 20px !important; }
+      .repo-panel { padding: 16px; min-height: 0; }
+      .portal-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); }
+    }
+
+    /* phones */
+    @media (max-width: 600px) {
+      .repo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .folder-card { padding: 14px 8px; }
+      .file-row { flex-wrap: wrap; }
+      input, select, textarea { font-size: 16px !important; }      /* stops the phone zooming in when you tap a box */
+      .auth-overlay { padding: 12px; }
+      .auth-box { padding: 28px 18px; border-radius: 22px; }
+      .auth-box h2 { font-size: 22px; }
+      #crestChatWidget { right: 12px !important; bottom: 12px !important; }
+      #chatBoxContainer { width: calc(100vw - 24px) !important; max-width: calc(100vw - 24px) !important; height: min(520px, 78vh) !important; bottom: 72px !important; }
+    }
   </style>
 </head>
 <body>
@@ -658,12 +701,18 @@
     const RESOURCES = {};
 
     const nav = { level: null, cls: null, subject: null, folder: null };
+    const YOUTUBE_FOLDER_NAME = 'YouTube Videos';        // name of the automatic folder with every channel video
+    let specialView = null;                              // 'youtube' | 'drive' while one of the automatic folders is open
+    let classAll = null;                                 // 'books' | 'papers' | 'videos' while an 'All ...' list of a class is open
+    let YT_ALL = [], DRIVE_UNSORTED = [];                // all channel videos / Drive files that could not be sorted by name
+    const GOOGLE_STATUS = { drive: '', youtube: '' };    // last error text per service ('' = fine)
     let currentLevel = null;
 
     function resKey(l, c, s, f) { return [l, c, s, f].join('|'); }
     function fileCount(l, c, s, f) { return (RESOURCES[resKey(l, c, s, f)] || []).length; }
 
     function chooseLevel(level) {
+      specialView = null; classAll = null;
       nav.level = level; nav.cls = null; nav.subject = null; nav.folder = null;
       currentLevel = level;
       Object.keys(CURRICULUM).forEach(k => {
@@ -673,11 +722,12 @@
       const sb = document.getElementById('searchBox'); if (sb) sb.value = '';
       renderLibrary();
     }
-    function chooseClass(cls)     { nav.cls = cls; nav.subject = null; nav.folder = null; renderLibrary(); }
-    function chooseSubject(subj)  { nav.subject = subj; nav.folder = null; renderLibrary(); }
+    function chooseClass(cls)     { classAll = null; nav.cls = cls; nav.subject = null; nav.folder = null; renderLibrary(); }
+    function chooseSubject(subj)  { classAll = null; nav.subject = subj; nav.folder = null; renderLibrary(); }
     function chooseFolder(folder) { nav.folder = folder; renderLibrary(); }
 
     function goTo(depth) {            /* breadcrumb jump: 0=home, 1=level, 2=class, 3=subject */
+      specialView = null; classAll = null;
       if (depth < 3) nav.folder = null;
       if (depth < 3) nav.subject = null;
       if (depth < 2) nav.cls = null;
@@ -716,6 +766,9 @@
 
     function renderLibrary() {
       renderSidebar();
+      if (specialView) { renderSpecialFolder(); return; }
+      if (classAll && nav.level && nav.cls && !nav.subject) { renderClassAll(); return; }
+      classAll = null;
       const cur = nav.level && CURRICULUM[nav.level];
       const bc = document.getElementById('breadcrumb');
       const title = document.getElementById('repoTitle'), sub = document.getElementById('repoSub');
@@ -741,6 +794,7 @@
         title.textContent = 'Choose your enrollment track';
         sub.textContent = 'Pick Primary, Secondary or Tertiary from the sidebar to open its folders.';
         Object.keys(CURRICULUM).forEach(k => folderCard(grid, CURRICULUM[k].icon, '#eab308', CURRICULUM[k].label, '', () => chooseLevel(k)));
+        addSpecialCards(grid);
       } else if (!cur.classes.length) {
         title.textContent = cur.label;
         sub.textContent = '';
@@ -752,7 +806,8 @@
         cur.classes.forEach(c => folderCard(grid, 'fa-folder', '#eab308', c, subjectsFor(nav.level, c).length + ' subjects', () => chooseClass(c)));
       } else if (!nav.subject) {
         title.textContent = nav.cls + ' — Subjects';
-        sub.textContent = 'Select a subject to open its Books, Papers and Videos.';
+        sub.textContent = 'Select a subject to open its Books, Papers and Videos, or use the All buttons to see every subject at once.';
+        FOLDER_TYPES.forEach(f => { const n = classTotal(nav.level, nav.cls, f.key); folderCard(grid, f.icon, f.color, 'All ' + f.label, n + (n === 1 ? ' file' : ' files') + ' · all subjects', () => { classAll = f.key; renderLibrary(); }); });
         subjectsFor(nav.level, nav.cls).forEach(s => folderCard(grid, 'fa-folder', '#eab308', s, '', () => chooseSubject(s)));
       } else if (!nav.folder) {
         title.textContent = nav.subject + ' — ' + nav.cls;
@@ -839,6 +894,7 @@
     }
 
     function openFolderPath(level, cls, subj, folder) {
+      specialView = null; classAll = null;
       nav.level = level; nav.cls = cls; nav.subject = subj; nav.folder = folder; currentLevel = level;
       Object.keys(CURRICULUM).forEach(k => { const b = document.getElementById('btn-' + k); if (b) b.classList.toggle('active', k === level); });
       document.getElementById('searchBox').value = '';
@@ -1341,7 +1397,7 @@
     }
 
     function forceLogout() {
-      localStorage.removeItem('crestStudentSession'); sessionStorage.removeItem('crestStudentSession'); localStorage.removeItem('crestCatalogCache'); localStorage.removeItem('crestExternalCache'); DRIVE_ITEMS = []; YT_ITEMS = [];
+      localStorage.removeItem('crestStudentSession'); sessionStorage.removeItem('crestStudentSession'); localStorage.removeItem('crestCatalogCache'); localStorage.removeItem('crestExternalCache'); DRIVE_ITEMS = []; YT_ITEMS = []; YT_ALL = []; DRIVE_UNSORTED = []; specialView = null; classAll = null;
       studentSession = null; applySession();
       authMsg('Your access changed. Please sign in again or contact Sir Taydayo on 0987112150.');
     }
@@ -1366,7 +1422,7 @@
 
     async function handleStudentLogout() {
       try { if (studentSession && studentSession.token) await rpc('student_logout', { p_token: studentSession.token }); } catch (e) {}
-      localStorage.removeItem('crestStudentSession'); sessionStorage.removeItem('crestStudentSession'); localStorage.removeItem('crestCatalogCache'); localStorage.removeItem('crestExternalCache'); DRIVE_ITEMS = []; YT_ITEMS = [];
+      localStorage.removeItem('crestStudentSession'); sessionStorage.removeItem('crestStudentSession'); localStorage.removeItem('crestCatalogCache'); localStorage.removeItem('crestExternalCache'); DRIVE_ITEMS = []; YT_ITEMS = []; YT_ALL = []; DRIVE_UNSORTED = []; specialView = null; classAll = null;
       location.reload();
     }
 
@@ -1466,18 +1522,68 @@
     }
 
     /* work out level / class / subject / folder from a piece of text */
+    /* The site looks for CLUES in the name (and, for Drive, in the folder names):
+         class   : Form 4, F4, Form IV, Form four, Standard 8, Std8, Class 6, Year 2
+         exam    : MSCE (Form 4), JCE (Form 2), PSLCE (Standard 8), MANEB, mock, question paper, marking scheme
+         subject : Biology, Bio, Chem, Phy, Maths, Agric, ICT, BK, RS ... (and the full subject names)
+         type    : paper / exam / past paper -> Papers,  video / lesson / lecture -> Videos,  anything else -> Books
+       Years, school names and other words are simply ignored.
+       If a class is missing but the level is clear (e.g. Biology is only taught in secondary), the item is shown in
+       every class of that level, so it is never hidden.  Set SPREAD_UNKNOWN_CLASS to false to switch this off. */
+    const SPREAD_UNKNOWN_CLASS = true;
+    const NUM_WORDS = ['one','two','three','four','five','six','seven','eight'];
+    const ROMAN = { i: 1, ii: 2, iii: 3, iv: 4, v: 5, vi: 6, vii: 7, viii: 8 };
+    function normalizeText(t) {
+      return ' ' + String(t || '')
+        .replace(/([a-z])([A-Z])/g, '$1 $2')                  // BiologyForm4 -> Biology Form4
+        .replace(/[_.\-]+/g, ' ')
+        .replace(/\bmsce\b/gi, ' form 4 exam ')               // MSCE = end of Form 4
+        .replace(/\bjce\b/gi, ' form 2 exam ')                // JCE = end of Form 2
+        .replace(/\bpslce\b/gi, ' standard 8 exam ')          // PSLCE = end of Standard 8
+        .replace(/\b(maneb|mocks?|question papers?|marking schemes?|marking guides?|end of term|end term|termly)\b/gi, ' exam ')
+        .replace(/\b(lectures?|recordings?|recorded|tutorials?)\b/gi, ' video ')
+        .replace(/\b(form|standard|std|class|grade)\s*(one|two|three|four|five|six|seven|eight)\b/gi, (m, w, n) => w + ' ' + (NUM_WORDS.indexOf(n.toLowerCase()) + 1))
+        .replace(/\b(form|standard|std|class|grade)\s*(viii|vii|vi|iv|iii|ii|v|i)\b/gi, (m, w, n) => w + ' ' + ROMAN[n.toLowerCase()])
+        .replace(/\b(class|grade)\s*([1-8])\b/gi, ' standard $2 ')
+        .replace(/\b(biol|bio)\b/gi, ' biology ')
+        .replace(/\b(chem|chemestry)\b/gi, ' chemistry ')
+        .replace(/\b(phy|phys|physic)\b/gi, ' physics ')
+        .replace(/\b(math|maths|mathematic)\b/gi, ' mathematics ')
+        .replace(/\b(agric|agri|agricultural science)\b/gi, ' agriculture ')
+        .replace(/\b(eng|english language|english literature)\b/gi, ' english ')
+        .replace(/\b(bk|rs|religious studies|religious education)\b/gi, ' bible knowledge ')
+        .replace(/\b(comp|computing|computers|ict)\b/gi, ' computer studies ')
+        .replace(/\b(sst)\b/gi, ' social studies ');
+    }
     function readParts(text) {
       if (!text) return null;
-      const p = parseSearch(text), one = set => set.size === 1 ? [...set][0] : null;
-      return { cls: one(p.classes), subj: one(p.subjects), folder: one(p.types) };
+      const p = parseSearch(normalizeText(text));
+      return { classes: [...p.classes], subjects: [...p.subjects], levels: [...p.levels], types: [...p.types] };
     }
-    function placeItem(mainText, otherText, defaultFolder) {
-      const a = readParts(mainText) || {}, b = readParts(otherText) || {};
-      const cls = a.cls || b.cls, subj = a.subj || b.subj, folder = a.folder || b.folder || defaultFolder || 'books';
-      if (!cls || !subj) return null;
-      const level = /^Form/.test(cls) ? 'secondary' : /^Standard/.test(cls) ? 'primary' : /^Year/.test(cls) ? 'tertiary' : null;
-      if (!level || !CURRICULUM[level].classes.includes(cls)) return null;
-      return { level: level, className: cls, subject: subj, folder: folder };
+    /* returns a LIST of places: [{ level, className, subject, folder }]  (empty list = could not place) */
+    function placeItem(mainText, otherText, defaultFolder, forceFolder) {
+      const a = readParts(mainText) || { classes: [], subjects: [], levels: [], types: [] };
+      const b = readParts(otherText) || { classes: [], subjects: [], levels: [], types: [] };
+      const pick = f => a[f].length ? a[f] : b[f];            // the name wins; folder names / description fill the gaps
+      const classes = pick('classes'), subjects = pick('subjects'), levels = pick('levels'), types = pick('types');
+      if (!subjects.length) return [];
+      let folder = forceFolder || defaultFolder || 'books';
+      if (!forceFolder && types.length) folder = types.includes(defaultFolder) ? defaultFolder : (['papers', 'videos', 'books'].find(t => types.includes(t)) || folder);
+      const levelOf = c => /^Form/.test(c) ? 'secondary' : /^Standard/.test(c) ? 'primary' : /^Year/.test(c) ? 'tertiary' : null;
+      let targets = [];                                         // [level, class] pairs
+      if (classes.length) classes.forEach(c => { const l = levelOf(c); if (l && CURRICULUM[l].classes.includes(c)) targets.push([l, c]); });
+      else if (SPREAD_UNKNOWN_CLASS) {
+        let lv = levels.slice();
+        if (!lv.length) {                                       // work the level out from the subjects themselves
+          const cand = new Set();
+          subjects.forEach(sj => { const l = Object.keys(CURRICULUM).filter(k => CURRICULUM[k].subjects.includes(sj)); if (l.length === 1) cand.add(l[0]); });
+          if (cand.size === 1) lv = [...cand];
+        }
+        lv.forEach(l => CURRICULUM[l].classes.forEach(c => targets.push([l, c])));
+      }
+      const out = [];
+      targets.forEach(([l, c]) => subjects.forEach(sj => { if (CURRICULUM[l].subjects.includes(sj) && out.length < 12) out.push({ level: l, className: c, subject: sj, folder: folder }); }));
+      return out;
     }
     const FOLDER_TO_TYPE = { books: 'Book', papers: 'Past Paper', videos: 'Video Lesson' };
 
@@ -1521,9 +1627,9 @@
           if (x.mimeType === 'application/vnd.google-apps.shortcut') return;
           const title = String(x.name || '').replace(/\.[a-z0-9]{2,5}$/i, '');
           const link = x.webViewLink || ('https://drive.google.com/file/d/' + x.id + '/view');
-          const pl = placeItem(title, folder.path, /^video\//.test(x.mimeType || '') ? 'videos' : 'books');
-          if (pl && safeUrl(link)) items.push({ level: pl.level, className: pl.className, subject: pl.subject, type: FOLDER_TO_TYPE[pl.folder], title: title, link: link });
-          else unplaced.push((folder.path.trim() ? folder.path.trim() + ' / ' : '') + x.name);
+          const pls = placeItem(title, folder.path, /^video\//.test(x.mimeType || '') ? 'videos' : 'books');
+          if (pls.length && safeUrl(link)) pls.forEach(pl => items.push({ level: pl.level, className: pl.className, subject: pl.subject, type: FOLDER_TO_TYPE[pl.folder], title: title, link: link }));
+          else if (safeUrl(link)) unplaced.push({ title: title, link: link, path: folder.path.trim() });
         });
       }
       return { items: items, unplaced: unplaced };
@@ -1541,7 +1647,7 @@
         uploads = d.items && d.items[0] && d.items[0].contentDetails.relatedPlaylists.uploads;
         if (!uploads) { logPortalError('youtube', 'Channel not found: ' + YOUTUBE_CHANNEL, { fn: 'channels' }); throw new Error('YouTube channel not found'); }
       }
-      const items = [], unplaced = [];
+      const items = [], unplaced = [], all = [];
       let token = '', pages = 0;
       do {
         const params = { part: 'snippet', playlistId: uploads, maxResults: 50 };
@@ -1550,13 +1656,99 @@
         (d.items || []).forEach(it => {
           const sn = it.snippet || {}, id = sn.resourceId && sn.resourceId.videoId;
           if (!id || /^(Private|Deleted) video$/i.test(sn.title || '')) return;
-          const pl = placeItem(sn.title || '', String(sn.description || '').slice(0, 300), 'videos');
-          if (pl) items.push({ level: pl.level, className: pl.className, subject: pl.subject, type: 'Video Lesson', title: sn.title, link: 'https://www.youtube.com/watch?v=' + id });
+          const th = sn.thumbnails && (sn.thumbnails.medium || sn.thumbnails.high || sn.thumbnails.default);
+          all.push({ id: id, title: sn.title || 'Video', link: 'https://www.youtube.com/watch?v=' + id, thumb: th ? th.url : '', date: sn.publishedAt || '' });
+          const pls = placeItem(sn.title || '', String(sn.description || '').slice(0, 300), 'videos', 'videos');
+          if (pls.length) pls.forEach(pl => items.push({ level: pl.level, className: pl.className, subject: pl.subject, type: 'Video Lesson', title: sn.title, link: 'https://www.youtube.com/watch?v=' + id }));
           else unplaced.push(sn.title || id);
         });
         token = d.nextPageToken || '';
       } while (token && ++pages < 10);
-      return { items: items, unplaced: unplaced };
+      return { items: items, unplaced: unplaced, all: all };
+    }
+
+    /* ---------- "All Books / All Papers / All Videos" for one class ---------- */
+    function classTotal(level, cls, folder) {
+      return subjectsFor(level, cls).reduce((n, sj) => n + fileCount(level, cls, sj, folder), 0);
+    }
+    function renderClassAll() {
+      const f = FOLDER_TYPES.find(x => x.key === classAll), cur = CURRICULUM[nav.level];
+      const bc = document.getElementById('breadcrumb'), host = document.getElementById('repoGrid');
+      bc.innerHTML = '';
+      [{ t: 'Library', d: 0 }, { t: cur.label, d: 1 }, { t: nav.cls, d: 2 }].forEach(c => {
+        const a = document.createElement('a'); a.textContent = c.t; a.onclick = () => goTo(c.d); bc.appendChild(a);
+        const sep = document.createElement('i'); sep.className = 'fas fa-chevron-right'; sep.style.fontSize = '10px'; bc.appendChild(sep);
+      });
+      const last = document.createElement('span'); last.className = 'crumb-current'; last.textContent = 'All ' + f.label; bc.appendChild(last);
+      document.getElementById('repoTitle').textContent = 'All ' + f.label + ' — ' + nav.cls;
+      document.getElementById('repoSub').textContent = 'Every ' + f.label.toLowerCase().replace(/s$/, '') + ' for this class, grouped by subject.';
+      host.innerHTML = '';
+      let any = false;
+      subjectsFor(nav.level, nav.cls).forEach(sj => {
+        const files = RESOURCES[resKey(nav.level, nav.cls, sj, classAll)] || [];
+        if (!files.length) return;
+        any = true;
+        const h = document.createElement('div');
+        h.style.cssText = 'margin:18px 0 8px;font-weight:800;color:#38bdf8;font-size:14px;letter-spacing:.3px;';
+        h.innerHTML = '<i class="fas fa-folder" style="color:#eab308;margin-right:8px;"></i>' + esc(sj) + ' <span style="color:#64748b;font-weight:600;">(' + files.length + ')</span>';
+        host.appendChild(h);
+        files.forEach(file => {
+          const row = document.createElement('div'); row.className = 'file-row';
+          row.innerHTML = '<span><i class="fas ' + f.icon + '" style="color:' + f.color + ';margin-right:10px;"></i>' + esc(file.title) + '</span><a href="' + esc(file.url) + '" target="_blank" rel="noopener"><i class="fas fa-arrow-up-right-from-square"></i> Open</a>';
+          host.appendChild(row);
+        });
+      });
+      if (!any) host.innerHTML = '<div class="repo-empty"><i class="fas ' + f.icon + '"></i>No ' + f.label.toLowerCase() + ' have been added for this class yet.</div>';
+    }
+
+    /* ---------- automatic folders: every YouTube video + unsorted Drive files ---------- */
+    function openSpecial(kind) {
+      specialView = kind; nav.level = nav.cls = nav.subject = nav.folder = null; currentLevel = null;
+      Object.keys(CURRICULUM).forEach(k => { const b = document.getElementById('btn-' + k); if (b) b.classList.remove('active'); });
+      const sb = document.getElementById('searchBox'); if (sb) sb.value = '';
+      renderLibrary();
+    }
+    function addSpecialCards(grid) {
+      if (YT_ALL.length || GOOGLE_STATUS.youtube) {
+        folderCard(grid, 'fa-circle-play', '#ef4444', YOUTUBE_FOLDER_NAME, YT_ALL.length ? YT_ALL.length + (YT_ALL.length === 1 ? ' video' : ' videos') : 'Could not load', () => openSpecial('youtube'));
+        const i = grid.lastChild && grid.lastChild.querySelector('i'); if (i) i.className = 'fab fa-youtube';
+      }
+      if (DRIVE_UNSORTED.length || GOOGLE_STATUS.drive) {
+        folderCard(grid, 'fa-folder-open', '#94a3b8', 'More Files from Drive', DRIVE_UNSORTED.length ? DRIVE_UNSORTED.length + ' not sorted yet' : 'Could not load', () => openSpecial('drive'));
+      }
+    }
+    function renderSpecialFolder() {
+      const isYT = specialView === 'youtube';
+      const list = isYT ? YT_ALL : DRIVE_UNSORTED, err = isYT ? GOOGLE_STATUS.youtube : GOOGLE_STATUS.drive;
+      const bc = document.getElementById('breadcrumb'), host = document.getElementById('repoGrid');
+      bc.innerHTML = '';
+      const home = document.createElement('a'); home.textContent = 'Library'; home.onclick = () => goTo(0); bc.appendChild(home);
+      const sep = document.createElement('i'); sep.className = 'fas fa-chevron-right'; sep.style.fontSize = '10px'; bc.appendChild(sep);
+      const cur = document.createElement('span'); cur.className = 'crumb-current'; cur.textContent = isYT ? YOUTUBE_FOLDER_NAME : 'More Files from Drive'; bc.appendChild(cur);
+      document.getElementById('repoTitle').textContent = isYT ? YOUTUBE_FOLDER_NAME : 'More Files from Drive';
+      document.getElementById('repoSub').textContent = isYT ? 'Every video from our YouTube channel, newest first.' : 'These files could not be sorted by name. Put the class and subject in the file name, e.g. "Form 2 Biology Notes".';
+      host.innerHTML = '';
+      if (err) { const n = document.createElement('div'); n.className = 'repo-empty'; n.innerHTML = '<i class="fas fa-triangle-exclamation"></i>' + (isYT ? 'YouTube' : 'Google Drive') + ' could not be read just now: ' + esc(err); host.appendChild(n); }
+      if (!list.length) { if (!err) host.innerHTML = '<div class="repo-empty"><i class="fas fa-folder-open"></i>Nothing here yet.</div>'; return; }
+      if (isYT) {
+        const grid = document.createElement('div');
+        grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(min(240px,100%),1fr));gap:16px;';
+        list.forEach(v => {
+          const a = document.createElement('a'); a.href = v.link; a.target = '_blank'; a.rel = 'noopener';
+          a.style.cssText = 'display:block;text-decoration:none;color:#e2e8f0;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;overflow:hidden;';
+          const when = v.date ? new Date(v.date).toLocaleDateString() : '';
+          a.innerHTML = (safeUrl(v.thumb) ? '<img src="' + esc(v.thumb) + '" alt="" loading="lazy" style="width:100%;display:block;aspect-ratio:16/9;object-fit:cover;background:#0b112c;">' : '<div style="aspect-ratio:16/9;background:#0b112c;display:flex;align-items:center;justify-content:center;color:#ef4444;font-size:34px;"><i class="fab fa-youtube"></i></div>') +
+            '<div style="padding:12px 14px;"><div style="font-weight:700;font-size:14px;line-height:1.35;">' + esc(v.title) + '</div>' + (when ? '<div style="font-size:12px;color:#94a3b8;margin-top:6px;">' + esc(when) + '</div>' : '') + '</div>';
+          grid.appendChild(a);
+        });
+        host.appendChild(grid);
+      } else {
+        list.forEach(file => {
+          const row = document.createElement('div'); row.className = 'file-row';
+          row.innerHTML = '<span><i class="fas fa-file-lines" style="color:#94a3b8;margin-right:10px;"></i>' + esc(file.title) + (file.path ? ' <small style="color:#64748b;">(' + esc(file.path) + ')</small>' : '') + '</span><a href="' + esc(file.link) + '" target="_blank" rel="noopener"><i class="fas fa-arrow-up-right-from-square"></i> Open</a>';
+          host.appendChild(row);
+        });
+      }
     }
 
     /* ---------- run both and refresh the folders ---------- */
@@ -1570,12 +1762,12 @@
       googleBusy = true;
       const unplaced = [];
       try {
-        if (useDrive) { try { const r = await fetchDriveItems(); DRIVE_ITEMS = r.items; r.unplaced.forEach(n => unplaced.push('Drive: ' + n)); } catch (e) { console.error('Drive sync failed', e); } }
-        if (useYT)    { try { const r = await fetchYouTubeItems(); YT_ITEMS = r.items; r.unplaced.forEach(n => unplaced.push('YouTube: ' + n)); } catch (e) { console.error('YouTube sync failed', e); } }
-        try { localStorage.setItem('crestExternalCache', JSON.stringify({ drive: DRIVE_ITEMS, youtube: YT_ITEMS })); } catch (e) {}
+        if (useDrive) { try { const r = await fetchDriveItems(); DRIVE_ITEMS = r.items; DRIVE_UNSORTED = r.unplaced; GOOGLE_STATUS.drive = ''; r.unplaced.forEach(n => unplaced.push('Drive: ' + n.title)); } catch (e) { GOOGLE_STATUS.drive = e.message || 'Could not read Drive'; console.error('Drive sync failed', e); } }
+        if (useYT)    { try { const r = await fetchYouTubeItems(); YT_ITEMS = r.items; YT_ALL = r.all; GOOGLE_STATUS.youtube = ''; } catch (e) { GOOGLE_STATUS.youtube = e.message || 'Could not read YouTube'; console.error('YouTube sync failed', e); } }
+        try { localStorage.setItem('crestExternalCache', JSON.stringify({ drive: DRIVE_ITEMS, youtube: YT_ITEMS, ytAll: YT_ALL, driveUnsorted: DRIVE_UNSORTED })); } catch (e) {}
         window.portalUnplaced = unplaced;
         const sig = unplaced.join('|');
-        if (unplaced.length && sig !== lastUnplacedSig) logPortalError('sync', unplaced.length + ' item(s) not placed (add class + subject to the name, e.g. "Form 2 Biology Notes"): ' + unplaced.slice(0, 8).join(' ; '), { fn: 'classify' });
+        if (unplaced.length && sig !== lastUnplacedSig) logPortalError('sync', unplaced.length + ' item(s) not placed (add class + subject to the name, e.g. "Form 2 Biology Notes"; they are listed under More Files from Drive): ' + unplaced.slice(0, 8).join(' ; '), { fn: 'classify' });
         lastUnplacedSig = sig;
         rebuildResources(LAST_BOOKS);
       } finally { googleBusy = false; }
@@ -1583,8 +1775,8 @@
 
     /* ===================== START-UP ===================== */
     (function startUp() {
-      try { const x = JSON.parse(localStorage.getItem('crestExternalCache') || 'null'); if (x) { DRIVE_ITEMS = x.drive || []; YT_ITEMS = x.youtube || []; } } catch (e) {}
-      try { const c = JSON.parse(localStorage.getItem('crestCatalogCache') || 'null'); if (c) rebuildResources(c); else if (externalItems().length) rebuildResources([]); } catch (e) {}
+      try { const x = JSON.parse(localStorage.getItem('crestExternalCache') || 'null'); if (x) { DRIVE_ITEMS = x.drive || []; YT_ITEMS = x.youtube || []; YT_ALL = x.ytAll || []; DRIVE_UNSORTED = x.driveUnsorted || []; } } catch (e) {}
+      try { const c = JSON.parse(localStorage.getItem('crestCatalogCache') || 'null'); if (c) rebuildResources(c); else if (externalItems().length || YT_ALL.length) rebuildResources([]); } catch (e) {}
       setupYouTubeLink();
       applySession();
       if (studentSession) { validateSession(); loadCatalog(); loadWork(); syncGoogleContent(); }
