@@ -147,6 +147,31 @@
     .modal-box h3 { font-size: 18px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
     .add-part-btn { background: linear-gradient(135deg, var(--accent-hover), var(--accent-primary)); color: #040714; border: none; padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; }
     .ghost-btn { background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); padding: 12px; border-radius: 12px; cursor: pointer; font-weight: 600; width: 100%; margin-top: 10px; }
+
+    /* ===== due-date field + Quick Upload (added) ===== */
+    input[type="date"] { color-scheme: dark; min-height: 48px; cursor: pointer; }
+    input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.9; cursor: pointer; padding: 6px; }
+    .due-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
+    .due-chip { padding: 7px 12px; border-radius: 10px; border: 1px solid rgba(56,189,248,0.35); background: rgba(56,189,248,0.12); color: #38bdf8; font-size: 12px; font-weight: 700; cursor: pointer; }
+    .due-chip:hover { background: rgba(56,189,248,0.22); }
+    #quickUploadBtn { position: fixed; left: 20px; bottom: 20px; z-index: 9000; display: flex; align-items: center; gap: 10px; padding: 14px 20px; border: none; border-radius: 40px; background: linear-gradient(135deg, #2563eb, #38bdf8); color: #fff; font-weight: 800; font-size: 14px; cursor: pointer; box-shadow: 0 10px 30px rgba(37,99,235,0.45); }
+    #quickUploadBtn i { font-size: 18px; }
+    #quModal { position: fixed; inset: 0; z-index: 99999; background: rgba(3,7,24,0.82); display: none; align-items: center; justify-content: center; padding: 14px; }
+    #quBox { width: 100%; max-width: 580px; max-height: 92vh; overflow-y: auto; background: #0b112c; border: 1px solid rgba(255,255,255,0.1); border-radius: 22px; padding: 22px; }
+    #quBox h3 { margin: 0 0 4px 0; color: #fff; font-size: 18px; }
+    #quBox .qu-sub { color: #94a3b8; font-size: 12px; margin: 0 0 16px 0; }
+    #quBox .qu-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    #quBox .qu-pick { display: flex; gap: 10px; flex-wrap: wrap; margin: 4px 0 12px 0; }
+    #quBox .qu-pick button, #quBox .qu-actions button { padding: 12px 16px; border-radius: 12px; border: 1px solid rgba(56,189,248,0.35); background: rgba(56,189,248,0.12); color: #38bdf8; font-weight: 700; font-size: 13px; cursor: pointer; }
+    #quBox .qu-actions { display: flex; gap: 10px; margin-top: 14px; }
+    #quBox .qu-actions #quGo { flex: 1; background: linear-gradient(135deg, #16a34a, #22c55e); border: none; color: #fff; font-size: 14px; }
+    #quBox .qu-actions button:disabled { opacity: 0.55; cursor: not-allowed; }
+    #quList { max-height: 210px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; background: #080d24; }
+    #quList .qu-item { display: flex; justify-content: space-between; gap: 10px; padding: 9px 12px; font-size: 12px; color: #e2e8f0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    #quList .qu-item span:first-child { overflow-wrap: anywhere; }
+    #quList .qu-tag { white-space: nowrap; font-weight: 700; }
+    #quStatus { margin-top: 12px; font-size: 13px; font-weight: 600; white-space: pre-wrap; display: none; }
+    @media (max-width: 520px) { #quBox .qu-row { grid-template-columns: 1fr; } #quickUploadBtn span { display: none; } #quickUploadBtn { padding: 16px; } }
   </style>
 </head>
 <body class="locked">
@@ -312,7 +337,14 @@
         </div>
 
         <div id="assignFields">
-          <div class="form-group"><label>Due date (optional)</label><input type="date" id="workDue" /></div>
+          <div class="form-group"><label>Due date (optional)</label><input type="date" id="workDue" onclick="try{if(this.showPicker)this.showPicker()}catch(e){}" />
+            <div class="due-chips">
+              <button type="button" class="due-chip" onclick="setDue(1)">Tomorrow</button>
+              <button type="button" class="due-chip" onclick="setDue(3)">In 3 days</button>
+              <button type="button" class="due-chip" onclick="setDue(7)">In 1 week</button>
+              <button type="button" class="due-chip" onclick="setDue(14)">In 2 weeks</button>
+              <button type="button" class="due-chip" onclick="setDue(null)">Clear</button>
+            </div></div>
           <div class="form-group"><label>Instructions</label><textarea id="workDesc" rows="3" placeholder="What should the student do?"></textarea></div>
           <div class="form-group">
             <label>Attach a file (optional)</label>
@@ -1697,6 +1729,137 @@
     document.addEventListener("DOMContentLoaded", () => {
       if (sessionStorage.getItem('crestAdminOK') === '1' && sessionStorage.getItem('crestAdminKey')) startAdmin();
     });
+  </script>
+
+  <!-- ===== QUICK UPLOAD (added): pick the place first, then drop in files or a whole folder ===== -->
+  <button type="button" id="quickUploadBtn" onclick="quOpen()" title="Quick upload to a chosen folder"><i class="fa-solid fa-cloud-arrow-up"></i><span>Quick Upload</span></button>
+  <div id="quModal" onclick="if(event.target===this)quClose()">
+    <div id="quBox">
+      <h3><i class="fa-solid fa-cloud-arrow-up" style="color:#38bdf8;"></i> Quick Upload</h3>
+      <p class="qu-sub">Choose the place, then add files or a whole folder. They go straight into that folder.</p>
+      <div class="qu-row">
+        <div class="form-group"><label>Level</label><select id="quLevel" onchange="quFill()"><option value="primary">Primary</option><option value="secondary" selected>Secondary</option><option value="tertiary">Tertiary</option></select></div>
+        <div class="form-group"><label>Class</label><select id="quClass"></select></div>
+        <div class="form-group"><label>Folder</label><select id="quType"><option value="Past Paper">Past Papers</option><option value="Book">Books</option><option value="Notes">Notes</option><option value="Video Lesson">Videos</option></select></div>
+        <div class="form-group"><label>Subject</label><select id="quSubject" onchange="quRender()"></select></div>
+      </div>
+      <div class="qu-pick">
+        <button type="button" onclick="document.getElementById('quFileInput').click()"><i class="fa-solid fa-file-circle-plus"></i> Add files</button>
+        <button type="button" onclick="document.getElementById('quFolderInput').click()"><i class="fa-solid fa-folder-plus"></i> Add a folder</button>
+      </div>
+      <input type="file" id="quFileInput" multiple style="display:none;" onchange="quAdd(this)" />
+      <input type="file" id="quFolderInput" webkitdirectory directory multiple style="display:none;" onchange="quAdd(this)" />
+      <div id="quList"></div>
+      <div id="quStatus"></div>
+      <div class="qu-actions">
+        <button type="button" onclick="quClear()" id="quClearBtn">Clear</button>
+        <button type="button" id="quGo" onclick="quUpload()"><i class="fa-solid fa-upload"></i> Upload</button>
+        <button type="button" onclick="quClose()">Close</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    /* ---------- due date helper ---------- */
+    function setDue(days) {
+      const el = document.getElementById('workDue'); if (!el) return;
+      if (days === null) { el.value = ''; return; }
+      const d = new Date(); d.setDate(d.getDate() + days);
+      const p = n => String(n).padStart(2, '0');
+      el.value = d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+    }
+
+    /* ---------- QUICK UPLOAD ---------- */
+    let quFiles = [], quBusy = false;
+    const QU_ALIASES = [
+      ['Biology', /\b(bio|biol)\b/], ['Chemistry', /\b(chem|chemestry)\b/], ['Physics', /\b(phy|phys|physic)\b/],
+      ['Mathematics', /\b(math|maths|mathematic)\b/], ['Agriculture', /\b(agric|agri)\b/], ['English', /\beng\b/],
+      ['Computer Studies', /\b(ict|comp|computer|computing)\b/], ['Bible Knowledge', /\b(bk|rs|bible|religious)\b/],
+      ['Social Studies', /\b(sst|social)\b/], ['Science & Technology', /\bscience\b/], ['Business Studies', /\bbusiness\b/], ['Chichewa', /\bchichewa\b/]
+    ];
+    function quDetect(text, level) {
+      const subs = localSubjects[level] || [];
+      const direct = matchSubjectName(String(text), subs);
+      if (direct) return direct;
+      const t = ' ' + String(text).toLowerCase().replace(/[^a-z0-9&]+/g, ' ') + ' ';
+      for (const [name, re] of QU_ALIASES) { if (subs.includes(name) && re.test(t)) return name; }
+      return null;
+    }
+    function quSubjectFor(f, level) {                         // the file name first, then its folders (deepest first)
+      let sj = quDetect(f.file.name, level);
+      if (sj) return sj;
+      const parts = (f.file.webkitRelativePath || '').split('/'); parts.pop();
+      for (let i = parts.length - 1; i >= 0 && !sj; i--) sj = quDetect(parts[i], level);
+      return sj;
+    }
+    function quFill() {
+      const lvl = document.getElementById('quLevel').value;
+      document.getElementById('quClass').innerHTML = (localClasses[lvl] || []).map(c => '<option value="' + c + '">' + c + '</option>').join('');
+      document.getElementById('quSubject').innerHTML = '<option value="">Auto: read it from the file / folder name</option>' + (localSubjects[lvl] || []).map(s => '<option value="' + s + '">' + s + '</option>').join('');
+      quRender();
+    }
+    function quOpen() { quFill(); document.getElementById('quModal').style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+    function quClose() { if (quBusy && !confirm('An upload is still running. Close anyway?')) return; document.getElementById('quModal').style.display = 'none'; document.body.style.overflow = ''; }
+    function quClear() { if (quBusy) return; quFiles = []; quRender(); quStatus(''); }
+    function quStatus(msg, color) { const el = document.getElementById('quStatus'); el.style.display = msg ? 'block' : 'none'; el.style.color = color || '#94a3b8'; el.textContent = msg; }
+    function quAdd(input) {
+      const skip = /^(\.|thumbs\.db$|desktop\.ini$)/i;
+      Array.from(input.files || []).forEach(f => {
+        if (skip.test(f.name)) return;
+        if (!quFiles.some(x => x.file.name === f.name && x.file.size === f.size && (x.file.webkitRelativePath || '') === (f.webkitRelativePath || ''))) quFiles.push({ file: f, done: false });
+      });
+      input.value = ''; quRender();
+    }
+    function quRender() {
+      const lvl = document.getElementById('quLevel').value, fixed = document.getElementById('quSubject').value;
+      const box = document.getElementById('quList');
+      if (!quFiles.length) { box.innerHTML = '<div class="qu-item" style="color:#64748b;">No files chosen yet.</div>'; return; }
+      box.innerHTML = quFiles.map(f => {
+        f.subject = fixed || quSubjectFor(f, lvl);
+        const rel = f.file.webkitRelativePath || f.file.name;
+        const tag = f.done ? '<span class="qu-tag" style="color:#22c55e;">✔ uploaded</span>' : f.subject ? '<span class="qu-tag" style="color:#38bdf8;">' + esc(f.subject) + '</span>' : '<span class="qu-tag" style="color:#f59e0b;">pick a subject</span>';
+        return '<div class="qu-item"><span>' + esc(rel) + ' <small style="color:#64748b;">(' + (f.file.size / 1048576).toFixed(1) + ' MB)</small></span>' + tag + '</div>';
+      }).join('');
+    }
+    async function quUpload() {
+      if (quBusy) return;
+      const level = document.getElementById('quLevel').value, className = document.getElementById('quClass').value;
+      const type = document.getElementById('quType').value, fixed = document.getElementById('quSubject').value;
+      quRender();
+      const todo = quFiles.filter(f => !f.done && f.subject);
+      const noSubject = quFiles.filter(f => !f.done && !f.subject).length;
+      if (!todo.length) return quStatus(quFiles.length ? 'No subject could be read from the names. Pick a subject above, then press Upload.' : 'Add some files or a folder first.', '#f59e0b');
+      quBusy = true; document.getElementById('quGo').disabled = true;
+      let pending = [], failed = [], saved = 0;
+      const flush = async () => {
+        if (!pending.length) return;
+        const live = await rpc('get_books', { p_key: adminKey() });          // throws on error, so the catalogue is never overwritten by mistake
+        if (!Array.isArray(live)) throw new Error('Could not read the current catalogue');
+        await saveBooks(live.concat(pending)); saved += pending.length; pending = [];
+      };
+      try {
+        for (let i = 0; i < todo.length; i++) {
+          const f = todo[i];
+          quStatus('Uploading ' + (i + 1) + ' of ' + todo.length + ': ' + f.file.name, '#38bdf8');
+          try {
+            const fd = new FormData(); fd.append('file', f.file); fd.append('upload_preset', CLOUDINARY_PRESET);
+            const r = await fetch(CLOUDINARY_URL, { method: 'POST', body: fd });
+            if (!r.ok) throw new Error('upload failed (' + r.status + ')');
+            const data = await r.json();
+            pending.push({ title: f.file.name.replace(/\.[^/.]+$/, ''), level: level, className: className, subject: f.subject, type: type, syllabus: 'National', description: 'Quick upload', link: data.secure_url, timestamp: new Date().toISOString() });
+            f.done = true;
+            if (pending.length >= 5) await flush();
+          } catch (e) { failed.push(f.file.name + ' — ' + e.message); }
+        }
+        await flush();
+      } catch (e) { failed.push('Saving to the library failed: ' + e.message); }
+      quBusy = false; document.getElementById('quGo').disabled = false;
+      quFiles = quFiles.filter(f => !f.done); quRender();
+      let msg = saved ? '✅ ' + saved + ' file' + (saved === 1 ? '' : 's') + ' added to ' + className + ' › ' + document.getElementById('quType').selectedOptions[0].textContent + '.' : '⚠️ Nothing was added.';
+      if (noSubject) msg += '\n⚠️ ' + noSubject + ' file' + (noSubject === 1 ? '' : 's') + ' not uploaded: no subject found in the name. Pick a subject above and press Upload again.';
+      if (failed.length) msg += '\n❌ Problems:\n' + failed.join('\n');
+      quStatus(msg, failed.length || noSubject ? '#f59e0b' : '#22c55e');
+      try { await loadBookList(); } catch (e) {}
+    }
   </script>
 </body>
 </html>

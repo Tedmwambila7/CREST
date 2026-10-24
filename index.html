@@ -211,24 +211,6 @@
     .repo-empty i { font-size: 34px; display: block; margin-bottom: 12px; color: #334155; }
       #chatBoxContainer { max-width: calc(100vw - 40px); }
 
-    /* Back button */
-    .back-btn { display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; margin-bottom: 14px; background: rgba(56,189,248,0.1); border: 1px solid rgba(56,189,248,0.35); border-radius: 10px; color: #38bdf8; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all .2s; }
-    .back-btn:hover { background: rgba(56,189,248,0.2); color: #fff; }
-
-    /* In-page file / video viewer */
-    #viewerOverlay { position: fixed; inset: 0; z-index: 20000; background: rgba(4,7,20,0.96); display: none; flex-direction: column; }
-    #viewerOverlay.open { display: flex; }
-    .viewer-bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.08); background: #070b1e; }
-    .viewer-bar .v-title { flex: 1; min-width: 0; font-size: 13px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .viewer-bar a, .viewer-bar button { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer; text-decoration: none; font-family: inherit; white-space: nowrap; }
-    .v-open { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #cbd5e1; }
-    .v-close { background: rgba(244,63,94,0.12); border: 1px solid rgba(244,63,94,0.3); color: #f43f5e; }
-    .viewer-body { position: relative; flex: 1; background: #000; }
-    .viewer-body iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #fff; }
-    .viewer-loading { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: #040714; color: #94a3b8; font-size: 14px; font-weight: 600; }
-    .viewer-loading .spin { width: 42px; height: 42px; border: 4px solid rgba(56,189,248,0.2); border-top-color: #38bdf8; border-radius: 50%; animation: vspin .8s linear infinite; }
-    @keyframes vspin { to { transform: rotate(360deg); } }
-
     /* ===================== RESPONSIVE LAYOUT =====================
        Fits PCs, tablets and phones. Nothing moves sideways, text does not jump in size,
        and the big screens keep the design exactly as before. */
@@ -406,19 +388,6 @@
     </div>
   </div>
 
-  <!-- FILE / VIDEO VIEWER (opens inside the portal, no jumping around) -->
-  <div id="viewerOverlay">
-    <div class="viewer-bar">
-      <button class="v-close" onclick="closeViewer()"><i class="fas fa-arrow-left"></i> Back</button>
-      <div class="v-title" id="viewerTitle"></div>
-      <a class="v-open" id="viewerExternal" href="#" target="_blank" rel="noopener"><i class="fas fa-arrow-up-right-from-square"></i> Open in new tab</a>
-    </div>
-    <div class="viewer-body">
-      <div class="viewer-loading" id="viewerLoading"><div class="spin"></div><div id="viewerLoadingText">Loading...</div></div>
-      <iframe id="viewerFrame" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
-    </div>
-  </div>
-
   <!-- PLATFORM WEB INTERFACE APPLICATION LOADER -->
   <div class="loader" id="loader" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#040714; display:flex; align-items:center; justify-content:center; z-index:9999; transition: opacity 0.5s;">
     <div style="text-align:center;">
@@ -558,7 +527,7 @@
         <!-- ASSET DATA INTERACTIVE STREAMS SECTION -->
         <section>
           <div class="repo-panel">
-            <button class="back-btn" id="libBackBtn" onclick="goBack()" style="display:none;"><i class="fas fa-arrow-left"></i> Back</button>
+            <button type="button" id="backBtn" onclick="goBack()" style="display:none;margin:0 0 14px 0;padding:9px 16px;border-radius:12px;border:1px solid rgba(56,189,248,0.35);background:rgba(56,189,248,0.12);color:#38bdf8;font-weight:700;font-size:13px;cursor:pointer;align-items:center;gap:8px;"><i class="fas fa-arrow-left"></i> Back</button>
             <div class="breadcrumb" id="breadcrumb"></div>
             <h2 class="repo-title" id="repoTitle"></h2>
             <p class="repo-sub" id="repoSub"></p>
@@ -570,7 +539,7 @@
 
     <!-- VIEW 2: STUDENT ASSIGNMENTS & GRADEBOOK PORTAL VIEW -->
     <div id="studentPortalView" style="display: none;">
-      <button class="back-btn" onclick="showMainView('home')"><i class="fas fa-arrow-left"></i> Back</button>
+      <button type="button" onclick="showMainView('home')" style="margin:0 0 16px 0;padding:9px 16px;border-radius:12px;border:1px solid rgba(56,189,248,0.35);background:rgba(56,189,248,0.12);color:#38bdf8;font-weight:700;font-size:13px;cursor:pointer;"><i class="fas fa-arrow-left"></i> Back to Library</button>
       
       <!-- PORTAL NAVIGATION CONTROLS -->
       <div class="portal-section-header">
@@ -769,22 +738,6 @@
       renderLibrary();
     }
 
-    function syncBackBtn() {
-      const b = document.getElementById('libBackBtn'); if (!b) return;
-      const sb = document.getElementById('searchBox');
-      b.style.display = (specialView || classAll || nav.level || (sb && sb.value.trim())) ? 'inline-flex' : 'none';
-    }
-    function goBack() {                 /* one step back, whatever is open */
-      const sb = document.getElementById('searchBox');
-      if (sb && sb.value.trim()) { sb.value = ''; renderLibrary(); return; }
-      if (specialView) { goTo(0); return; }
-      if (classAll) { classAll = null; renderLibrary(); return; }
-      if (nav.folder) { goTo(3); return; }
-      if (nav.subject) { goTo(2); return; }
-      if (nav.cls) { goTo(1); return; }
-      if (nav.level) { goTo(0); return; }
-    }
-
     function sideButton(container, iconClass, text, active, handler) {
       const b = document.createElement('button');
       b.className = 'folder-item-btn' + (active ? ' active' : '');
@@ -814,8 +767,8 @@
     }
 
     function renderLibrary() {
-      syncBackBtn();
       renderSidebar();
+      updateBackBtn();
       if (specialView) { renderSpecialFolder(); return; }
       if (classAll && nav.level && nav.cls && !nav.subject) { renderClassAll(); return; }
       classAll = null;
@@ -954,7 +907,6 @@
     function searchBooks() {
       const raw = document.getElementById('searchBox').value.trim();
       if (!raw) { renderLibrary(); return; }
-      syncBackBtn();
       const p = parseSearch(raw);
       const hasFilter = p.levels.size || p.classes.size || p.subjects.size || p.types.size;
 
@@ -1560,9 +1512,9 @@
     const DRIVE_API_KEY       = "AIzaSyDWSpCEuqdOaHOv61zEoPmsS8-PUyi27z4";   // key for the Google Drive API
     const YOUTUBE_API_KEY     = "AIzaSyC5jRmDBiR5mSOEulzv7m15hvUjo_ds8hw";   // key for the YouTube Data API
     const DRIVE_FOLDER_ID     = "1LuP_JJpRGlavQvOEvcePJcZzE93lWWXy";         // the long code at the end of the Drive folder link
+    const YOUTUBE_PLAYLIST_ID = "PLD-IWj8tHMWQ";                             // your playlist (the code after list= in the playlist link)
     const YOUTUBE_CHANNEL     = "@sirtaydayo";                               // channel @handle (or UCxxxx channel id)
     const YOUTUBE_CHANNEL_URL = "https://www.youtube.com/@sirtaydayo";       // used by the YouTube icon
-    const YOUTUBE_PLAYLIST_ID = "PLD-IWj8tHMWQ";                             // playlist the student videos come from (leave "" to use every channel upload)
 
     const googleSet = v => !!v && !/PASTE_YOUR/.test(v);
 
@@ -1691,19 +1643,11 @@
     async function ytGet(path, params) {
       return googleGet(key => 'https://www.googleapis.com/youtube/v3/' + path + '?' + new URLSearchParams(Object.assign({ key: key }, params)).toString(), 'youtube', path);
     }
-    async function fetchYouTubeItems() {
-      let uploads;
-      if (YOUTUBE_PLAYLIST_ID) uploads = YOUTUBE_PLAYLIST_ID;
-      else if (/^UC/.test(YOUTUBE_CHANNEL)) uploads = 'UU' + YOUTUBE_CHANNEL.slice(2);
-      else {
-        const d = await ytGet('channels', { part: 'contentDetails', forHandle: '@' + YOUTUBE_CHANNEL.replace(/^@/, '') });
-        uploads = d.items && d.items[0] && d.items[0].contentDetails.relatedPlaylists.uploads;
-        if (!uploads) { logPortalError('youtube', 'Channel not found: ' + YOUTUBE_CHANNEL, { fn: 'channels' }); throw new Error('YouTube channel not found'); }
-      }
+    async function readPlaylist(playlistId) {
       const items = [], unplaced = [], all = [];
       let token = '', pages = 0;
       do {
-        const params = { part: 'snippet', playlistId: uploads, maxResults: 50 };
+        const params = { part: 'snippet', playlistId: playlistId, maxResults: 50 };
         if (token) params.pageToken = token;
         const d = await ytGet('playlistItems', params);
         (d.items || []).forEach(it => {
@@ -1719,6 +1663,120 @@
       } while (token && ++pages < 10);
       return { items: items, unplaced: unplaced, all: all };
     }
+    async function fetchYouTubeItems() {
+      /* 1) your playlist (if it can be read), 2) otherwise every upload on the channel */
+      if (googleSet(YOUTUBE_PLAYLIST_ID)) {
+        try { const r = await readPlaylist(YOUTUBE_PLAYLIST_ID); if (r.all.length) return r; logPortalError('youtube', 'Playlist ' + YOUTUBE_PLAYLIST_ID + ' has no public videos; using the channel uploads instead', { fn: 'playlistItems' }); }
+        catch (e) { /* already logged: fall back to the channel */ }
+      }
+      if (!googleSet(YOUTUBE_CHANNEL)) throw new Error('The YouTube playlist could not be read and no channel is set');
+      let uploads;
+      if (/^UC/.test(YOUTUBE_CHANNEL)) uploads = 'UU' + YOUTUBE_CHANNEL.slice(2);
+      else {
+        const d = await ytGet('channels', { part: 'contentDetails', forHandle: '@' + YOUTUBE_CHANNEL.replace(/^@/, '') });
+        uploads = d.items && d.items[0] && d.items[0].contentDetails.relatedPlaylists.uploads;
+        if (!uploads) { logPortalError('youtube', 'Channel not found: ' + YOUTUBE_CHANNEL, { fn: 'channels' }); throw new Error('YouTube channel not found'); }
+      }
+      return readPlaylist(uploads);
+    }
+
+    /* ===================== FILE VIEWER =====================
+       Click a book, paper or video: a "Loading..." screen appears and the file opens straight away
+       inside the site (no jumping between pages).  Back / Esc closes it. */
+    let viewerEl = null, viewerTimer = null;
+    function attachUrl(u) { return /res\.cloudinary\.com\/[^/]+\/(image|video|raw)\/upload\//.test(u) ? u.replace('/upload/', '/upload/fl_attachment/') : u; }
+    function viewerPlan(url) {
+      let m;
+      if ((m = url.match(/drive\.google\.com\/file\/d\/([\w-]+)/))) return { kind: 'frame', src: 'https://drive.google.com/file/d/' + m[1] + '/preview', dl: 'https://drive.google.com/uc?export=download&id=' + m[1] };
+      if ((m = url.match(/(?:youtube\.com\/watch\?[^#]*v=|youtu\.be\/)([\w-]{6,})/))) return { kind: 'frame', src: 'https://www.youtube-nocookie.com/embed/' + m[1] + '?autoplay=1&rel=0', dl: '' };
+      const path = url.split(/[?#]/)[0].toLowerCase();
+      if (/\.(mp4|webm|m4v|mov|ogv)$/.test(path)) return { kind: 'video', src: url, dl: attachUrl(url) };
+      if (/\.(png|jpe?g|gif|webp|bmp|svg)$/.test(path)) return { kind: 'image', src: url, dl: attachUrl(url) };
+      if (/\.pdf$/.test(path) && navigator.pdfViewerEnabled) return { kind: 'frame', src: url, dl: attachUrl(url) };
+      return { kind: 'external', src: url, dl: attachUrl(url) };
+    }
+    function buildViewer() {
+      if (viewerEl) return viewerEl;
+      const el = document.createElement('div');
+      el.style.cssText = 'position:fixed;inset:0;z-index:100000;background:#050a1f;display:none;flex-direction:column;';
+      el.innerHTML =
+        '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#0b112c;border-bottom:1px solid rgba(255,255,255,0.08);flex-wrap:wrap;">' +
+          '<button type="button" id="vwBack" style="padding:9px 16px;border-radius:12px;border:1px solid rgba(56,189,248,0.35);background:rgba(56,189,248,0.12);color:#38bdf8;font-weight:700;font-size:13px;cursor:pointer;"><i class="fas fa-arrow-left"></i> Back</button>' +
+          '<div id="vwTitle" style="flex:1;min-width:120px;color:#fff;font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>' +
+          '<a id="vwNew" target="_blank" rel="noopener" style="color:#e2e8f0;text-decoration:none;font-size:13px;font-weight:600;padding:9px 12px;border-radius:12px;background:rgba(255,255,255,0.06);"><i class="fas fa-arrow-up-right-from-square"></i> New tab</a>' +
+          '<a id="vwDl" rel="noopener" style="color:#fff;text-decoration:none;font-size:13px;font-weight:700;padding:9px 14px;border-radius:12px;background:#2563eb;cursor:pointer;"><i class="fas fa-download"></i> Download</a>' +
+        '</div>' +
+        '<div style="position:relative;flex:1;min-height:0;">' +
+          '<div id="vwLoad" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#cbd5e1;font-weight:600;background:#050a1f;z-index:2;"><i class="fas fa-circle-notch fa-spin" style="font-size:34px;color:#38bdf8;"></i><span id="vwMsg">Loading...</span></div>' +
+          '<div id="vwBody" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;"></div>' +
+        '</div>' +
+        '<div id="vwToast" style="position:absolute;left:50%;bottom:22px;transform:translateX(-50%);background:#16a34a;color:#fff;font-weight:700;font-size:13px;padding:10px 18px;border-radius:12px;display:none;z-index:3;"></div>';
+      document.body.appendChild(el);
+      el.querySelector('#vwBack').onclick = closeViewer;
+      el.querySelector('#vwDl').addEventListener('click', () => {
+        const t = el.querySelector('#vwToast'); t.textContent = 'Downloading...'; t.style.display = 'block';
+        setTimeout(() => { t.textContent = 'Download started. Check your downloads.'; }, 1800);
+        setTimeout(() => { t.style.display = 'none'; }, 4500);
+      });
+      document.addEventListener('keydown', e => { if (e.key === 'Escape' && viewerEl && viewerEl.style.display !== 'none') closeViewer(); });
+      return (viewerEl = el);
+    }
+    function closeViewer() {
+      if (!viewerEl) return;
+      clearTimeout(viewerTimer);
+      viewerEl.querySelector('#vwBody').innerHTML = '';     // stops any video / audio
+      viewerEl.style.display = 'none'; document.body.style.overflow = '';
+    }
+    function openViewer(url, title) {
+      const plan = viewerPlan(url);
+      if (plan.kind === 'external') { window.open(plan.src, '_blank', 'noopener'); return; }   // e.g. Word files: the phone opens/downloads them itself
+      const el = buildViewer(), body = el.querySelector('#vwBody'), load = el.querySelector('#vwLoad'), msg = el.querySelector('#vwMsg');
+      el.querySelector('#vwTitle').textContent = title || 'File';
+      el.querySelector('#vwNew').href = url;
+      const dl = el.querySelector('#vwDl');
+      if (plan.dl) { dl.href = plan.dl; dl.setAttribute('download', ''); dl.style.display = ''; } else { dl.style.display = 'none'; }
+      body.innerHTML = ''; load.style.display = 'flex'; load.querySelector('i').className = 'fas fa-circle-notch fa-spin';
+      msg.textContent = plan.kind === 'video' ? 'Loading video...' : 'Loading...';
+      el.style.display = 'flex'; document.body.style.overflow = 'hidden';
+      const done = () => { load.style.display = 'none'; clearTimeout(viewerTimer); };
+      const failed = () => { msg.textContent = 'This file could not be shown here. Tap "New tab" at the top.'; load.querySelector('i').className = 'fas fa-triangle-exclamation'; };
+      let node;
+      if (plan.kind === 'video') { node = document.createElement('video'); node.controls = true; node.autoplay = true; node.playsInline = true; node.src = plan.src; node.style.cssText = 'max-width:100%;max-height:100%;background:#000;'; node.addEventListener('loadeddata', done); node.addEventListener('error', failed); }
+      else if (plan.kind === 'image') { node = document.createElement('img'); node.style.cssText = 'max-width:100%;max-height:100%;object-fit:contain;'; node.addEventListener('load', done); node.addEventListener('error', failed); node.src = plan.src; }
+      else { node = document.createElement('iframe'); node.style.cssText = 'width:100%;height:100%;border:0;background:#fff;'; node.allow = 'autoplay; fullscreen; encrypted-media'; node.allowFullscreen = true; node.addEventListener('load', done); node.src = plan.src; }
+      body.appendChild(node);
+      viewerTimer = setTimeout(() => { msg.textContent = 'Still loading... you can also tap "New tab" at the top.'; }, 12000);
+    }
+    /* every Open / video-card link inside the library uses the viewer */
+    document.addEventListener('click', function (e) {
+      const a = e.target.closest && e.target.closest('#repoGrid a[href]');
+      if (!a) return;
+      const href = a.getAttribute('href');
+      if (!safeUrl(href)) return;
+      e.preventDefault();
+      const row = a.closest('.file-row'), sp = row && row.querySelector('span');
+      openViewer(href, a.dataset.title || (sp ? sp.textContent.trim() : '') || 'File');
+    }, true);
+
+    /* ---------- BACK button (goes up one step) ---------- */
+    function libraryDepth() { return nav.folder ? 4 : nav.subject ? 3 : nav.cls ? 2 : nav.level ? 1 : 0; }
+    function updateBackBtn() {
+      const b = document.getElementById('backBtn'); if (!b) return;
+      const sb = document.getElementById('searchBox');
+      const show = !!((sb && sb.value.trim()) || specialView || classAll || libraryDepth() > 0);
+      b.style.display = show ? 'inline-flex' : 'none';
+    }
+    function goBack() {
+      const sb = document.getElementById('searchBox');
+      if (sb && sb.value.trim()) { sb.value = ''; renderLibrary(); return; }
+      if (specialView) { goTo(0); return; }
+      if (classAll) { classAll = null; renderLibrary(); return; }
+      const d = libraryDepth();
+      if (d === 0) return;
+      if (d === 4) { nav.folder = null; renderLibrary(); return; }
+      goTo(d - 1);
+    }
+    document.addEventListener('DOMContentLoaded', () => { const sb = document.getElementById('searchBox'); if (sb) sb.addEventListener('input', updateBackBtn); });
 
     /* ---------- "All Books / All Papers / All Videos" for one class ---------- */
     function classTotal(level, cls, folder) {
@@ -1787,7 +1845,7 @@
         const grid = document.createElement('div');
         grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(min(240px,100%),1fr));gap:16px;';
         list.forEach(v => {
-          const a = document.createElement('a'); a.href = v.link; a.target = '_blank'; a.rel = 'noopener';
+          const a = document.createElement('a'); a.href = v.link; a.target = '_blank'; a.rel = 'noopener'; a.dataset.title = v.title;
           a.style.cssText = 'display:block;text-decoration:none;color:#e2e8f0;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;overflow:hidden;';
           const when = v.date ? new Date(v.date).toLocaleDateString() : '';
           a.innerHTML = (safeUrl(v.thumb) ? '<img src="' + esc(v.thumb) + '" alt="" loading="lazy" style="width:100%;display:block;aspect-ratio:16/9;object-fit:cover;background:#0b112c;">' : '<div style="aspect-ratio:16/9;background:#0b112c;display:flex;align-items:center;justify-content:center;color:#ef4444;font-size:34px;"><i class="fab fa-youtube"></i></div>') +
@@ -1810,7 +1868,7 @@
     async function syncGoogleContent() {
       if (!studentSession || googleBusy) return;
       const useDrive = (googleSet(DRIVE_API_KEY) || googleSet(YOUTUBE_API_KEY)) && googleSet(DRIVE_FOLDER_ID);
-      const useYT = (googleSet(YOUTUBE_API_KEY) || googleSet(DRIVE_API_KEY)) && googleSet(YOUTUBE_CHANNEL);
+      const useYT = (googleSet(YOUTUBE_API_KEY) || googleSet(DRIVE_API_KEY)) && (googleSet(YOUTUBE_CHANNEL) || googleSet(YOUTUBE_PLAYLIST_ID));
       if (!useDrive && !useYT) return;
       googleBusy = true;
       const unplaced = [];
@@ -1825,55 +1883,6 @@
         rebuildResources(LAST_BOOKS);
       } finally { googleBusy = false; }
     }
-
-    /* ===================== FILE / VIDEO VIEWER =====================
-       Clicking Open / Download shows "Loading..." and the file opens right here in the portal. */
-    let viewerTimer = null;
-    function viewerUrlFor(url) {
-      let m;
-      if ((m = url.match(/[?&]v=([\w-]{6,})/)) && /youtube\.com/.test(url)) return 'https://www.youtube.com/embed/' + m[1] + '?autoplay=1&rel=0';
-      if ((m = url.match(/youtu\.be\/([\w-]{6,})/))) return 'https://www.youtube.com/embed/' + m[1] + '?autoplay=1&rel=0';
-      if ((m = url.match(/drive\.google\.com\/file\/d\/([\w-]+)/))) return 'https://drive.google.com/file/d/' + m[1] + '/preview';
-      if ((m = url.match(/[?&]id=([\w-]+)/)) && /drive\.google\.com/.test(url)) return 'https://drive.google.com/file/d/' + m[1] + '/preview';
-      const path = url.split('?')[0].toLowerCase();
-      const mobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-      if (/\.(docx?|pptx?|xlsx?)$/.test(path) || (mobile && /\.pdf$/.test(path))) return 'https://docs.google.com/gview?embedded=1&url=' + encodeURIComponent(url);
-      return url;
-    }
-    function openViewer(url, title) {
-      if (!safeUrl(url)) return;
-      const ov = document.getElementById('viewerOverlay'), fr = document.getElementById('viewerFrame'), ld = document.getElementById('viewerLoading');
-      const isVideo = /youtu|\.(mp4|webm|mov)(\?|$)/i.test(url);
-      document.getElementById('viewerTitle').textContent = title || '';
-      document.getElementById('viewerExternal').href = url;
-      document.getElementById('viewerLoadingText').textContent = isVideo ? 'Loading video...' : 'Downloading file, it will open in a moment...';
-      ld.style.display = 'flex';
-      clearTimeout(viewerTimer);
-      fr.onload = () => { ld.style.display = 'none'; clearTimeout(viewerTimer); };
-      fr.src = viewerUrlFor(url);
-      viewerTimer = setTimeout(() => { ld.style.display = 'none'; }, 20000);   // never leave the loading screen stuck
-      ov.classList.add('open');
-      document.body.style.overflow = 'hidden';
-    }
-    function closeViewer() {
-      clearTimeout(viewerTimer);
-      const fr = document.getElementById('viewerFrame');
-      fr.onload = null; fr.src = 'about:blank';          // also stops any playing video
-      document.getElementById('viewerOverlay').classList.remove('open');
-      document.body.style.overflow = '';
-    }
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeViewer(); });
-    document.addEventListener('click', e => {
-      if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.shiftKey || e.button) return;
-      const a = e.target.closest && e.target.closest('a[target="_blank"]');
-      if (!a || !a.closest('#repoGrid, #assignmentsGrid')) return;
-      const href = a.getAttribute('href');
-      if (!safeUrl(href)) return;
-      e.preventDefault();
-      const holder = a.closest('.file-row') || a;
-      const label = (holder.querySelector('.fc-name, span, div') || holder).textContent.trim().split('\n')[0];
-      openViewer(href, label);
-    });
 
     /* ===================== START-UP ===================== */
     (function startUp() {
