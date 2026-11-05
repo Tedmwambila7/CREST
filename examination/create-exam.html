@@ -1,0 +1,13 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Create Examination</title><link rel="stylesheet" href="exam.css"></head>
+<body><header><a href="../index.html" style="color:#fff;text-decoration:none;font-size:13px;">← CREST Academy home</a><h1>Create an Examination</h1></header><main><div class="card"><div id="message" class="message"></div>
+<form id="examForm">
+<label>Examination title</label><input name="title" required maxlength="150">
+<label>Subject</label><input name="subject" required maxlength="100">
+<label>Instructions</label><textarea name="instructions" placeholder="Instructions for students"></textarea>
+<div class="grid"><div><label>Duration (minutes)</label><input name="duration" type="number" min="1" max="600" required value="60"></div>
+<div><label>Maximum attempts</label><input name="maxAttempts" type="number" min="1" max="10" value="1"></div></div>
+<label>Access method</label><select name="accessType"><option value="code">Access code</option><option value="open">Open access</option></select>
+<label>Start date and time (optional)</label><input name="startsAt" type="datetime-local">
+<label>End date and time (optional)</label><input name="endsAt" type="datetime-local">
+<button type="submit">Create examination</button><a class="button secondary" href="teacher-dashboard.html">Cancel</a>
+</form></div></main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="exam.js"></script><script src="create-exam.js"></script></body></html>

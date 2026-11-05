@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Teacher Sign In | CREST Examinations</title>
+  <link rel="stylesheet" href="exam.css">
+</head>
+<body>
+  <header><h1>CREST — Teacher Sign In</h1></header>
+  <main>
+    <section class="card">
+      <h2>Teacher access</h2>
+      <p class="muted">Sign in with the teacher account authorised for the CREST examination system.</p>
+      <div id="message" class="message" role="status" aria-live="polite"></div>
+      <form id="teacherLoginForm">
+        <label for="email">Teacher email</label>
+        <input id="email" name="email" type="email" autocomplete="username" required>
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+        <button type="submit" id="loginButton">Sign in</button>
+        <a class="button secondary" href="index.html">Back</a>
+      </form>
+    </section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="exam.js"></script>
+  <script>
+    const form = document.getElementById("teacherLoginForm");
+    const message = document.getElementById("message");
+    const button = document.getElementById("loginButton");
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      button.disabled = true;
+      CREST_EXAM.message(message, "Signing in…", "info");
+      try {
+        const client = CREST_EXAM.getClient();
+        const { error } = await client.auth.signInWithPassword({
+          email: form.email.value.trim(),
+          password: form.password.value
+        });
+        if (error) throw error;
+        await CREST_EXAM.requireTeacher();
+        location.href = "teacher-dashboard.html";
+      } catch (error) {
+        try { await CREST_EXAM.getClient().auth.signOut(); } catch (_) {}
+        CREST_EXAM.message(message, error.message || "Sign-in failed.", "error");
+      } finally {
+        button.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

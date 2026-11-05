@@ -1,0 +1,15 @@
+:root{--green:#176b45;--dark:#123d2b;--light:#eef7f1;--border:#d8e3dc;--danger:#a52828;--text:#1e2923}
+*{box-sizing:border-box}body{margin:0;background:#f5f8f6;color:var(--text);font:16px/1.5 Arial,sans-serif}
+header{background:var(--dark);color:#fff;padding:18px 22px}header h1{margin:0;font-size:22px}
+main{width:min(1000px,94%);margin:24px auto}.card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;margin:16px 0;box-shadow:0 2px 8px #102b1b0b}
+h2{color:var(--dark);margin-top:0}label{display:block;font-weight:700;margin:13px 0 5px}
+input,textarea,select{width:100%;padding:11px;border:1px solid #aebdb3;border-radius:7px;font:inherit;background:#fff}
+textarea{min-height:90px}button,.button{display:inline-block;border:0;border-radius:7px;background:var(--green);color:#fff;padding:11px 16px;font-weight:700;cursor:pointer;text-decoration:none;margin:8px 6px 0 0}
+button.secondary,.button.secondary{background:#52665a}button.danger{background:var(--danger)}button:disabled{opacity:.55;cursor:not-allowed}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}.message{padding:10px;border-radius:7px;margin:12px 0;display:block}.message:empty{display:none}.message.error{background:#fdeaea;color:#842020}.message.success{background:#e5f5e9;color:#155c34}.message.info{background:#edf3f7;color:#23465b}
+.exam-item,.question-item{border:1px solid var(--border);border-radius:8px;padding:14px;margin:12px 0;background:#fff}
+.muted{color:#66736b;font-size:14px}.hidden{display:none!important}.option{display:flex;gap:10px;align-items:flex-start;padding:8px;border:1px solid var(--border);border-radius:7px;margin:7px 0}.option input{width:auto;margin-top:5px}
+.timer{font-size:22px;font-weight:700;color:var(--danger);position:sticky;top:0;background:#fff;padding:12px;border:1px solid var(--border);border-radius:8px}
+table{border-collapse:collapse;width:100%;background:#fff}th,td{padding:10px;border-bottom:1px solid var(--border);text-align:left}th{background:var(--light)}
+a{color:var(--green)}.top-links{display:flex;flex-wrap:wrap;gap:8px}
+@media(max-width:600px){main{width:96%;margin:12px auto}.card{padding:14px}header{padding:14px}}

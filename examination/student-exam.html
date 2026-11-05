@@ -1,0 +1,7 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Student Examination</title><link rel="stylesheet" href="exam.css"></head>
+<body><header><a href="../index.html" style="color:#fff;text-decoration:none;font-size:13px;">← CREST Academy home</a><h1>CREST Student Examination</h1></header><main>
+<section class="card" id="accessCard"><h2>Enter examination access code</h2><div id="message" class="message"></div>
+<form id="accessForm"><label>Access code (leave blank for open-access exams)</label><input name="code" autocomplete="off"><button type="submit">Find examination</button></form></section>
+<section class="card hidden" id="examCard"><div class="timer" id="timer">Time remaining: --:--</div><h2 id="examTitle"></h2><p id="examInstructions"></p><div id="questions"></div><button id="submitBtn">Submit examination</button></section>
+<section class="card hidden" id="doneCard"><h2>Examination submitted</h2><p id="doneText"></p><a class="button" href="index.html">Return home</a></section>
+</main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="exam.js"></script><script src="student.js"></script></body></html>

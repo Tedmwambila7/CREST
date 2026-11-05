@@ -1,0 +1,13 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Manage Questions</title><link rel="stylesheet" href="exam.css"></head>
+<body><header><h1>Manage Examination Questions</h1></header><main>
+<div class="card"><div id="message" class="message"></div><p id="examInfo" class="muted"></p>
+<form id="questionForm">
+<label>Question number</label><input name="number" type="number" min="1" required>
+<label>Question</label><textarea name="question" required></textarea>
+<div class="grid"><div><label>Option A</label><input name="a" required></div><div><label>Option B</label><input name="b" required></div><div><label>Option C</label><input name="c" required></div><div><label>Option D</label><input name="d" required></div></div>
+<div class="grid"><div><label>Correct answer</label><select name="correct"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div><div><label>Marks</label><input name="marks" type="number" min="1" value="1" required></div></div>
+<label>Explanation (optional; shown only where permitted)</label><textarea name="explanation"></textarea>
+<button type="submit">Save question</button>
+</form><div class="top-links"><button id="publishBtn">Publish examination</button><a class="button secondary" href="teacher-dashboard.html">Back to dashboard</a></div>
+</div><section class="card"><h2>Saved questions</h2><div id="questionList">Loading...</div></section>
+</main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="exam.js"></script><script src="questions.js"></script></body></html>
