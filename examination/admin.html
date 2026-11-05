@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CRESTACADA — Super Admin</title>
+  <link rel="stylesheet" href="exam.css">
+  <style>
+    :root{--navy:#10243b;--blue:#1769aa;--bg:#f3f6fa;--ink:#172536;--muted:#66768a;--line:#dce4ed}
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+    header{background:var(--navy);color:white;padding:22px max(18px,calc((100% - 1120px)/2))}
+    header h1{margin:0;font-size:23px}header p{margin:4px 0 0;color:#cbd8e6}
+    main{max-width:1120px;margin:24px auto;padding:0 16px 40px}
+    .panel,.stat{background:white;border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:0 4px 18px #10243b0a}
+    .login{max-width:440px;margin:50px auto}.hidden{display:none!important}
+    label{display:block;font-weight:650;margin:12px 0 5px}
+    input{width:100%;padding:12px;border:1px solid #c8d3df;border-radius:9px;font:inherit}
+    button,.button{display:inline-block;border:0;border-radius:9px;padding:11px 16px;background:var(--blue);color:white;text-decoration:none;font:inherit;font-weight:650;cursor:pointer}
+    button:disabled{opacity:.55;cursor:wait}.secondary{background:#e9eff5;color:#21384f}
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:18px}
+    .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:16px 0}
+    .stat strong{display:block;font-size:28px}.stat span{color:var(--muted);font-size:13px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    h2{font-size:18px;margin:0 0 14px}.muted{color:var(--muted)}.notice{padding:12px;border-radius:9px;background:#eef5fb;color:#23425f;margin:12px 0}
+    .message{margin:12px 0}.error{color:#a32222}.success{color:#176b3a}
+    .table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line);white-space:nowrap}th{font-size:12px;text-transform:uppercase;color:var(--muted)}
+    .tag{display:inline-block;padding:3px 8px;border-radius:20px;background:#e8f1fb;color:#17558b;font-size:12px}
+    @media(max-width:700px){.stats{grid-template-columns:1fr 1fr}.grid{grid-template-columns:1fr}header h1{font-size:20px}}
+  </style>
+</head>
+<body>
+<header>
+  <h1>CRESTACADA · Super Admin</h1>
+  <p>Examination system administration</p>
+</header>
+<main>
+  <section id="loginPanel" class="panel login">
+    <h2>Administrator sign in</h2>
+    <p class="muted">Use the email and password of the account assigned the super_admin role in Supabase.</p>
+    <div id="loginMessage" class="message" role="status"></div>
+    <form id="loginForm">
+      <label for="email">Email address</label>
+      <input id="email" name="email" type="email" autocomplete="username" required>
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+      <p><button id="loginButton" type="submit">Sign in securely</button></p>
+    </form>
+  </section>
+
+  <section id="dashboard" class="hidden">
+    <div class="toolbar">
+      <div><h2 style="margin:0">Administration overview</h2><span id="adminIdentity" class="muted"></span></div>
+      <div><button id="refreshButton" class="secondary" type="button">Refresh</button> <button id="logoutButton" type="button">Sign out</button></div>
+    </div>
+    <div id="dashboardMessage" class="message" role="status"></div>
+    <div class="notice"><strong>Initial release:</strong> this dashboard verifies your administrator role and displays records permitted by the database. Teacher creation, suspension and other changes will be enabled after the matching secure database functions and policies are installed.</div>
+    <div class="stats">
+      <div class="stat"><strong id="teacherCount">—</strong><span>Teacher accounts visible to admin</span></div>
+      <div class="stat"><strong id="studentCount">—</strong><span>Student profiles visible to admin</span></div>
+      <div class="stat"><strong id="examCount">—</strong><span>Examinations visible to admin</span></div>
+    </div>
+    <div class="grid">
+      <section class="panel">
+        <h2>Teacher accounts</h2>
+        <div class="table-wrap"><table><thead><tr><th>Name</th><th>Role</th><th>Account ID</th></tr></thead><tbody id="teachersBody"><tr><td colspan="3">Loading…</td></tr></tbody></table></div>
+      </section>
+      <section class="panel">
+        <h2>Recent examinations</h2>
+        <div class="table-wrap"><table><thead><tr><th>Title</th><th>Subject</th><th>Status</th></tr></thead><tbody id="examsBody"><tr><td colspan="3">Loading…</td></tr></tbody></table></div>
+      </section>
+    </div>
+    <p class="muted" style="font-size:12px;margin-top:18px">Security note: never place a Supabase service_role key in this website. Administrative account creation must run through a protected server-side function.</p>
+  </section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="exam.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>
