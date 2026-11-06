@@ -1,15 +1,15 @@
 
 /* CREST examinations — shared configuration and helpers.
-   Connected to MAIN CREST Supabase project.
+   Connected to CREST-EXAMINATION Supabase project.
    Never use a service_role key in browser code.
 */
 
 (() => {
   const SUPABASE_URL =
-    "https://otjybdiyoqnsynjbofuj.supabase.co";
+    "https://rvsmsucxgpdpdequzteb.supabase.co";
 
   const SUPABASE_ANON_KEY =
-    "sb_publishable_GijXkClgkvYF4vAC07qvPA_l3Zy7KHM";
+    "sb_publishable_BfNQFlXNB24JVFy0RBrNmw_iG5G8KOE";
 
   window.CREST_EXAM = window.CREST_EXAM || {};
   window.CREST_EXAM.client = null;
@@ -167,5 +167,3 @@
   };
 
 })();
-
-
