@@ -1,23 +1,24 @@
 
 /* CREST examinations — shared configuration and helpers.
-   Uses the MAIN CREST Supabase project.
-   NEVER use a service_role key in browser code.
+   Connected to MAIN CREST Supabase project.
+   Never use a service_role key in browser code.
 */
+
 (() => {
   const SUPABASE_URL =
     "https://otjybdiyoqnsynjbofuj.supabase.co";
 
-  // Paste the MAIN CREST project's publishable/anon key here.
   const SUPABASE_ANON_KEY =
-    "PASTE_MAIN_CREST_PUBLISHABLE_KEY_HERE";
+    "sb_publishable_GijXkClgkvYF4vAC07qvPA_l3Zy7KHM";
 
   window.CREST_EXAM = window.CREST_EXAM || {};
   window.CREST_EXAM.client = null;
 
+  // Initialize Supabase
   if (
     window.supabase &&
     SUPABASE_URL.startsWith("https://") &&
-    !SUPABASE_ANON_KEY.includes("PASTE_")
+    SUPABASE_ANON_KEY.startsWith("sb_publishable_")
   ) {
     window.CREST_EXAM.client =
       window.supabase.createClient(
@@ -26,17 +27,22 @@
       );
   }
 
+  // Get Supabase client
   window.CREST_EXAM.getClient = function () {
     if (!window.CREST_EXAM.client) {
       throw new Error(
-        "Supabase is not configured. Check the main CREST URL and publishable key."
+        "Supabase is not configured. Check the Supabase library and CREST configuration."
       );
     }
+
     return window.CREST_EXAM.client;
   };
 
+  // Student session token helper
   window.CREST_EXAM.getStudentSessionToken = function () {
-    if (typeof window.getCrestStudentSessionToken === "function") {
+    if (
+      typeof window.getCrestStudentSessionToken === "function"
+    ) {
       return window.getCrestStudentSessionToken();
     }
 
@@ -60,6 +66,7 @@
           if (typeof parsed === "string") return parsed;
           if (parsed.token) return parsed.token;
           if (parsed.session_token) return parsed.session_token;
+
         } catch (_) {
           return value;
         }
@@ -69,16 +76,19 @@
     return "";
   };
 
+  // Display messages
   window.CREST_EXAM.message = function (
     element,
     text,
     type = "info"
   ) {
     if (!element) return;
+
     element.textContent = text;
     element.className = "message " + type;
   };
 
+  // Escape HTML
   window.CREST_EXAM.escape = function (value) {
     return String(value ?? "").replace(/[&<>"']/g, c => ({
       "&": "&amp;",
@@ -89,6 +99,7 @@
     })[c]);
   };
 
+  // Format dates
   window.CREST_EXAM.formatDate = function (value) {
     if (!value) return "Not scheduled";
 
@@ -99,15 +110,17 @@
       : date.toLocaleString();
   };
 
+  // Supabase RPC helper
   window.CREST_EXAM.rpc = async function (name, params) {
     const { data, error } =
       await window.CREST_EXAM.getClient().rpc(name, params);
 
     if (error) throw error;
+
     return data;
   };
 
-  // Require a signed-in CREST staff account.
+  // Require a signed-in teacher or administrator
   window.CREST_EXAM.requireTeacher = async function () {
     const client = window.CREST_EXAM.getClient();
 
@@ -118,7 +131,7 @@
 
     if (error || !user) {
       throw new Error(
-        "Please sign in using your CREST Supabase account."
+        "Please sign in using your CREST account."
       );
     }
 
@@ -134,26 +147,25 @@
       !["teacher", "admin", "super_admin"].includes(profile.role)
     ) {
       throw new Error(
-        "This account is not registered as CREST teaching or administrative staff."
+        "You are not registered as CREST teaching or administrative staff."
       );
     }
 
     return { user, profile };
   };
 
-  // Require the actual Super Admin role.
+  // Require Super Admin specifically
   window.CREST_EXAM.requireSuperAdmin = async function () {
     const { user, profile } =
       await window.CREST_EXAM.requireTeacher();
 
     if (profile.role !== "super_admin") {
-      throw new Error(
-        "Super Admin access required."
-      );
+      throw new Error("Super Admin access required.");
     }
 
     return { user, profile };
   };
 
 })();
+
 
