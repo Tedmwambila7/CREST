@@ -61,7 +61,7 @@
 
   async function callTeacherFunction(action, payload = {}) {
     const { data, error } = await client.functions.invoke(
-      "crest-admin-teachers",
+      "super-function",
       { body: { action, ...payload } }
     );
 
