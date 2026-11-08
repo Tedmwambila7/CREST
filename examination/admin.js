@@ -66,8 +66,14 @@
     );
 
     if (error) {
-      throw new Error(error.message || "Teacher service could not be reached.");
-    }
+  let details = error.message;
+
+  if (error.context && typeof error.context.clone === "function") {
+    details = await error.context.clone().text();
+  }
+
+  throw new Error(details || "Teacher service failed.");
+}
 
     if (data?.error) {
       throw new Error(data.error);
