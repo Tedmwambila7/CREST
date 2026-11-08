@@ -3,61 +3,52 @@
   "use strict";
 
   const client = window.CREST_EXAM;
+  const $ = id => document.getElementById(id);
 
-  const $ = (id) => document.getElementById(id);
+  if (!client) {
+    alert("CREST connection missing. Check exam.js.");
+    return;
+  }
 
   const loginPanel = $("loginPanel");
   const dashboard = $("dashboard");
   const loginForm = $("loginForm");
-  const loginButton = $("loginButton");
-  const emailInput = $("email");
-  const passwordInput = $("password");
-  const adminIdentity = $("adminIdentity");
   const dashboardMessage = $("dashboardMessage");
-  const teachersBody = $("teachersBody");
-  const examsBody = $("examsBody");
 
-  if (!client) {
-    alert("CREST Supabase connection is missing. Check exam.js.");
-    return;
+  function showMessage(text, error = false) {
+    if (dashboardMessage) {
+      dashboardMessage.textContent = text;
+      dashboardMessage.style.color = error ? "red" : "green";
+    }
   }
 
-  function message(text, error = false) {
-    if (!dashboardMessage) return;
-    dashboardMessage.textContent = text;
-    dashboardMessage.style.color = error ? "#dc2626" : "#15803d";
-  }
-
-  async function edge(action, payload = {}) {
+  async function callFunction(action, payload = {}) {
     const { data, error } = await client.functions.invoke(
       "crest-admin-teachers",
       { body: { action, ...payload } }
     );
 
-    if (error) throw new Error(error.message || "Edge Function failed.");
+    if (error) throw new Error(error.message);
     if (data?.error) throw new Error(data.error);
 
     return data;
   }
 
-  async function verifySuperAdmin() {
-    const { data: sessionData, error: sessionError } =
-      await client.auth.getSession();
+  async function verifyAdmin() {
+    const { data: session } = await client.auth.getSession();
 
-    if (sessionError || !sessionData.session) return false;
+    if (!session.session) return false;
 
     const { data, error } = await client
       .from("profiles")
-      .select("full_name, email, role")
-      .eq("id", sessionData.session.user.id)
+      .select("full_name,email,role")
+      .eq("id", session.session.user.id)
       .single();
 
-    if (error || data?.role !== "super_admin") {
-      return false;
-    }
+    if (error || data?.role !== "super_admin") return false;
 
-    if (adminIdentity) {
-      adminIdentity.textContent =
+    if ($("adminIdentity")) {
+      $("adminIdentity").textContent =
         data.full_name || data.email || "Super Admin";
     }
 
@@ -74,59 +65,72 @@
     if (dashboard) dashboard.style.display = "block";
   }
 
-  function addTeacherPanel() {
-    if (!dashboard || $("crestTeacherPanel")) return;
+  function createTeacherPanel() {
+    if ($("crestTeacherPanel") || !dashboard) return;
 
     const panel = document.createElement("section");
     panel.id = "crestTeacherPanel";
-    panel.className = "card";
-    panel.style.cssText =
-      "background:white;padding:20px;margin:20px 0;border-radius:12px;";
+
+    panel.style.cssText = `
+      display:block!important;
+      visibility:visible!important;
+      background:#ffffff;
+      color:#172033;
+      padding:25px;
+      margin:20px 0;
+      border:2px solid #d8e2ef;
+      border-radius:12px;
+      width:100%;
+      box-sizing:border-box;
+    `;
 
     panel.innerHTML = `
-      <h2>Register New Teacher</h2>
+      <h2 style="color:#123b70;margin-top:0">
+        Register New Teacher
+      </h2>
+
       <form id="crestTeacherForm">
-        <p>
-          <label>Teacher Full Name</label><br>
-          <input id="crestTeacherName" type="text" required
-            placeholder="Enter full name"
-            style="width:100%;padding:12px;margin:6px 0;">
-        </p>
-        <p>
-          <label>Email Address</label><br>
-          <input id="crestTeacherEmail" type="email" required
-            placeholder="teacher@example.com"
-            style="width:100%;padding:12px;margin:6px 0;">
-        </p>
-        <p>
-          <label>Temporary Password (minimum 8 characters)</label><br>
-          <input id="crestTeacherPassword" type="password"
-            minlength="8" required
-            placeholder="Create temporary password"
-            style="width:100%;padding:12px;margin:6px 0;">
-        </p>
+
+        <label for="crestTeacherName">Full Name</label>
+        <input id="crestTeacherName" required
+          type="text" placeholder="Teacher full name"
+          style="display:block;width:100%;box-sizing:border-box;padding:13px;margin:8px 0 18px;border:1px solid #aaa;border-radius:6px;">
+
+        <label for="crestTeacherEmail">Email Address</label>
+        <input id="crestTeacherEmail" required
+          type="email" placeholder="teacher@example.com"
+          style="display:block;width:100%;box-sizing:border-box;padding:13px;margin:8px 0 18px;border:1px solid #aaa;border-radius:6px;">
+
+        <label for="crestTeacherPassword">Temporary Password</label>
+        <input id="crestTeacherPassword" required
+          type="password" minlength="8"
+          placeholder="Minimum 8 characters"
+          style="display:block;width:100%;box-sizing:border-box;padding:13px;margin:8px 0 18px;border:1px solid #aaa;border-radius:6px;">
+
         <button id="crestTeacherSubmit" type="submit"
-          style="padding:12px 22px;cursor:pointer;">
-          Register Teacher
+          style="display:block!important;visibility:visible!important;opacity:1!important;width:100%;padding:16px;background:#123b70!important;color:#ffffff!important;border:none;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;">
+          REGISTER TEACHER
         </button>
+
       </form>
-      <p id="crestTeacherMessage" role="status"></p>
+
+      <p id="crestTeacherMessage"
+        style="font-weight:bold;margin-top:15px"></p>
     `;
 
     dashboard.prepend(panel);
 
-    $("crestTeacherForm").addEventListener("submit", async (event) => {
+    $("crestTeacherForm").addEventListener("submit", async event => {
       event.preventDefault();
 
       const button = $("crestTeacherSubmit");
       const output = $("crestTeacherMessage");
 
       button.disabled = true;
-      button.textContent = "Registering...";
-      output.textContent = "";
+      button.textContent = "REGISTERING...";
 
       try {
-        const result = await edge("create", {
+        const result = await callFunction("create", {
           full_name: $("crestTeacherName").value.trim(),
           email: $("crestTeacherEmail").value.trim(),
           password: $("crestTeacherPassword").value
@@ -144,54 +148,54 @@
         output.textContent = error.message;
       } finally {
         button.disabled = false;
-        button.textContent = "Register Teacher";
+        button.textContent = "REGISTER TEACHER";
       }
     });
   }
 
   async function loadTeachers() {
-    const result = await edge("list");
+    const result = await callFunction("list");
     const teachers = result.teachers || [];
 
     if ($("teacherCount")) {
       $("teacherCount").textContent = teachers.length;
     }
 
-    if (!teachersBody) return;
+    const body = $("teachersBody");
+    if (!body) return;
 
-    teachersBody.innerHTML = "";
+    body.innerHTML = "";
 
     if (!teachers.length) {
-      teachersBody.innerHTML =
+      body.innerHTML =
         '<tr><td colspan="3">No teachers registered yet.</td></tr>';
       return;
     }
 
-    teachers.forEach((teacher) => {
-      const tr = document.createElement("tr");
+    teachers.forEach(teacher => {
+      const row = document.createElement("tr");
 
-      const nameCell = document.createElement("td");
-      nameCell.textContent = teacher.full_name || "Unnamed";
-      if (teacher.email) {
-        const small = document.createElement("small");
-        small.textContent = teacher.email;
-        small.style.display = "block";
-        nameCell.appendChild(small);
-      }
+      const name = document.createElement("td");
+      name.textContent = teacher.full_name || "Unnamed";
 
-      const roleCell = document.createElement("td");
-      roleCell.textContent = teacher.role || "teacher";
+      const email = document.createElement("small");
+      email.textContent = teacher.email || "";
+      email.style.display = "block";
+      name.appendChild(email);
 
-      const idCell = document.createElement("td");
-      idCell.textContent = teacher.id || "";
+      const role = document.createElement("td");
+      role.textContent = teacher.role || "teacher";
 
-      tr.append(nameCell, roleCell, idCell);
-      teachersBody.appendChild(tr);
+      const id = document.createElement("td");
+      id.textContent = teacher.id || "";
+
+      row.append(name, role, id);
+      body.appendChild(row);
     });
   }
 
   async function loadDashboard() {
-    message("Loading dashboard...");
+    showMessage("Loading dashboard...");
 
     try {
       const { count: students, error: studentError } = await client
@@ -211,41 +215,40 @@
       if ($("examCount")) $("examCount").textContent = exams ?? 0;
 
       await loadTeachers();
+      showMessage("Dashboard loaded successfully.");
 
-      message("Dashboard loaded successfully.");
     } catch (error) {
-      message(error.message, true);
+      showMessage(error.message, true);
     }
   }
 
   async function startDashboard() {
-    const authorised = await verifySuperAdmin();
-
-    if (!authorised) {
+    if (!await verifyAdmin()) {
       await client.auth.signOut();
       showLogin();
-      message("Super Admin account not authorised.", true);
+      showMessage("Super Admin access required.", true);
       return;
     }
 
     showDashboard();
-    addTeacherPanel();
+    createTeacherPanel();
     await loadDashboard();
   }
 
   if (loginForm) {
-    loginForm.addEventListener("submit", async (event) => {
+    loginForm.addEventListener("submit", async event => {
       event.preventDefault();
 
-      if (loginButton) {
-        loginButton.disabled = true;
-        loginButton.textContent = "Signing in...";
+      const button = $("loginButton");
+      if (button) {
+        button.disabled = true;
+        button.textContent = "Signing in...";
       }
 
       try {
         const { error } = await client.auth.signInWithPassword({
-          email: emailInput.value.trim(),
-          password: passwordInput.value
+          email: $("email").value.trim(),
+          password: $("password").value
         });
 
         if (error) throw error;
@@ -253,11 +256,11 @@
         await startDashboard();
 
       } catch (error) {
-        message(error.message, true);
+        showMessage(error.message, true);
       } finally {
-        if (loginButton) {
-          loginButton.disabled = false;
-          loginButton.textContent = "Sign In";
+        if (button) {
+          button.disabled = false;
+          button.textContent = "Sign In";
         }
       }
     });
@@ -274,10 +277,8 @@
     });
   }
 
-  client.auth.onAuthStateChange((event, session) => {
-    if (event === "SIGNED_OUT" || !session) {
-      showLogin();
-    }
+  client.auth.onAuthStateChange((event) => {
+    if (event === "SIGNED_OUT") showLogin();
   });
 
   showLogin();
@@ -285,4 +286,7 @@
   client.auth.getSession().then(({ data }) => {
     if (data.session) startDashboard();
   });
+
 })();
+
+ 
