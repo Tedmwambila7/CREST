@@ -24,3 +24,12 @@ this student page is considered compatible with questions created here.
 
 Do not run setup.sql as a shortcut for the current schema. It describes the
 legacy data model and may conflict with the current examination tables.
+
+
+PDF QUESTION IMPORT
+[ ] Run pdf-question-upload-migration.sql in the CREST Examination Supabase project.
+[ ] Confirm private bucket `crest-question-papers` exists.
+[ ] Upload a text-based sample PDF and verify extracted text.
+[ ] Confirm the original PDF opens through its temporary signed URL.
+[ ] Transfer a sample question, complete its answer/marks, and save it.
+[ ] Test with a scanned PDF and confirm the OCR limitation is clearly reported.

@@ -40,6 +40,36 @@
       <div id="pageMessage" class="message" role="status" aria-live="polite"></div>
     </section>
 
+    <section class="q-card" id="pdfImportCard">
+      <div class="q-section-heading">
+        <div>
+          <p class="eyebrow">PDF QUESTION IMPORT</p>
+          <h2>Upload an existing question paper</h2>
+          <p class="muted">Keep the original PDF and extract its selectable text to help build this online examination.</p>
+        </div>
+      </div>
+      <div class="pdf-import-grid">
+        <div>
+          <label for="questionPdf">Choose a PDF question paper</label>
+          <input id="questionPdf" type="file" accept="application/pdf,.pdf">
+          <p class="field-help">PDF only. Maximum file size: 20 MB.</p>
+          <button type="button" id="uploadExtractPdf">Upload and extract text</button>
+          <p id="pdfImportStatus" class="message" role="status" aria-live="polite"></p>
+          <a id="openOriginalPdf" class="pdf-original-link" href="#" target="_blank" rel="noopener" hidden>Open uploaded original PDF</a>
+        </div>
+        <div>
+          <label for="extractedPdfText">Extracted text — review before using</label>
+          <textarea id="extractedPdfText" rows="12" placeholder="Text extracted from your PDF will appear here. Check it carefully; page layouts may affect extraction."></textarea>
+          <div class="pdf-import-actions">
+            <button type="button" id="usePdfText" class="secondary-btn">Use selected text in question editor</button>
+            <button type="button" id="useAllPdfText" class="secondary-btn">Use all extracted text</button>
+          </div>
+          <p class="field-help">Select one question in the text box and use the first button. Then choose its question type, add options and answers, and save it below. Repeat for each question.</p>
+        </div>
+      </div>
+      <p class="field-help">Scanned/image-only PDFs may not contain selectable text. This version stores the original PDF but does not yet perform OCR; those questions must be typed or transcribed by the teacher.</p>
+    </section>
+
     <section class="q-card" id="questionEditor">
       <div class="q-section-heading">
         <div>
@@ -120,7 +150,9 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="exam.js"></script>
   <script src="questions.js"></script>
+  <script src="pdf-import.js"></script>
 </body>
 </html>

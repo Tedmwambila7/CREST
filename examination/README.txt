@@ -99,3 +99,24 @@ SAFE OPERATING NOTES
   database safeguard will reject that operation.
 - Test with a draft examination before publishing a real examination.
 - Hard-refresh the browser after replacing files (Ctrl + Shift + R).
+
+
+PDF QUESTION PAPER IMPORT
+-------------------------
+The Question Management page now includes a PDF upload and text-extraction panel.
+Before using it, run `pdf-question-upload-migration.sql` in the CREST Examination
+Supabase project. This creates a private Storage bucket and an RLS-protected
+metadata table. Uploads are stored under the authenticated teacher's user ID.
+
+The browser extracts selectable PDF text with PDF.js. Teachers must review the
+extracted text and transfer each question into the existing Question Management
+form, where they choose the question type, options, correct answer/marking guide
+and marks before saving. This deliberately avoids guessing question boundaries
+or answer keys. Scanned/image-only PDFs are stored but are not OCR-processed in
+this version; their questions must be transcribed manually.
+
+The uploaded original PDF is kept privately in Supabase Storage. The page offers
+a temporary signed link after upload. The import panel does not publish an exam
+and does not expose marking answers to students. The student delivery limitation
+above still applies until the newer student delivery and marking backend is
+implemented.
