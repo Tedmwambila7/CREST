@@ -1,47 +1,60 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#123d2b">
   <title>Question Management | CREST Academy</title>
   <link rel="stylesheet" href="exam.css">
   <link rel="stylesheet" href="questions.css">
 </head>
 <body>
-  <header>
-    <a href="teacher-dashboard.html" class="back-link">← Dashboard</a>
-    <h1>CREST — Question Management</h1>
-    <p>Create, edit and manage examination questions.</p>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand-link" href="teacher-dashboard.html">← Teacher dashboard</a>
+      <div>
+        <h1>Question Management</h1>
+        <p>Create and organise the questions for an examination.</p>
+      </div>
+    </div>
   </header>
-
   <main>
+    <nav class="top-links" aria-label="Question management navigation">
+      <a class="button secondary" href="crest-master.html">Master dashboard</a>
+      <a class="button secondary" href="teacher-dashboard.html">All examinations</a>
+      <a class="button secondary" href="index.html">Examination home</a>
+    </nav>
+
     <section class="q-card">
       <div class="q-toolbar">
         <div>
-          <h2>Examination</h2>
-          <p>Select the examination whose questions you want to manage.</p>
+          <h2>Select examination</h2>
+          <p class="muted">Choose which examination to edit.</p>
         </div>
-        <button type="button" id="refreshQuestions" class="secondary-btn">
-          Refresh
-        </button>
+        <button type="button" id="refreshQuestions" class="secondary-btn">Refresh questions</button>
       </div>
-
+      <label for="examSelect">Examination</label>
       <select id="examSelect">
         <option value="">Loading examinations...</option>
       </select>
-      <div id="pageMessage" role="status"></div>
+      <div id="pageMessage" class="message" role="status" aria-live="polite"></div>
     </section>
 
     <section class="q-card" id="questionEditor">
-      <h2 id="formHeading">Add a question</h2>
+      <div class="q-section-heading">
+        <div>
+          <p class="eyebrow">QUESTION EDITOR</p>
+          <h2 id="formHeading">Add a question</h2>
+        </div>
+        <span class="editor-note">Changes are saved to this examination.</span>
+      </div>
 
       <form id="questionForm">
         <input type="hidden" id="questionId">
 
-        <label for="questionText">Question</label>
-        <textarea id="questionText" rows="4"
-          placeholder="Enter the question here..." required></textarea>
+        <label for="questionText">Question text</label>
+        <textarea id="questionText" rows="4" maxlength="10000"
+          placeholder="Write the question clearly..." required></textarea>
 
         <div class="q-grid">
           <div>
@@ -50,51 +63,44 @@
               <option value="multiple_choice">Multiple choice</option>
               <option value="true_false">True / False</option>
               <option value="short_answer">Short answer</option>
-              <option value="essay">Essay / Written</option>
+              <option value="essay">Essay / Written response</option>
             </select>
           </div>
-
           <div>
             <label for="questionMarks">Marks</label>
-            <input type="number" id="questionMarks" min="0.1"
-              step="0.1" value="1" required>
+            <input type="number" id="questionMarks" min="0.1" step="0.1" value="1" required>
           </div>
-
           <div>
             <label for="questionOrder">Question number</label>
-            <input type="number" id="questionOrder" min="1"
-              step="1" value="1" required>
+            <input type="number" id="questionOrder" min="1" step="1" value="1" required>
           </div>
         </div>
 
         <div id="optionsSection">
           <div class="options-heading">
-            <h3>Answer options</h3>
-            <button type="button" id="addOption" class="secondary-btn">
-              + Add option
-            </button>
+            <div>
+              <h3>Answer options</h3>
+              <p class="muted">Choose one correct answer.</p>
+            </div>
+            <button type="button" id="addOption" class="secondary-btn">+ Add option</button>
           </div>
-          <p class="hint">Enter each option and select exactly one correct answer.</p>
           <div id="optionsContainer"></div>
         </div>
 
         <label for="correctAnswer">Expected answer / marking guide</label>
-        <textarea id="correctAnswer" rows="2"
-          placeholder="Optional for written questions; useful as a marking guide."></textarea>
+        <textarea id="correctAnswer" rows="3"
+          placeholder="For short-answer and essay questions, enter the marking guide."></textarea>
 
         <label for="explanation">Explanation (optional)</label>
         <textarea id="explanation" rows="2"
-          placeholder="Explain why the answer is correct..."></textarea>
+          placeholder="Provide an explanation for the correct answer."></textarea>
 
         <label for="imageUrl">Question image URL (optional)</label>
-        <input type="url" id="imageUrl"
-          placeholder="https://example.com/image.jpg">
+        <input type="url" id="imageUrl" placeholder="https://example.com/image.jpg">
 
         <div class="q-actions">
           <button type="submit" id="saveQuestion">Save question</button>
-          <button type="button" id="cancelEdit" class="secondary-btn">
-            Clear form
-          </button>
+          <button type="button" id="cancelEdit" class="secondary-btn">Clear form</button>
         </div>
       </form>
     </section>
@@ -102,11 +108,12 @@
     <section class="q-card">
       <div class="q-toolbar">
         <div>
+          <p class="eyebrow">QUESTION BANK</p>
           <h2>Saved questions</h2>
-          <p id="questionCount">0 questions</p>
+          <p id="questionCount" class="muted">0 questions</p>
         </div>
       </div>
-      <div id="questionList">
+      <div id="questionList" aria-live="polite">
         Select an examination to view its questions.
       </div>
     </section>

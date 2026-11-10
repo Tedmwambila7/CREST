@@ -124,7 +124,7 @@
       const status = String(exam.status || "unknown").toLowerCase();
 
       const start = exam.scheduled_at || exam.start_time;
-      const end = exam.ends_at || exam.end_time;
+      const end = exam.ends_at;
 
       return `
         <article class="exam-item">
@@ -188,7 +188,6 @@
           total_marks,
           status,
           start_time,
-          end_time,
           scheduled_at,
           ends_at,
           class_name,

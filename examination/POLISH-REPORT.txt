@@ -1,0 +1,47 @@
+CREST EXAMINATION FOLDER — POLISH REPORT
+========================================
+
+What was corrected in this package
+----------------------------------
+1. Confirmed the actual project directory is `CREST-main/examination/`.
+2. Consolidated shared styling and responsive layout.
+3. Updated the teacher dashboard navigation and examination cards.
+4. Added a direct route to the Master Examination Dashboard.
+5. Updated examination creation to call the versioned RPC
+   `crest_teacher_create_examination_v2`, matching the current schema.
+6. Added subject linking, total marks, pass mark percentage, duration,
+   instructions and scheduling fields to the create form.
+7. Corrected the Master Dashboard query so it no longer requests `end_time`.
+8. Reworked Question Management:
+   - MCQ, True/False, short-answer and essay question types.
+   - Dynamic answer options and one correct option.
+   - Edit and delete controls.
+   - Image URL validation.
+   - Hidden option inputs no longer block written-question submission.
+   - Clearer loading, empty and error states.
+9. Updated the results page to use the newer `examination_results` table.
+10. Updated the shared helper to permit teacher, admin and super_admin roles.
+11. Added a database migration for pass marks, automatic examination total
+    marks, and protection of questions that already have student answers.
+12. Rewrote the folder instructions and marked setup.sql as a legacy migration.
+
+Checks performed
+----------------
+- All eight JavaScript files passed `node --check`.
+- All local HTML script and stylesheet references were checked; no missing
+  local references were found.
+- The archive was rebuilt with the complete original CREST project and the
+  polished examination folder.
+
+Important remaining integration boundary
+-----------------------------------------
+The student page still uses the earlier session-token RPC flow and legacy
+questions/answer_keys tables. The new staff editor writes to
+examination_questions/examination_question_options. These are separate
+data models. The student delivery and marking backend must be migrated to
+the new model before the student portal can sit papers created by the new
+Question Management page.
+
+No Supabase database migration was executed by creating this ZIP. Run
+master-code-5-polish.sql in the CREST Examination Supabase project before
+using the updated examination creation form and total-mark safeguards.

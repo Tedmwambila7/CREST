@@ -1,3 +1,9 @@
+-- LEGACY STUDENT-FLOW MIGRATION — NOT FOR ROUTINE USE WITH THE CURRENT SCHEMA.
+-- This script targets the earlier crest_students/questions/answer_keys flow.
+-- The current staff question editor uses examination_questions and
+-- examination_question_options. Review README.txt before running this file.
+-- Do not run this script simply to fix the current staff dashboard.
+--
 -- CREST examination module migration
 -- Run once in Supabase SQL Editor after backing up your project.
 -- This script reuses existing tables and adds server-side RPC functions.

@@ -1,13 +1,83 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Create Examination</title><link rel="stylesheet" href="exam.css"></head>
-<body><header><a href="../index.html" style="color:#fff;text-decoration:none;font-size:13px;">← CREST Academy home</a><h1>Create an Examination</h1></header><main><div class="card"><div id="message" class="message"></div>
-<form id="examForm">
-<label>Examination title</label><input name="title" required maxlength="150">
-<label>Subject</label><input name="subject" required maxlength="100">
-<label>Instructions</label><textarea name="instructions" placeholder="Instructions for students"></textarea>
-<div class="grid"><div><label>Duration (minutes)</label><input name="duration" type="number" min="1" max="600" required value="60"></div>
-<div><label>Maximum attempts</label><input name="maxAttempts" type="number" min="1" max="10" value="1"></div></div>
-<label>Access method</label><select name="accessType"><option value="code">Access code</option><option value="open">Open access</option></select>
-<label>Start date and time (optional)</label><input name="startsAt" type="datetime-local">
-<label>End date and time (optional)</label><input name="endsAt" type="datetime-local">
-<button type="submit">Create examination</button><a class="button secondary" href="teacher-dashboard.html">Cancel</a>
-</form></div></main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="exam.js"></script><script src="create-exam.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Create Examination | CREST Academy</title>
+  <link rel="stylesheet" href="exam.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand-link" href="teacher-dashboard.html">← Teacher dashboard</a>
+      <div>
+        <h1>Create an Examination</h1>
+        <p>Set the examination details before adding questions.</p>
+      </div>
+    </div>
+  </header>
+  <main>
+    <section class="card form-card">
+      <div id="message" class="message" role="status"></div>
+      <form id="examForm">
+        <div class="form-section">
+          <h2>Examination details</h2>
+          <label for="title">Examination title</label>
+          <input id="title" name="title" type="text" maxlength="150"
+            placeholder="e.g. End of Term Mathematics Examination" required>
+
+          <label for="subject">Subject</label>
+          <input id="subject" name="subject" type="text" maxlength="100"
+            placeholder="Enter subject name" required>
+
+          <label for="subjectId">Link to a registered subject (optional)</label>
+          <select id="subjectId" name="subjectId">
+            <option value="">No subject link / custom subject</option>
+          </select>
+          <p class="field-help">Selecting a registered subject will fill the subject name above.</p>
+
+          <label for="instructions">Instructions for students</label>
+          <textarea id="instructions" name="instructions" rows="4"
+            placeholder="Explain how students should complete the examination."></textarea>
+        </div>
+
+        <div class="form-section">
+          <h2>Marks and timing</h2>
+          <div class="form-grid">
+            <div>
+              <label for="duration">Duration (minutes)</label>
+              <input id="duration" name="duration" type="number"
+                min="1" max="600" value="60" required>
+            </div>
+            <div>
+              <label for="totalMarks">Total marks</label>
+              <input id="totalMarks" name="totalMarks" type="number"
+                min="0" step="0.5" value="0" required>
+              <p class="field-help">Question marks will update the examination total automatically.</p>
+            </div>
+            <div>
+              <label for="passMark">Pass mark (%)</label>
+              <input id="passMark" name="passMark" type="number"
+                min="0" max="100" step="0.5" value="50" required>
+            </div>
+          </div>
+
+          <label for="startTime">Start date and time (optional)</label>
+          <input id="startTime" name="startTime" type="datetime-local">
+
+          <label for="endsAt">End date and time (optional)</label>
+          <input id="endsAt" name="endsAt" type="datetime-local">
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" id="createExamBtn">Create examination</button>
+          <a class="button secondary" href="teacher-dashboard.html">Cancel</a>
+        </div>
+      </form>
+    </section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="exam.js"></script>
+  <script src="create-exam.js"></script>
+</body>
+</html>

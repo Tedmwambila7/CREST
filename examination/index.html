@@ -2,26 +2,45 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#123d2b">
   <title>CREST Examination Centre</title>
   <link rel="stylesheet" href="exam.css">
 </head>
 <body>
-  <header><h1>CREST Examination Centre</h1></header>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand-link" href="../index.html">CREST Academy</a>
+      <div>
+        <h1>Examination Centre</h1>
+        <p>A single place to manage and sit CREST examinations.</p>
+      </div>
+    </div>
+  </header>
   <main>
     <section class="card">
       <h2>Welcome to the Examination Centre</h2>
-      <p>Choose the area you need.</p>
+      <p class="muted">Choose the portal that matches your role.</p>
       <div class="grid">
         <article class="exam-item">
           <h3>Student examination</h3>
-          <p class="muted">Enter an examination access code, sit an available examination and submit your answers.</p>
-          <a class="button" href="student-exam.html">Continue as student</a>
+          <p class="muted">Open an available examination and submit your answers.</p>
+          <a class="button" href="student-exam.html">Student portal</a>
         </article>
         <article class="exam-item">
           <h3>Teacher portal</h3>
-          <p class="muted">Sign in to create examinations, add questions, publish papers and manage results.</p>
+          <p class="muted">Create examinations, add questions and review results.</p>
           <a class="button" href="teacher-login.html">Teacher sign in</a>
+        </article>
+        <article class="exam-item">
+          <h3>Examination management</h3>
+          <p class="muted">Open the master dashboard after signing in with an authorised staff account.</p>
+          <a class="button secondary" href="crest-master.html">Master dashboard</a>
+        </article>
+        <article class="exam-item">
+          <h3>Super Admin</h3>
+          <p class="muted">Manage authorised teacher accounts and review system activity.</p>
+          <a class="button secondary" href="admin.html">Super Admin portal</a>
         </article>
       </div>
       <p><a class="button secondary" href="../index.html">Return to CREST Academy home</a></p>

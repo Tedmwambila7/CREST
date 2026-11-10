@@ -49,6 +49,18 @@ body {
   text-decoration: none;
   font-size: 13px;
 }
+.master-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
+}
+.master-nav a {
+  color: #dce9f5;
+  text-decoration: none;
+  font-size: 13px;
+}
+.master-nav a:hover { text-decoration: underline; }
 
 .container {
   max-width: 1150px;

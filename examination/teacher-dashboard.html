@@ -1,5 +1,42 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Teacher Dashboard</title><link rel="stylesheet" href="exam.css"></head>
-<body><header><a href="../index.html" style="color:#fff;text-decoration:none;font-size:13px;">← CREST Academy home</a><h1>CREST — Teacher Dashboard</h1></header><main>
-<div class="top-links"><a class="button" href="create-exam.html">Create examination</a><a class="button secondary" href="index.html">Home</a><button id="refreshBtn" class="secondary">Refresh</button></div>
-<div id="message" class="message"></div><section class="card"><h2>Your examinations</h2><div id="examList">Loading examinations...</div></section>
-</main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="exam.js"></script><script src="teacher.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#123d2b">
+  <title>Teacher Dashboard | CREST Academy</title>
+  <link rel="stylesheet" href="exam.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand-link" href="../index.html">CREST Academy</a>
+      <div>
+        <h1>Teacher Dashboard</h1>
+        <p>Manage examinations, questions and student results.</p>
+      </div>
+    </div>
+  </header>
+  <main>
+    <nav class="top-links" aria-label="Examination navigation">
+      <a class="button" href="create-exam.html">+ Create examination</a>
+      <a class="button secondary" href="crest-master.html">Master dashboard</a>
+      <a class="button secondary" href="index.html">Examination home</a>
+      <button id="refreshBtn" class="secondary" type="button">Refresh</button>
+    </nav>
+    <div id="message" class="message" role="status"></div>
+    <section class="card">
+      <div class="section-heading">
+        <div>
+          <h2>Your examinations</h2>
+          <p class="muted">Open an examination to manage its questions or review its results.</p>
+        </div>
+      </div>
+      <div id="examList" aria-live="polite">Loading examinations...</div>
+    </section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="exam.js"></script>
+  <script src="teacher.js"></script>
+</body>
+</html>

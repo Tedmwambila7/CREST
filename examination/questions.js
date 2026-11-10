@@ -1,13 +1,12 @@
-
 /* =========================================================
    CREST EXAMINATION — QUESTION MANAGEMENT
-   Uses existing exam.js and Supabase connection.
+   Uses examination_questions and examination_question_options.
    ========================================================= */
-
 (() => {
   "use strict";
 
   const E = window.CREST_EXAM;
+  const $ = id => document.getElementById(id);
 
   if (!E || typeof E.getClient !== "function") {
     alert("CREST connection error. Check that exam.js loads first.");
@@ -15,129 +14,104 @@
   }
 
   const client = E.getClient();
-  const $ = id => document.getElementById(id);
-
-  const examSelect = $("examSelect");
   const form = $("questionForm");
-  const optionsContainer = $("optionsContainer");
+  const examSelect = $("examSelect");
   const optionsSection = $("optionsSection");
+  const optionsContainer = $("optionsContainer");
   const questionList = $("questionList");
+  const saveButton = $("saveQuestion");
 
   let currentExamId = null;
   let savedQuestions = [];
-  let optionCounter = 0;
+  let loading = false;
+  let saving = false;
 
-  function escapeHTML(value) {
-    return String(value ?? "").replace(/[&<>"']/g, char => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#039;"
-    })[char]);
+  const escape = value => E.escape(value ?? "");
+
+  function showMessage(text, type = "info") {
+    E.message($("pageMessage"), text, type);
   }
 
-  function showMessage(message, type = "success") {
-    const element = $("pageMessage");
-    element.textContent = message;
-    element.className = type === "error"
-      ? "message-error"
-      : "message-success";
+  function optionRows() {
+    return [...optionsContainer.querySelectorAll(".option-row")];
   }
 
-  function setBusy(busy) {
-    $("saveQuestion").disabled = busy;
-    $("saveQuestion").textContent = busy
-      ? "Saving..."
-      : "Save question";
+  function renumberOptions() {
+    optionRows().forEach((row, index) => {
+      const label = String.fromCharCode(65 + index);
+      row.dataset.label = label;
+      row.querySelector(".option-label").textContent = `Option ${label}`;
+    });
   }
 
-  function addOption(label = "", text = "", correct = false) {
-    optionCounter++;
-
+  function addOption(text = "", correct = false) {
     const row = document.createElement("div");
     row.className = "option-row";
-    row.dataset.option = String(optionCounter);
-
     row.innerHTML = `
-      <label>
-        <input type="radio" name="correctOption"
-          class="correct-radio" ${correct ? "checked" : ""}>
-        Correct
+      <label class="correct-choice">
+        <input type="radio" name="correctOption" class="correct-radio">
+        <span class="option-label">Option</span>
+        <span class="correct-caption">Correct answer</span>
       </label>
-      <input class="option-text" type="text"
-        placeholder="Option text" value="${escapeHTML(text)}"
-        required>
-      <button type="button" class="remove-option">
-        Remove
-      </button>
+      <input class="option-text" type="text" maxlength="1000"
+        placeholder="Enter answer option" required>
+      <button type="button" class="remove-option" aria-label="Remove this option">Remove</button>
     `;
 
+    row.querySelector(".option-text").value = text;
+    row.querySelector(".correct-radio").checked = Boolean(correct);
     row.querySelector(".remove-option").addEventListener("click", () => {
       row.remove();
       renumberOptions();
     });
 
     optionsContainer.appendChild(row);
-
-    if (label) {
-      row.dataset.label = label;
-    }
-
     renumberOptions();
   }
 
-  function renumberOptions() {
-    [...optionsContainer.children].forEach((row, index) => {
-      row.dataset.label = String.fromCharCode(65 + index);
-      row.querySelector("label").lastChild.textContent =
-        " Correct (" + row.dataset.label + ")";
-    });
-  }
-
-  function getOptions() {
-    return [...optionsContainer.children].map(row => ({
-      label: row.dataset.label,
-      text: row.querySelector(".option-text").value.trim(),
-      is_correct: row.querySelector(".correct-radio").checked
-    }));
-  }
-
-  function resetOptions(type = "multiple_choice") {
-    optionsContainer.innerHTML = "";
-    optionCounter = 0;
+  function resetOptions(type) {
+    optionsContainer.replaceChildren();
 
     if (type === "true_false") {
-      addOption("A", "True", true);
-      addOption("B", "False", false);
+      addOption("True", true);
+      addOption("False", false);
     } else if (type === "multiple_choice") {
-      addOption("A", "", true);
-      addOption("B", "", false);
-      addOption("C", "", false);
-      addOption("D", "", false);
+      addOption("", true);
+      addOption("");
+      addOption("");
+      addOption("");
     }
+    updateTypeDisplay();
   }
 
   function updateTypeDisplay() {
     const type = $("questionType").value;
-    const needsOptions =
-      type === "multiple_choice" || type === "true_false";
+    const needsOptions = ["multiple_choice", "true_false"].includes(type);
 
     optionsSection.hidden = !needsOptions;
+    optionsContainer.querySelectorAll("input").forEach(input => {
+      input.disabled = !needsOptions;
+      input.required = needsOptions && input.classList.contains("option-text");
+    });
+    $("addOption").hidden = type !== "multiple_choice";
 
     if (type === "true_false") {
-      const existing = getOptions();
-      if (
-        existing.length !== 2 ||
-        !existing.some(o => o.text === "True") ||
-        !existing.some(o => o.text === "False")
-      ) {
-        resetOptions("true_false");
-      }
-    } else if (type === "multiple_choice" &&
-               optionsContainer.children.length < 2) {
+      const rows = optionRows();
+      const valid = rows.length === 2 &&
+        rows[0].querySelector(".option-text").value.trim().toLowerCase() === "true" &&
+        rows[1].querySelector(".option-text").value.trim().toLowerCase() === "false";
+      if (!valid) resetOptions("true_false");
+    } else if (type === "multiple_choice" && optionRows().length < 2) {
       resetOptions("multiple_choice");
     }
+  }
+
+  function getOptions() {
+    return optionRows().map(row => ({
+      label: row.dataset.label,
+      text: row.querySelector(".option-text").value.trim(),
+      is_correct: row.querySelector(".correct-radio").checked
+    }));
   }
 
   function clearForm() {
@@ -146,13 +120,9 @@
     $("formHeading").textContent = "Add a question";
     $("questionMarks").value = "1";
     $("questionOrder").value = String(savedQuestions.length + 1);
-    $("saveQuestion").textContent = "Save question";
-    $("correctAnswer").value = "";
-    $("explanation").value = "";
-    $("imageUrl").value = "";
     $("questionType").value = "multiple_choice";
+    saveButton.textContent = "Save question";
     resetOptions("multiple_choice");
-    updateTypeDisplay();
   }
 
   async function loadExaminations() {
@@ -170,68 +140,68 @@
     (data || []).forEach(exam => {
       const option = document.createElement("option");
       option.value = exam.id;
-      option.textContent = `${exam.title} (${exam.status || "draft"})`;
+      option.textContent = `${exam.title} — ${exam.status || "draft"}`;
       examSelect.appendChild(option);
     });
 
-    const requestedExam = new URLSearchParams(location.search).get("exam");
-
-    if (requestedExam && (data || []).some(e => e.id === requestedExam)) {
-      examSelect.value = requestedExam;
-      currentExamId = requestedExam;
-      await loadQuestions();
-    } else if ((data || []).length === 1) {
-      examSelect.value = data[0].id;
-      currentExamId = data[0].id;
-      await loadQuestions();
-    } else {
-      questionList.textContent = "Select an examination to view its questions.";
+    if (!data?.length) {
+      showMessage("No examinations are available to this account yet.", "info");
+      questionList.textContent = "Create an examination first, then return here to add questions.";
+      return;
     }
+
+    const requestedId = new URLSearchParams(window.location.search).get("exam");
+    const requestedExists = requestedId && data.some(exam => exam.id === requestedId);
+
+    if (requestedExists) {
+      examSelect.value = requestedId;
+    } else if (data.length === 1) {
+      examSelect.value = data[0].id;
+    }
+
+    if (examSelect.value) await loadQuestions();
+    else questionList.textContent = "Choose an examination above to see its questions.";
   }
 
   async function loadQuestions() {
+    if (loading) return;
     currentExamId = examSelect.value;
 
     if (!currentExamId) {
       savedQuestions = [];
-      questionList.textContent = "Select an examination to view its questions.";
       $("questionCount").textContent = "0 questions";
+      questionList.textContent = "Choose an examination above to see its questions.";
+      clearForm();
       return;
     }
 
+    loading = true;
     questionList.textContent = "Loading questions...";
 
-    const { data, error } = await client
-      .from("examination_questions")
-      .select(`
-        id,
-        examination_id,
-        question_text,
-        question_type,
-        marks,
-        question_order,
-        correct_answer,
-        explanation,
-        image_url,
-        examination_question_options (
-          id,
-          option_label,
-          option_text,
-          is_correct
-        )
-      `)
-      .eq("examination_id", currentExamId)
-      .order("question_order", { ascending: true });
+    try {
+      const { data, error } = await client
+        .from("examination_questions")
+        .select(`
+          id, examination_id, question_text, question_type, marks,
+          question_order, correct_answer, explanation, image_url,
+          examination_question_options (
+            id, option_label, option_text, is_correct
+          )
+        `)
+        .eq("examination_id", currentExamId)
+        .order("question_order", { ascending: true });
 
-    if (error) {
-      questionList.textContent = "Could not load questions.";
-      showMessage(error.message, "error");
-      return;
+      if (error) throw error;
+      savedQuestions = data || [];
+      renderQuestions();
+      clearForm();
+      showMessage(`${savedQuestions.length} question(s) loaded.`, "success");
+    } catch (error) {
+      questionList.textContent = "Questions could not be loaded.";
+      showMessage(error.message || String(error), "error");
+    } finally {
+      loading = false;
     }
-
-    savedQuestions = data || [];
-    renderQuestions();
-    clearForm();
   }
 
   function renderQuestions() {
@@ -239,73 +209,69 @@
       `${savedQuestions.length} question${savedQuestions.length === 1 ? "" : "s"}`;
 
     if (!savedQuestions.length) {
-      questionList.innerHTML = "<p>No questions have been added to this examination yet.</p>";
+      questionList.innerHTML = `
+        <div class="empty-state">
+          <h3>No questions added yet</h3>
+          <p>Use the form above to create the first question for this examination.</p>
+        </div>`;
       return;
     }
 
     questionList.innerHTML = savedQuestions.map((question, index) => {
-      const options = question.examination_question_options || [];
+      const options = [...(question.examination_question_options || [])]
+        .sort((a, b) => a.option_label.localeCompare(b.option_label));
 
-      const optionHTML = options.length
-        ? `<ol class="question-options">
-            ${options.map(option => `
-              <li class="${option.is_correct ? "correct-option" : ""}">
-                ${escapeHTML(option.option_label)}.
-                ${escapeHTML(option.option_text)}
-                ${option.is_correct ? " ✓ Correct answer" : ""}
-              </li>
-            `).join("")}
-          </ol>`
-        : "";
+      const optionMarkup = options.length ? `
+        <ol class="question-options">
+          ${options.map(option => `
+            <li class="${option.is_correct ? "correct-option" : ""}">
+              <strong>${escape(option.option_label)}.</strong>
+              ${escape(option.option_text)}
+              ${option.is_correct ? '<span class="correct-tag">Correct</span>' : ""}
+            </li>
+          `).join("")}
+        </ol>` : "";
 
-      const imageHTML = question.image_url
-        ? `<img class="question-image"
-             src="${escapeHTML(question.image_url)}"
-             alt="Question image" loading="lazy">`
+      const imageMarkup = safeImageUrl(question.image_url)
+        ? `<img class="question-image" src="${escape(question.image_url)}"
+             alt="Illustration for question ${index + 1}" loading="lazy">`
         : "";
 
       return `
         <article class="question-item">
-          <h3>Question ${index + 1}: ${escapeHTML(question.question_text)}</h3>
-          <div class="question-meta">
-            Type: ${escapeHTML(question.question_type.replaceAll("_", " "))}
-            | Marks: ${escapeHTML(question.marks)}
-            | Order: ${escapeHTML(question.question_order)}
+          <div class="question-item-heading">
+            <h3>Question ${escape(question.question_order ?? index + 1)}</h3>
+            <span class="marks-badge">${escape(question.marks)} marks</span>
           </div>
-          ${optionHTML}
-          ${question.correct_answer
-            ? `<p><strong>Expected answer / marking guide:</strong>
-                ${escapeHTML(question.correct_answer)}</p>`
-            : ""}
-          ${question.explanation
-            ? `<p><strong>Explanation:</strong>
-                ${escapeHTML(question.explanation)}</p>`
-            : ""}
-          ${imageHTML}
+          <p class="question-prompt">${escape(question.question_text)}</p>
+          <p class="question-meta">${escape(String(question.question_type || "").replaceAll("_", " "))}</p>
+          ${optionMarkup}
+          ${question.correct_answer ? `<p><strong>Expected answer / marking guide:</strong> ${escape(question.correct_answer)}</p>` : ""}
+          ${question.explanation ? `<p><strong>Explanation:</strong> ${escape(question.explanation)}</p>` : ""}
+          ${imageMarkup}
           <div class="question-actions">
-            <button type="button" data-edit="${question.id}">
-              Edit
-            </button>
-            <button type="button" class="delete-btn"
-              data-delete="${question.id}">
-              Delete
-            </button>
+            <button type="button" data-edit="${escape(question.id)}">Edit question</button>
+            <button type="button" class="danger" data-delete="${escape(question.id)}">Delete question</button>
           </div>
-        </article>
-      `;
+        </article>`;
     }).join("");
 
     questionList.querySelectorAll("[data-edit]").forEach(button => {
-      button.addEventListener("click", () => {
-        editQuestion(button.dataset.edit);
-      });
+      button.addEventListener("click", () => editQuestion(button.dataset.edit));
     });
-
     questionList.querySelectorAll("[data-delete]").forEach(button => {
-      button.addEventListener("click", () => {
-        deleteQuestion(button.dataset.delete);
-      });
+      button.addEventListener("click", () => deleteQuestion(button.dataset.delete));
     });
+  }
+
+  function safeImageUrl(value) {
+    if (!value) return false;
+    try {
+      const url = new URL(value, window.location.href);
+      return ["https:", "http:"].includes(url.protocol);
+    } catch (_) {
+      return false;
+    }
   }
 
   function editQuestion(id) {
@@ -321,22 +287,23 @@
     $("explanation").value = question.explanation || "";
     $("imageUrl").value = question.image_url || "";
     $("formHeading").textContent = "Edit question";
+    saveButton.textContent = "Update question";
 
-    optionsContainer.innerHTML = "";
-    optionCounter = 0;
-
-    (question.examination_question_options || [])
-      .sort((a, b) => a.option_label.localeCompare(b.option_label))
-      .forEach(option => {
-        addOption(option.option_label, option.option_text, option.is_correct);
-      });
+    optionsContainer.replaceChildren();
+    const options = [...(question.examination_question_options || [])]
+      .sort((a, b) => a.option_label.localeCompare(b.option_label));
+    options.forEach(option => addOption(
+      option.option_text,
+      option.is_correct
+    ));
 
     updateTypeDisplay();
-    $("questionEditor").scrollIntoView({ behavior: "smooth" });
+    $("questionEditor").scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   async function saveQuestion(event) {
     event.preventDefault();
+    if (saving) return;
 
     if (!currentExamId) {
       showMessage("Select an examination first.", "error");
@@ -344,28 +311,38 @@
     }
 
     const type = $("questionType").value;
-    const options = getOptions();
-    const needsOptions =
-      type === "multiple_choice" || type === "true_false";
+    const needsOptions = ["multiple_choice", "true_false"].includes(type);
+    const options = needsOptions ? getOptions() : [];
 
     if (needsOptions) {
-      if (options.length < 2 || options.some(o => !o.text)) {
+      if (options.length < 2 || options.some(option => !option.text)) {
         showMessage("Enter at least two complete answer options.", "error");
         return;
       }
-
-      if (options.filter(o => o.is_correct).length !== 1) {
+      if (options.filter(option => option.is_correct).length !== 1) {
         showMessage("Select exactly one correct answer option.", "error");
+        return;
+      }
+      if (type === "true_false" &&
+          (options.length !== 2 ||
+           options[0].text.toLowerCase() !== "true" ||
+           options[1].text.toLowerCase() !== "false")) {
+        showMessage("True/False questions must have True and False options.", "error");
         return;
       }
     }
 
     const marks = Number($("questionMarks").value);
     const order = Number($("questionOrder").value);
-
     if (!Number.isFinite(marks) || marks <= 0 ||
         !Number.isInteger(order) || order < 1) {
-      showMessage("Enter valid marks and question number.", "error");
+      showMessage("Enter valid marks and a whole-number question order.", "error");
+      return;
+    }
+
+    const imageUrl = $("imageUrl").value.trim();
+    if (imageUrl && !safeImageUrl(imageUrl)) {
+      showMessage("The image URL must use http:// or https://.", "error");
       return;
     }
 
@@ -378,73 +355,82 @@
       p_question_order: order,
       p_correct_answer: $("correctAnswer").value.trim() || null,
       p_explanation: $("explanation").value.trim() || null,
-      p_image_url: $("imageUrl").value.trim() || null,
-      p_options: needsOptions ? options : []
+      p_image_url: imageUrl || null,
+      p_options: options
     };
 
-    setBusy(true);
-    showMessage("Saving question...");
+    saving = true;
+    saveButton.disabled = true;
+    saveButton.textContent = "Saving...";
+    showMessage("Saving question...", "info");
 
-    const { data, error } = await client.rpc(
-      "crest_exam_save_question",
-      payload
-    );
+    try {
+      const { error } = await client.rpc("crest_exam_save_question", payload);
+      if (error) throw error;
 
-    setBusy(false);
-
-    if (error) {
-      showMessage(error.message, "error");
-      return;
+      showMessage("Question saved successfully. Examination total marks have been updated.", "success");
+      await loadQuestions();
+    } catch (error) {
+      showMessage(error.message || String(error), "error");
+    } finally {
+      saving = false;
+      saveButton.disabled = false;
+      saveButton.textContent = $("questionId").value ? "Update question" : "Save question";
     }
-
-    showMessage("Question saved successfully.");
-    clearForm();
-    await loadQuestions();
   }
 
   async function deleteQuestion(id) {
     const question = savedQuestions.find(item => item.id === id);
     if (!question) return;
 
-    if (!confirm("Delete this question and its answer options?")) return;
-
-    showMessage("Deleting question...");
-
-    const { error } = await client.rpc(
-      "crest_exam_delete_question",
-      { p_question_id: id }
-    );
-
-    if (error) {
-      showMessage(error.message, "error");
+    if (!window.confirm("Delete this question? Questions with existing student answers are protected.")) {
       return;
     }
 
-    showMessage("Question deleted successfully.");
-    await loadQuestions();
+    showMessage("Deleting question...", "info");
+    try {
+      const { error } = await client.rpc("crest_exam_delete_question", {
+        p_question_id: id
+      });
+      if (error) throw error;
+      showMessage("Question deleted.", "success");
+      await loadQuestions();
+    } catch (error) {
+      showMessage(error.message || String(error), "error");
+    }
   }
 
   async function initialise() {
     try {
       await E.requireTeacher();
-      resetOptions("multiple_choice");
+      $("questionType").addEventListener("change", () => {
+        const type = $("questionType").value;
+        const rows = optionRows();
+        const isTrueFalsePair = rows.length === 2 &&
+          rows[0].querySelector(".option-text").value.trim().toLowerCase() === "true" &&
+          rows[1].querySelector(".option-text").value.trim().toLowerCase() === "false";
 
-      $("questionType").addEventListener("change", updateTypeDisplay);
+        if (type === "true_false") {
+          resetOptions("true_false");
+        } else if (type === "multiple_choice" &&
+                   (rows.length < 2 || isTrueFalsePair)) {
+          resetOptions("multiple_choice");
+        } else {
+          updateTypeDisplay();
+        }
+      });
       $("addOption").addEventListener("click", () => addOption());
       $("cancelEdit").addEventListener("click", clearForm);
       $("refreshQuestions").addEventListener("click", loadQuestions);
       examSelect.addEventListener("change", loadQuestions);
       form.addEventListener("submit", saveQuestion);
-
+      resetOptions("multiple_choice");
       await loadExaminations();
     } catch (error) {
-      showMessage(error.message || "Could not initialise question management.", "error");
+      showMessage(error.message || String(error), "error");
+      questionList.textContent = "Question Management could not be initialised.";
     }
   }
 
   initialise();
 })();
-
-
-
-   

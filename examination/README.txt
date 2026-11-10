@@ -1,92 +1,101 @@
-CREST EXAMINATION SYSTEM — INSTALLATION GUIDE
-=============================================
+CREST ACADEMY — EXAMINATION MODULE
+=================================
 
-IMPORTANT
----------
-This package adds an examination module to your EXISTING CREST website.
-It does not replace your existing student login or other CREST pages.
+CURRENT PROJECT STRUCTURE
+-------------------------
+This module is stored in the `examination/` folder of CREST-main.
 
-WHAT IS INCLUDED
+Main pages:
+- index.html              Examination Centre home
+- teacher-login.html      Teacher sign-in
+- teacher-dashboard.html  Teacher examination list
+- crest-master.html       Searchable examination dashboard
+- create-exam.html       Create an examination
+- questions.html          Add, edit and manage questions
+- results.html            View examination results
+- student-exam.html       Legacy student examination entry
+- admin.html              Super Admin portal
+
+Shared assets:
+- exam.js                 Supabase client and shared helpers
+- exam.css                Shared styling
+- questions.js/css        Question Management page
+- teacher.js              Teacher dashboard
+- create-exam.js          Examination creation
+- crest-master.js/css     Master dashboard
+- results.js              Results register
+- admin.js                Super Admin page
+
+IMPORTANT: KEEP THE FOLDER NAME
+-------------------------------
+The real folder name in this project is `examination`, not `exam`.
+Keep all files listed above together in that folder. Page links are relative
+to this folder. Do not move individual JavaScript or CSS files elsewhere.
+
+SUPABASE PROJECT
 ----------------
-- Teacher sign-in page and dashboard: create and manage examinations.
-- Question editor: add multiple-choice questions and correct answers.
-- Publishing: publish an exam with an access code or open access.
-- Student exam page: validate an existing CREST student session, start an attempt,
-  display questions, save answers, and submit.
-- Server-side marking and result storage.
-- Results page for teachers.
-- Supabase SQL setup script with RPC functions.
+The Examination module uses the Supabase project already configured in
+`exam.js`. The browser must use only the Supabase anon/public key. Never put
+a service_role key in HTML or JavaScript.
 
-BEFORE YOU START
-----------------
-1. Make a backup copy of your existing CREST project.
-2. In Supabase, open SQL Editor.
-3. Open the file examinations/database/setup.sql from this package.
-4. Copy its contents into SQL Editor and run it.
-5. If Supabase reports an error, STOP and send the exact error. Do not repeatedly
-   run modified SQL without checking the cause.
-6. In examinations/exam.js, replace:
-      YOUR_SUPABASE_PROJECT_URL
-      YOUR_SUPABASE_ANON_OR_PUBLISHABLE_KEY
-   with your Supabase Project URL and anon/publishable key.
-   NEVER put a service_role key in browser JavaScript.
-7. The main CREST homepage now links to this module. Connect this module to your existing CREST student session:
-   In exam.js, edit getStudentSessionToken(). It must return the same session
-   token your existing CREST login stores after a student signs in.
-   The helper checks several common localStorage names, but your existing site
-   may use a different name. Search your existing login code for
-   "crest_sessions", "crestStudentSession", or "token".
-8. Teacher pages require Supabase Auth sign-in and a matching row in public.profiles
-   where id = auth.uid() and role = 'teacher' or 'admin'. If your current teacher
-   login uses a different system, it must be connected before teacher RPCs work.
-9. Upload the examinations folder to the same location as your other CREST pages.
-   Keep the existing root site files. Link to:
-      examinations/index.html
-
-DATABASE NOTES
+STAFF WORKFLOW
 --------------
-Your existing tables are reused. The SQL adds a UUID column to crest_students
-for examination attempt identity, and creates secure RPC functions.
-It does not expose answer_keys to students. Student operations validate the
-existing crest_sessions token on the server.
+1. Open `teacher-login.html` and sign in.
+2. Open `teacher-dashboard.html` or `crest-master.html`.
+3. Create an examination from `create-exam.html`.
+4. The creation page calls `crest_teacher_create_examination_v2`.
+5. The page opens `questions.html?exam=<id>`.
+6. Add multiple-choice, true/false, short-answer or essay questions.
+7. Question marks are recalculated into `examinations.total_marks`.
+8. Use `results.html?exam=<id>` to inspect submitted results.
 
-The package assumes:
-- crest_sessions.token and crest_sessions.phone identify a current student session.
-- crest_students.phone identifies the same student phone.
-- profiles.id is the authenticated teacher UUID.
-- profiles.role contains 'teacher' or 'admin' for permitted teachers.
+REQUIRED DATABASE MIGRATION FOR THIS PACKAGE
+---------------------------------------------
+Run `master-code-5-polish.sql` in the SQL Editor of the CREST Examination
+Supabase project. It:
+- Adds a versioned examination-creation function that matches create-exam.js.
+- Saves the pass-mark percentage.
+- Prevents edits/deletions to questions that already have student answers.
+- Keeps the examination total marks aligned with question marks.
 
-If any of these assumptions do not match your actual CREST login/database,
-the relevant integration must be adjusted. The student token is not guessed:
-connect getStudentSessionToken() to your existing login's actual storage key.
+The existing Question Management functions from MASTER CODE 5A and 5B must
+also be present:
+- crest_exam_save_question
+- crest_exam_delete_question
 
-SECURITY
---------
-- Do not share your Supabase service_role key.
-- Do not make answer_keys publicly readable.
-- Student answers are marked on the server.
-- The browser countdown is only a display; the server checks the deadline.
-- Use HTTPS when hosting the site.
+Do not run this migration in the main CREST Academy project.
 
-SUPPORTED QUESTION TYPE
------------------------
-This first version supports four-option multiple-choice questions (A, B, C, D).
-Your current questions table has option_a through option_d and no written-answer
-field. Written-response questions need a separate schema and marking workflow.
+LEGACY STUDENT FLOW — IMPORTANT LIMITATION
+------------------------------------------
+`student-exam.html` and `student.js` are the earlier session-token student
+flow. They call the legacy RPCs:
+- crest_student_start_exam
+- crest_student_get_questions
+- crest_student_save_answer
+- crest_student_submit_exam
 
-FILES
------
-index.html                 Module landing page
-exam.js                    Supabase setup and shared helpers
-exam.css                   Shared styling
-teacher-login.html         Teacher sign-in page\nteacher-dashboard.html     Teacher exam list
-teacher.js                 Teacher dashboard logic
-create-exam.html           Create/edit exam form
-create-exam.js             Create exam logic
-questions.html             Add questions and answer keys
-questions.js               Question editor logic
-student-exam.html          Student exam access and sitting page
-student.js                 Student attempt logic
-results.html               Teacher results page
-results.js                 Results logic
-database/setup.sql         Database migration and secure RPC functions
+That earlier flow uses the legacy `questions`, `answer_keys`, `exam_attempts`
+and `student_answers` structure. The current staff Question Management page
+uses `examination_questions` and `examination_question_options`, with the
+newer `student_exam_attempts` / `student_exam_answers` structure.
+
+These are two different examination data models. Do not assume the student
+portal can sit questions created in the new Question Management page until
+the student delivery and marking functions are migrated to the same model.
+The legacy `setup.sql` is retained for reference but is NOT a general setup
+script for the current schema. Do not rerun it blindly.
+
+SUPER ADMIN
+-----------
+`admin.html` uses the existing `super-function` Supabase Edge Function for
+teacher creation and listing. Keep that Edge Function deployed and configured.
+Never place the Supabase service_role key in the browser.
+
+SAFE OPERATING NOTES
+--------------------
+- Keep a backup of the project before publishing updates.
+- Do not delete existing tables or records to resolve a page error.
+- Do not edit or delete a question after students have answered it; the
+  database safeguard will reject that operation.
+- Test with a draft examination before publishing a real examination.
+- Hard-refresh the browser after replacing files (Ctrl + Shift + R).

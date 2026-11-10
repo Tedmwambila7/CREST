@@ -32,6 +32,7 @@
 <header>
   <h1>CRESTACADA · Super Admin</h1>
   <p>Examination system administration</p>
+  <p style="margin:10px 0 0"><a href="crest-master.html" style="color:#d8e9fa">Open examination dashboard</a> · <a href="index.html" style="color:#d8e9fa">Examination home</a></p>
 </header>
 <main>
   <section id="loginPanel" class="panel login">
@@ -53,7 +54,7 @@
       <div><button id="refreshButton" class="secondary" type="button">Refresh</button> <button id="logoutButton" type="button">Sign out</button></div>
     </div>
     <div id="dashboardMessage" class="message" role="status"></div>
-    <div class="notice"><strong>Initial release:</strong> this dashboard verifies your administrator role and displays records permitted by the database. Teacher creation, suspension and other changes will be enabled after the matching secure database functions and policies are installed.</div>
+    <div class="notice"><strong>Secure administration:</strong> teacher account creation and listing are handled by the deployed <code>super-function</code> Edge Function. Never expose a service_role key in browser code.</div>
     <div class="stats">
       <div class="stat"><strong id="teacherCount">—</strong><span>Teacher accounts visible to admin</span></div>
       <div class="stat"><strong id="studentCount">—</strong><span>Student profiles visible to admin</span></div>
