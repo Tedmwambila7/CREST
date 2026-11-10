@@ -1,1 +1,106 @@
 
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CREST Master Examination Dashboard</title>
+  <link rel="stylesheet" href="crest-master.css">
+</head>
+<body>
+
+<header class="master-header">
+  <div>
+    <a href="../index.html" class="home-link">← CREST Academy</a>
+    <h1>CREST Examination Centre</h1>
+    <p>Master examination management dashboard</p>
+  </div>
+  <button id="refreshBtn" class="refresh-btn">↻ Refresh</button>
+</header>
+
+<main class="container">
+
+  <div id="message" class="message" role="status"></div>
+
+  <section class="stats-grid">
+    <article class="stat-card">
+      <span>Total examinations</span>
+      <strong id="totalExams">—</strong>
+    </article>
+    <article class="stat-card">
+      <span>Published</span>
+      <strong id="publishedExams">—</strong>
+    </article>
+    <article class="stat-card">
+      <span>Drafts</span>
+      <strong id="draftExams">—</strong>
+    </article>
+    <article class="stat-card">
+      <span>Other statuses</span>
+      <strong id="otherExams">—</strong>
+    </article>
+  </section>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <div>
+        <h2>Examination management</h2>
+        <p>Examinations available to your account</p>
+      </div>
+      <a href="create-exam.html" class="primary-btn">
+        + Create examination
+      </a>
+    </div>
+
+    <div class="toolbar">
+      <input
+        id="searchInput"
+        type="search"
+        placeholder="Search by examination title or subject..."
+        aria-label="Search examinations"
+      >
+
+      <select id="statusFilter" aria-label="Filter by status">
+        <option value="all">All statuses</option>
+        <option value="draft">Draft</option>
+        <option value="published">Published</option>
+        <option value="other">Other statuses</option>
+      </select>
+    </div>
+
+    <div id="examList" class="exam-list">
+      <div class="loading">Loading examinations...</div>
+    </div>
+  </section>
+
+  <section class="quick-links">
+    <h2>Quick access</h2>
+    <div class="quick-grid">
+      <a href="create-exam.html" class="quick-card">
+        <strong>Create examination</strong>
+        <span>Set up a new examination</span>
+      </a>
+      <a href="teacher-dashboard.html" class="quick-card">
+        <strong>Original teacher dashboard</strong>
+        <span>Open the existing dashboard</span>
+      </a>
+      <a href="index.html" class="quick-card">
+        <strong>Examination home</strong>
+        <span>Return to the examination home page</span>
+      </a>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  CREST Academy · Examination Management
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="exam.js"></script>
+<script src="crest-master.js"></script>
+
+</body>
+</html>
