@@ -1,7 +1,35 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Student Examination</title><link rel="stylesheet" href="exam.css"></head>
-<body><header><a href="../index.html" style="color:#fff;text-decoration:none;font-size:13px;">← CREST Academy home</a><h1>CREST Student Examination</h1></header><main>
-<section class="card" id="accessCard"><h2>Enter examination access code</h2><div id="message" class="message"></div>
-<form id="accessForm"><label>Access code (leave blank for open-access exams)</label><input name="code" autocomplete="off"><button type="submit">Find examination</button></form></section>
-<section class="card hidden" id="examCard"><div class="timer" id="timer">Time remaining: --:--</div><h2 id="examTitle"></h2><p id="examInstructions"></p><div id="questions"></div><button id="submitBtn">Submit examination</button></section>
-<section class="card hidden" id="doneCard"><h2>Examination submitted</h2><p id="doneText"></p><a class="button" href="index.html">Return home</a></section>
-</main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="exam.js"></script><script src="student.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#123d2b"><title>Student Examination | CREST Academy</title>
+  <link rel="stylesheet" href="exam.css">
+  <style>
+    .exam-picker{display:grid;gap:12px}.exam-picker select{width:100%;padding:12px;border:1px solid #cbd5d1;border-radius:8px}
+    .question-item{padding:18px;margin:18px 0;border:1px solid #dce5e0;border-radius:12px;background:#fff}
+    .question-item textarea,.question-item input:not([type=radio]){display:block;width:100%;padding:11px;margin-top:12px;border:1px solid #cbd5d1;border-radius:8px}
+    .question-item .option{display:flex;gap:10px;align-items:flex-start;padding:9px 0;cursor:pointer}
+    .question-item .option input{margin-top:4px}.timer{position:sticky;top:8px;padding:12px;background:#fff3cd;border-radius:8px;font-weight:700;z-index:2}
+    .hidden{display:none!important}.muted{color:#66736d}
+  </style>
+</head>
+<body>
+  <header><a href="../index.html" style="color:#fff;text-decoration:none;font-size:13px">← CREST Academy home</a><h1>CREST Student Examination</h1></header>
+  <main>
+    <section class="card" id="accessCard">
+      <h2>Available examinations</h2><p class="muted">Choose an examination assigned and published by your teacher.</p>
+      <div id="message" class="message" role="status" aria-live="polite"></div>
+      <form id="accessForm" class="exam-picker">
+        <label for="examSelect">Select examination</label><select id="examSelect" required><option value="">Loading examinations...</option></select>
+        <div style="display:flex;gap:10px;flex-wrap:wrap"><button type="submit" id="startExamBtn">Begin examination</button><button type="button" id="reloadExams" class="secondary-btn">Refresh list</button></div>
+      </form>
+    </section>
+    <section class="card hidden" id="examCard">
+      <div class="timer" id="timer">Time remaining: --:--</div><h2 id="examTitle"></h2><p id="examInstructions"></p>
+      <div id="questions"></div><button type="button" id="submitBtn">Submit examination</button>
+    </section>
+    <section class="card hidden" id="doneCard"><h2>Examination submitted</h2><p id="doneText"></p><a class="button" href="index.html">Return home</a></section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="exam.js"></script><script src="student.js"></script>
+</body>
+</html>

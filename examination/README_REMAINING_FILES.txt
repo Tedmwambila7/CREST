@@ -33,3 +33,12 @@ PDF QUESTION IMPORT
 [ ] Confirm the original PDF opens through its temporary signed URL.
 [ ] Transfer a sample question, complete its answer/marks, and save it.
 [ ] Test with a scanned PDF and confirm the OCR limitation is clearly reported.
+
+
+STUDENT DELIVERY V2
+[ ] Back up Supabase.
+[ ] Run student-delivery-v2.sql after master-code-5-polish.sql.
+[ ] Confirm crest_sessions has token, phone, created_at and crest_students has phone.
+[ ] Upload this complete examination folder.
+[ ] Test student session detection, published exam listing, exam timing, autosave, submission and MCQ marking.
+[ ] Build the teacher manual-marking interface for short-answer and essay responses.

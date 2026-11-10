@@ -20,8 +20,10 @@
   const optionsContainer = $("optionsContainer");
   const questionList = $("questionList");
   const saveButton = $("saveQuestion");
+  const publishButton = $("publishExam");
 
   let currentExamId = null;
+  let currentExamStatus = "draft";
   let savedQuestions = [];
   let loading = false;
   let saving = false;
@@ -166,8 +168,10 @@
   async function loadQuestions() {
     if (loading) return;
     currentExamId = examSelect.value;
+    currentExamStatus = examSelect.selectedOptions[0]?.textContent.toLowerCase().includes("published") ? "published" : "draft";
 
     if (!currentExamId) {
+      if (publishButton) publishButton.disabled = true;
       savedQuestions = [];
       $("questionCount").textContent = "0 questions";
       questionList.textContent = "Choose an examination above to see its questions.";
@@ -176,6 +180,7 @@
     }
 
     loading = true;
+    if (publishButton) publishButton.disabled = true;
     questionList.textContent = "Loading questions...";
 
     try {
@@ -193,6 +198,7 @@
 
       if (error) throw error;
       savedQuestions = data || [];
+      if (publishButton) { publishButton.disabled = currentExamStatus === "published"; publishButton.textContent = currentExamStatus === "published" ? "Already published" : "Publish examination"; }
       renderQuestions();
       clearForm();
       showMessage(`${savedQuestions.length} question(s) loaded.`, "success");
@@ -400,6 +406,25 @@
     }
   }
 
+
+  async function publishExam() {
+    if (!currentExamId) { showMessage("Select an examination first.", "error"); return; }
+    if (!window.confirm("Publish this examination? Students will be able to see it in their examination portal when its scheduled time begins.")) return;
+    publishButton.disabled = true;
+    showMessage("Publishing examination...", "info");
+    try {
+      await E.rpc("crest_teacher_publish_exam_v2", { p_exam_id: currentExamId });
+      currentExamStatus = "published";
+      const selected = examSelect.selectedOptions[0];
+      if (selected) selected.textContent = selected.textContent.replace(/—\s*[^—]+$/, "— published");
+      showMessage("Examination published. It is now available in the student portal according to its schedule.", "success");
+      publishButton.textContent = "Published";
+    } catch (error) {
+      showMessage(error.message || String(error), "error");
+      publishButton.disabled = false;
+    }
+  }
+
   async function initialise() {
     try {
       await E.requireTeacher();
@@ -423,6 +448,7 @@
       $("cancelEdit").addEventListener("click", clearForm);
       $("refreshQuestions").addEventListener("click", loadQuestions);
       examSelect.addEventListener("change", loadQuestions);
+      publishButton?.addEventListener("click", publishExam);
       form.addEventListener("submit", saveQuestion);
       resetOptions("multiple_choice");
       await loadExaminations();
