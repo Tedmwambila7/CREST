@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#123d2b">
+  <title>Examination Paper Generator | CREST Academy</title>
+  <link rel="stylesheet" href="exam.css">
+  <link rel="stylesheet" href="paper.css">
+</head>
+<body>
+  <header class="site-header no-print">
+    <div class="header-inner">
+      <a class="brand-link" href="teacher-dashboard.html">← Teacher dashboard</a>
+      <div>
+        <h1>Examination Paper Generator</h1>
+        <p>Preview, print or save examination papers as PDF.</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="paper-page">
+    <section class="card paper-controls no-print">
+      <div id="paperMessage" class="message" role="status"></div>
+
+      <label for="examSelect">Select examination</label>
+      <div class="control-row">
+        <select id="examSelect">
+          <option value="">Loading examinations...</option>
+        </select>
+        <button id="refreshExams" class="secondary" type="button">Refresh</button>
+      </div>
+
+      <div class="paper-settings">
+        <div>
+          <label for="schoolName">School / institution name</label>
+          <input id="schoolName" type="text" maxlength="120" value="CREST Academy">
+        </div>
+        <div>
+          <label for="logoUrl">Logo image URL (optional)</label>
+          <input id="logoUrl" type="url" placeholder="https://example.com/logo.png">
+        </div>
+      </div>
+
+      <div class="paper-actions">
+        <button id="previewBtn" type="button" class="secondary">Preview student paper</button>
+        <button id="studentPdfBtn" type="button">Print / Save student PDF</button>
+        <button id="schemePdfBtn" type="button" class="warning-button">Print / Save marking scheme</button>
+      </div>
+      <p class="field-help">Choose “Save as PDF” in the browser print window. The marking scheme is generated separately and is not included in the student paper.</p>
+    </section>
+
+    <section class="paper-preview-wrap">
+      <div class="preview-heading no-print">
+        <h2>Paper preview</h2>
+        <span id="previewMode" class="preview-mode">Student examination paper</span>
+      </div>
+      <div id="printArea" class="print-area" aria-live="polite">
+        <div class="paper-empty">Select an examination to preview its paper.</div>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="exam.js"></script>
+  <script src="paper.js"></script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+CREST ACADEMY — MASTER 4: EXAMINATION PAPER PDF GENERATOR
+
+FILES
+- paper.html
+- paper.js
+- paper.css
+
+INSTALLATION
+1. Open your CREST project folder.
+2. Open its examination folder.
+3. Copy paper.html, paper.js and paper.css into that examination folder.
+4. Do not replace exam.js, marking.js, teacher.js, student.js, or any SQL/database files.
+5. Sign in to CREST as a teacher and open:
+   examination/paper.html
+
+OPTIONAL DASHBOARD LINK
+Add this link inside the navigation section in examination/teacher-dashboard.html:
+<a class="button secondary" href="paper.html">Generate examination PDF</a>
+
+USAGE
+1. Select an examination.
+2. Check the preview.
+3. Optionally change the school name or enter a publicly accessible logo URL.
+4. Select “Print / Save student PDF” to produce the student paper.
+5. In the browser print dialog, choose “Save as PDF”.
+6. Select “Print / Save marking scheme” separately for the confidential teacher copy.
+
+IMPORTANT
+- This module uses the existing examinations, examination_questions and examination_question_options tables.
+- It does not create, drop or alter database tables.
+- It does not modify authentication or student records.
+- It uses the existing CREST_EXAM helper from exam.js.
+- Keep the marking scheme private. It contains correct answers where those answers are stored in the question data.
