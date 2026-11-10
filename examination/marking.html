@@ -1,0 +1,7 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#123d2b"><title>Mark Written Answers | CREST Academy"><link rel="stylesheet" href="exam.css"><link rel="stylesheet" href="marking.css"></head>
+<body><header class="site-header"><div class="header-inner"><a class="brand-link" href="../index.html">CREST Academy</a><div><h1>Teacher Marking</h1><p>Review written answers and award marks.</p></div></div></header>
+<main><nav class="top-links"><a class="button secondary" href="teacher-dashboard.html">Teacher dashboard</a><a class="button secondary" href="index.html">Examination home</a><button id="refreshBtn" class="secondary" type="button">Refresh</button></nav>
+<div id="message" class="message" role="status"></div><section class="card"><h2>Select examination</h2><label for="examSelect">Your examination</label><select id="examSelect"><option value="">Loading examinations...</option></select><button id="loadBtn" type="button">Load submissions</button></section>
+<section class="card"><h2>Student submissions</h2><div class="marking-layout"><aside><div id="submissionList" class="submission-list">Choose an examination to load submissions.</div></aside><div id="answerPanel"><div class="empty-state">Select a submitted examination on the left to review written answers.</div></div></div></section></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="exam.js"></script><script src="marking.js"></script></body></html>

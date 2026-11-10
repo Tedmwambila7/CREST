@@ -1,468 +1,149 @@
-
-/* =========================================================
-   CREST ACADEMY — MASTER 3
-   TEACHER MARKING DASHBOARD
-   Works with MASTER 1 and MASTER 2 SQL functions.
-   ========================================================= */
-
+/* CREST Examination — teacher written-answer marking (MASTER 2 RPCs) */
 (() => {
   "use strict";
-
   const E = window.CREST_EXAM;
   const $ = id => document.getElementById(id);
+  const examSelect = $("examSelect"), loadBtn = $("loadBtn"), refreshBtn = $("refreshBtn");
+  const submissionList = $("submissionList"), answerPanel = $("answerPanel"), message = $("message");
+  if (!E || !examSelect || !loadBtn || !submissionList || !answerPanel) return;
 
-  const message = $("message");
-  const examSelect = $("examSelect");
-  const submissionList = $("submissionList");
-  const answerPanel = $("answerPanel");
-
-  if (!E || !examSelect || !submissionList || !answerPanel) {
-    console.error("CREST marking dashboard elements are missing.");
-    return;
-  }
-
-  let submissions = [];
-  let activeAttemptId = null;
-  let loading = false;
-
+  let attempts = [], activeAttemptId = null, busy = false;
   const esc = value => E.escape(value ?? "");
+  const say = (text, type = "info") => E.message(message, text, type);
 
-  const num = value => {
-    const result = Number(value);
-    return Number.isFinite(result) ? result : 0;
-  };
-
-  function notify(text, type = "info") {
-    E.message(message, text, type);
+  function asArray(value) {
+    if (Array.isArray(value)) return value;
+    if (typeof value === "string") { try { const parsed = JSON.parse(value); return Array.isArray(parsed) ? parsed : []; } catch (_) { return []; } }
+    return [];
   }
 
-  function formatDate(value) {
-    return value ? E.formatDate(value) : "Not available";
-  }
-
-  // ---------------------------------------------------------
-  // 1. LOAD TEACHER EXAMINATIONS
-  // ---------------------------------------------------------
-
-  async function initialise() {
+  async function loadExams() {
+    examSelect.disabled = true;
+    examSelect.innerHTML = '<option value="">Loading examinations...</option>';
     try {
       await E.requireTeacher();
-
-      notify("Loading your examinations...");
-
-      const exams = await E.rpc(
-        "crest_teacher_marking_exams"
-      );
-
-      examSelect.innerHTML =
-        '<option value="">Choose an examination</option>';
-
-      (exams || []).forEach(exam => {
+      const rows = await E.rpc("crest_teacher_marking_exams") || [];
+      examSelect.innerHTML = '<option value="">Choose an examination</option>';
+      rows.forEach(row => {
         const option = document.createElement("option");
-
-        option.value = exam.id;
-        option.textContent =
-          `${exam.title} — ${exam.subject || "General"} (${exam.status || "unknown"})`;
-
+        option.value = row.id;
+        option.textContent = `${row.title} — ${row.subject || "No subject"} (${row.status || "draft"})`;
         examSelect.appendChild(option);
       });
-
-      const requestedExam =
-        new URLSearchParams(window.location.search).get("exam");
-
-      if (
-        requestedExam &&
-        [...examSelect.options].some(
-          option => option.value === requestedExam
-        )
-      ) {
-        examSelect.value = requestedExam;
-        await loadSubmissions();
-      } else {
-        notify(
-          exams?.length
-            ? "Choose an examination and load its submissions."
-            : "No examinations are currently available."
-        );
-      }
-
+      const requested = new URLSearchParams(location.search).get("exam");
+      if (requested && rows.some(row => row.id === requested)) examSelect.value = requested;
+      else if (rows.length === 1) examSelect.value = rows[0].id;
+      if (examSelect.value) await loadSubmissions();
+      else say(rows.length ? "Select an examination to view submissions." : "No examinations are available for marking.", "info");
     } catch (error) {
-      console.error(error);
-      notify(error.message || String(error), "error");
-      submissionList.textContent =
-        "Unable to load examinations.";
-    }
+      console.error("Load marking examinations:", error);
+      examSelect.innerHTML = '<option value="">Could not load examinations</option>';
+      say(error.message || String(error), "error");
+    } finally { examSelect.disabled = false; }
   }
 
-  // ---------------------------------------------------------
-  // 2. LOAD STUDENT SUBMISSIONS
-  // ---------------------------------------------------------
+  function renderSubmissions() {
+    if (!attempts.length) {
+      submissionList.innerHTML = '<div class="empty-state">No submitted attempts were found for this examination.</div>';
+      answerPanel.innerHTML = '<div class="empty-state">There are no submitted answers to mark yet.</div>';
+      activeAttemptId = null;
+      return;
+    }
+    submissionList.innerHTML = attempts.map((item, index) => `
+      <button type="button" class="submission-item ${item.attempt_id === activeAttemptId ? "active" : ""}" data-attempt="${esc(item.attempt_id)}">
+        <strong>${esc(item.student_name || "Student")}</strong>
+        <small>${esc(item.student_number || "No student number")}</small>
+        <small>Automatic: ${Number(item.automatic_marks || 0).toFixed(2)} · Manual: ${Number(item.manual_marks || 0).toFixed(2)}</small>
+        <small>${esc(item.marking_status || "pending")}</small>
+      </button>`).join("");
+    submissionList.querySelectorAll("[data-attempt]").forEach(button => button.addEventListener("click", () => {
+      activeAttemptId = button.dataset.attempt;
+      renderSubmissions();
+      renderAnswers(attempts.find(x => x.attempt_id === activeAttemptId));
+    }));
+    const selected = attempts.find(x => x.attempt_id === activeAttemptId) || attempts[0];
+    activeAttemptId = selected.attempt_id;
+    renderAnswers(selected);
+  }
+
+  function renderAnswers(attempt) {
+    if (!attempt) return;
+    const questions = asArray(attempt.questions);
+    if (!questions.length) {
+      answerPanel.innerHTML = `<div class="empty-state"><h3>${esc(attempt.student_name || "Student")}</h3><p>No short-answer or essay questions were returned for marking.</p></div>`;
+      return;
+    }
+    answerPanel.innerHTML = `<div class="answer-student-heading"><h3>${esc(attempt.student_name || "Student")}</h3><p class="muted">Student number: ${esc(attempt.student_number || "—")} · Submitted: ${esc(E.formatDate(attempt.submitted_at))}</p><p>Automatic marks: <strong>${Number(attempt.automatic_marks || 0).toFixed(2)}</strong> · Manual marks: <strong>${Number(attempt.manual_marks || 0).toFixed(2)}</strong> · Total available: <strong>${Number(attempt.total_marks || 0).toFixed(2)}</strong></p></div>
+      ${questions.map((q, index) => `<article class="answer-card" data-question="${esc(q.question_id)}">
+        <div class="answer-card-heading"><strong>Question ${esc(q.question_number || index + 1)}</strong><span>Maximum: ${Number(q.max_marks || 0).toFixed(2)} marks</span></div>
+        <p class="mark-question">${esc(q.question_text || "")}</p>
+        <div class="student-answer"><strong>Student's answer</strong><p>${esc(q.answer_text || "No answer text was submitted.").replace(/\n/g, "<br>")}</p></div>
+        <label>Marks awarded</label><input class="awarded-marks" type="number" min="0" max="${Number(q.max_marks || 0)}" step="0.01" value="${q.awarded_marks == null ? "" : Number(q.awarded_marks)}" placeholder="0 to ${Number(q.max_marks || 0)}">
+        <label>Teacher feedback</label><textarea class="teacher-feedback" rows="3" placeholder="Feedback for the student">${esc(q.teacher_feedback || "")}</textarea>
+        <div class="mark-save-row"><button type="button" class="save-mark">Save marks</button><span class="mark-save-status">${q.marked_at ? `Last marked: ${esc(E.formatDate(q.marked_at))}` : "Not marked yet"}</span></div>
+      </article>`).join("")}`;
+
+    answerPanel.querySelectorAll(".answer-card").forEach(card => {
+      card.querySelector(".save-mark").addEventListener("click", async () => {
+        const input = card.querySelector(".awarded-marks");
+        const marks = Number(input.value);
+        const max = Number(input.max);
+        const feedback = card.querySelector(".teacher-feedback").value;
+        const status = card.querySelector(".mark-save-status");
+        const button = card.querySelector(".save-mark");
+        if (input.value.trim() === "" || !Number.isFinite(marks) || marks < 0 || marks > max) {
+          status.textContent = `Enter a mark between 0 and ${max}.`; return;
+        }
+        button.disabled = true; status.textContent = "Saving...";
+        try {
+          const result = await E.rpc("crest_mark_student_question", {
+            p_attempt_id: activeAttemptId,
+            p_question_id: card.dataset.question,
+            p_marks: marks,
+            p_feedback: feedback
+          });
+          const current = attempts.find(x => x.attempt_id === activeAttemptId);
+          if (current && result) {
+            current.manual_marks = result.manual_marks ?? current.manual_marks;
+            current.marking_status = result.marking_status ?? result.status ?? current.marking_status;
+            const q = asArray(current.questions).find(x => x.question_id === card.dataset.question);
+            if (q) { q.awarded_marks = marks; q.teacher_feedback = feedback; q.marked_at = new Date().toISOString(); }
+          }
+          status.textContent = "Marks saved successfully.";
+          say("The student's marks and feedback have been saved.", "success");
+          renderSubmissions();
+        } catch (error) {
+          console.error("Save written-answer mark:", error);
+          status.textContent = error.message || "Could not save marks.";
+          say(error.message || String(error), "error");
+        } finally { button.disabled = false; }
+      });
+    });
+  }
 
   async function loadSubmissions() {
     const examId = examSelect.value;
-
-    if (!examId) {
-      notify("Please select an examination.", "error");
-      return;
-    }
-
-    if (loading) return;
-
-    loading = true;
-
-    submissionList.textContent =
-      "Loading student submissions...";
-
-    answerPanel.innerHTML =
-      '<div class="empty-state">Select a student submission to review answers.</div>';
-
-    submissions = [];
-    activeAttemptId = null;
-
+    if (!examId || busy) return;
+    busy = true; loadBtn.disabled = true;
+    submissionList.textContent = "Loading submitted students...";
+    answerPanel.innerHTML = '<div class="empty-state">Loading answers...</div>';
+    say("Loading submitted attempts and written answers...", "info");
     try {
-      const data = await E.rpc(
-        "crest_teacher_marking_list",
-        { p_exam_id: examId }
-      );
-
-      submissions = Array.isArray(data) ? data : [];
-
+      const result = await E.rpc("crest_teacher_marking_list", { p_exam_id: examId });
+      attempts = asArray(result);
+      activeAttemptId = attempts[0]?.attempt_id || null;
       renderSubmissions();
-
-      notify(
-        `${submissions.length} submitted examination(s) loaded.`,
-        "success"
-      );
-
+      say(`${attempts.length} submitted attempt(s) loaded.`, "success");
     } catch (error) {
-      console.error(error);
-
-      submissionList.textContent =
-        "Unable to load submissions.";
-
-      notify(error.message || String(error), "error");
-
-    } finally {
-      loading = false;
-    }
+      console.error("Load submitted answers:", error);
+      submissionList.textContent = "Submissions could not be loaded.";
+      answerPanel.innerHTML = '<div class="empty-state">Unable to load written answers.</div>';
+      say(error.message || String(error), "error");
+    } finally { busy = false; loadBtn.disabled = false; }
   }
 
-  // ---------------------------------------------------------
-  // 3. DISPLAY STUDENT SUBMISSIONS
-  // ---------------------------------------------------------
-
-  function renderSubmissions() {
-    if (!submissions.length) {
-      submissionList.innerHTML =
-        '<div class="empty-state">No submitted examinations found.</div>';
-      return;
-    }
-
-    submissionList.innerHTML = submissions.map(student => {
-      const active =
-        student.attempt_id === activeAttemptId;
-
-      const name =
-        student.student_name || "Student";
-
-      const reference =
-        student.student_number || student.student_id || "";
-
-      return `
-        <button
-          type="button"
-          class="submission-choice ${active ? "active" : ""}"
-          data-attempt="${esc(student.attempt_id)}">
-
-          <strong>${esc(name)}</strong>
-
-          <small>
-            ${esc(reference)}
-            · ${esc(student.marking_status || "pending")}
-            <br>
-            Automatic: ${esc(num(student.automatic_marks))}
-            · Written: ${esc(num(student.manual_marks))}
-            <br>
-            Submitted: ${esc(formatDate(student.submitted_at))}
-          </small>
-
-        </button>
-      `;
-    }).join("");
-
-    submissionList
-      .querySelectorAll("[data-attempt]")
-      .forEach(button => {
-        button.addEventListener("click", () => {
-          activeAttemptId = button.dataset.attempt;
-
-          const selected = submissions.find(
-            student =>
-              student.attempt_id === activeAttemptId
-          );
-
-          renderSubmissions();
-          renderAnswers(selected);
-        });
-      });
-  }
-
-  // ---------------------------------------------------------
-  // 4. DISPLAY STUDENT ANSWERS
-  // ---------------------------------------------------------
-
-  function renderAnswers(student) {
-    if (!student) return;
-
-    const questions = Array.isArray(student.questions)
-      ? student.questions
-      : [];
-
-    const heading = `
-      <h3>${esc(student.student_name || "Student")}</h3>
-
-      <p class="answer-meta">
-        Student number:
-        ${esc(student.student_number || student.student_id || "Not available")}
-      </p>
-
-      <p class="answer-meta">
-        Automatic marks:
-        <strong>${esc(num(student.automatic_marks))}</strong>
-
-        · Written marks:
-        <strong data-manual-total>${esc(num(student.manual_marks))}</strong>
-
-        · Total possible:
-        <strong>${esc(num(student.total_marks))}</strong>
-      </p>
-
-      <p class="answer-meta">
-        Submission status:
-        ${esc(student.attempt_status || "Submitted")}
-      </p>
-    `;
-
-    if (!questions.length) {
-      answerPanel.innerHTML =
-        heading +
-        '<div class="empty-state">No written questions require manual marking.</div>';
-      return;
-    }
-
-    answerPanel.innerHTML =
-      heading +
-      questions.map(question => {
-        const maxMarks = num(question.max_marks);
-
-        const awarded =
-          question.awarded_marks ??
-          question.teacher_marks ??
-          "";
-
-        const answer = question.answer_text
-          ? esc(question.answer_text).replace(/\r?\n/g, "<br>")
-          : "<em>No answer submitted.</em>";
-
-        return `
-          <article
-            class="answer-card"
-            data-question="${esc(question.question_id)}">
-
-            <h4>
-              Question ${esc(question.question_number ?? "—")}
-              · ${esc(maxMarks)} marks
-            </h4>
-
-            <p>${esc(question.question_text)}</p>
-
-            <p class="answer-meta">
-              <strong>Student's answer</strong>
-            </p>
-
-            <div class="student-answer">
-              ${answer}
-            </div>
-
-            <div class="mark-row">
-
-              <label>
-                Marks awarded
-
-                <input
-                  type="number"
-                  min="0"
-                  max="${maxMarks}"
-                  step="0.01"
-                  value="${esc(awarded)}"
-                  data-marks>
-              </label>
-
-              <label style="flex:1;min-width:180px">
-                Teacher feedback
-
-                <textarea
-                  data-feedback
-                  rows="2"
-                  placeholder="Enter feedback (optional)">${esc(question.teacher_feedback || "")}</textarea>
-              </label>
-
-              <button
-                type="button"
-                data-save>
-                Save mark
-              </button>
-
-              <span class="mark-status">
-                ${
-                  question.marked_at
-                    ? "Previously marked"
-                    : "Not yet marked"
-                }
-              </span>
-
-            </div>
-          </article>
-        `;
-      }).join("");
-
-    answerPanel
-      .querySelectorAll("[data-save]")
-      .forEach(button => {
-        button.addEventListener("click", () => saveMark(button));
-      });
-  }
-
-  // ---------------------------------------------------------
-  // 5. SAVE MARKS AND FEEDBACK
-  // ---------------------------------------------------------
-
-  async function saveMark(button) {
-    const card = button.closest("[data-question]");
-
-    if (!card || !activeAttemptId) return;
-
-    const marksInput = card.querySelector("[data-marks]");
-    const feedbackInput = card.querySelector("[data-feedback]");
-
-    const rawMarks = marksInput.value.trim();
-    const marks = Number(rawMarks);
-    const maxMarks = Number(marksInput.max);
-
-    if (
-      rawMarks === "" ||
-      !Number.isFinite(marks) ||
-      marks < 0 ||
-      marks > maxMarks
-    ) {
-      notify(
-        `Enter a mark between 0 and ${maxMarks}.`,
-        "error"
-      );
-
-      marksInput.focus();
-      return;
-    }
-
-    button.disabled = true;
-    button.textContent = "Saving...";
-
-    try {
-      const result = await E.rpc(
-        "crest_mark_student_question",
-        {
-          p_attempt_id: activeAttemptId,
-          p_question_id: card.dataset.question,
-          p_marks: marks,
-          p_feedback: feedbackInput.value
-        }
-      );
-
-      const student = submissions.find(
-        item => item.attempt_id === activeAttemptId
-      );
-
-      if (student) {
-        const question = student.questions.find(
-          item => item.question_id === card.dataset.question
-        );
-
-        if (question) {
-          question.awarded_marks = marks;
-          question.teacher_feedback = feedbackInput.value;
-          question.marked_at = new Date().toISOString();
-        }
-
-        student.manual_marks = result.manual_marks;
-        student.marking_status = result.status;
-      }
-
-      const total = answerPanel.querySelector(
-        "[data-manual-total]"
-      );
-
-      if (total) {
-        total.textContent = num(result.manual_marks);
-      }
-
-      const status = card.querySelector(".mark-status");
-
-      if (status) {
-        status.textContent = "Saved successfully";
-      }
-
-      renderSubmissions();
-
-      notify(
-        `Mark saved successfully. Written marks: ${num(result.manual_marks)}. ` +
-        (
-          result.pending_questions === 0
-            ? "All written questions are marked."
-            : `${result.pending_questions} question(s) remain to be marked.`
-        ),
-        "success"
-      );
-
-    } catch (error) {
-      console.error("Saving marks:", error);
-
-      notify(error.message || String(error), "error");
-
-    } finally {
-      button.disabled = false;
-      button.textContent = "Save mark";
-    }
-  }
-
-  // ---------------------------------------------------------
-  // 6. BUTTON EVENTS
-  // ---------------------------------------------------------
-
-  $("loadBtn").addEventListener(
-    "click",
-    loadSubmissions
-  );
-
-  $("refreshBtn").addEventListener(
-    "click",
-    loadSubmissions
-  );
-
-  examSelect.addEventListener("change", () => {
-    submissions = [];
-    activeAttemptId = null;
-
-    submissionList.textContent =
-      "Click Load submissions to continue.";
-
-    answerPanel.innerHTML =
-      '<div class="empty-state">Select an examination and load submissions.</div>';
-  });
-
-  // ---------------------------------------------------------
-  // 7. START DASHBOARD
-  // ---------------------------------------------------------
-
-  initialise();
-
+  loadBtn.addEventListener("click", loadSubmissions);
+  refreshBtn?.addEventListener("click", loadExams);
+  examSelect.addEventListener("change", loadSubmissions);
+  loadExams();
 })();

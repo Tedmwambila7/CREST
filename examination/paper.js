@@ -1,6 +1,6 @@
 /* CREST EXAMINATION — MASTER 4: PAPER AND MARKING-SCHEME PDF GENERATOR
    Additive front-end module. Uses the existing examinations,
-   examination_questions and examination_question_options tables.
+   the existing public.questions table and its JSON options column.
    Does not modify exam.js, authentication, student records or database tables.
 */
 (() => {
@@ -44,13 +44,7 @@
 
     try {
       await E.requireTeacher();
-      const { data, error } = await E.getClient()
-        .from("examinations")
-        .select("id,title,subject,status,duration_minutes,total_marks,instructions,start_time,scheduled_at,ends_at,created_at")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-
-      examinations = data || [];
+      examinations = await E.rpc("crest_teacher_dashboard_exams") || [];
       examSelect.innerHTML = '<option value="">Choose an examination</option>';
       examinations.forEach(exam => {
         const option = document.createElement("option");
@@ -98,18 +92,7 @@
     showMessage("Loading questions and answer options...", "info");
 
     try {
-      const { data, error } = await E.getClient()
-        .from("examination_questions")
-        .select(`
-          id, examination_id, question_text, question_type, marks,
-          question_order, correct_answer, explanation, image_url,
-          examination_question_options (id, option_label, option_text, is_correct)
-        `)
-        .eq("examination_id", examId)
-        .order("question_order", { ascending: true });
-      if (error) throw error;
-
-      activeQuestions = data || [];
+      activeQuestions = await E.rpc("crest_teacher_questions_list", { p_exam_id: examId }) || [];
       if (!activeQuestions.length) {
         printArea.innerHTML = '<div class="paper-empty">This examination has no questions yet. Add questions in Question Management.</div>';
         showMessage("No questions have been added to this examination.", "info");
@@ -158,8 +141,14 @@
   }
 
   function getOptions(question) {
-    return [...(question.examination_question_options || [])]
-      .sort((a, b) => String(a.option_label || "").localeCompare(String(b.option_label || "")));
+    const raw = question.options;
+    if (Array.isArray(raw)) return raw.map((item, index) => {
+      if (typeof item === "string") return { option_label: String.fromCharCode(65 + index), option_text: item, is_correct: false };
+      return { option_label: item.label || item.option_label || String.fromCharCode(65 + index), option_text: item.text || item.option_text || item.value || "", is_correct: Boolean(item.is_correct || item.correct) };
+    });
+    if (raw && typeof raw === "object") return Object.entries(raw).map(([label, value]) => ({ option_label: label, option_text: typeof value === "string" ? value : (value.text || ""), is_correct: Boolean(value.is_correct || value.correct) }));
+    if (typeof raw === "string") { try { question.options = JSON.parse(raw); return getOptions(question); } catch (_) { return []; } }
+    return [];
   }
 
   function renderStudentQuestion(question, index) {
@@ -198,15 +187,14 @@
 
   function renderSchemeQuestion(question, index) {
     const answer = correctAnswerText(question);
-    const explanation = String(question.explanation || "").trim();
     const answerBlock = answer
-      ? `<div><span class="scheme-label">Expected answer</span><br>${escape(answer)}</div>`
+      ? `<div><span class="scheme-label">Expected answer / marking guide</span><br>${escape(answer)}</div>`
       : '<div><span class="scheme-label">Marking guidance</span><br>Requires teacher assessment using the question and allocated marks.</div>';
     return `<article class="question">
       <div class="question-heading"><span>Question ${index + 1}</span><span>[${number(question.marks)} mark(s)]</span></div>
       <div class="question-text">${escape(question.question_text || "")}</div>
       ${getQuestionImage(question)}
-      <div class="scheme-answer">${answerBlock}${explanation ? `<p><strong>Explanation:</strong> ${escape(explanation)}</p>` : ""}</div>
+      <div class="scheme-answer">${answerBlock}</div>
     </article>`;
   }
 
