@@ -1,0 +1,25 @@
+CREST TWO-PROJECT STUDENT EXAMINATION CONNECTION
+
+This package updates the browser helper, student page logic, and the student delivery Edge Function.
+It preserves the existing examination_questions / examination_question_options workflow.
+
+FILES TO REPLACE
+1. crest_integration/examination/exam.js
+2. crest_integration/examination/student.js
+3. crest_integration/supabase/functions/crest-student-exams/index.ts
+
+DEPLOYMENT ORDER
+1. In the CREST Examination Supabase project, open Edge Functions > crest-student-exams.
+2. Replace its index.ts with the package version and deploy the function.
+3. Replace examination/exam.js and examination/student.js in the hosted CREST Examination website.
+4. Keep the existing student-exam.html script order: Supabase CDN, exam.js, student.js.
+5. Do not change or expose any service-role keys in browser files.
+
+IMPORTANT
+- The existing super-action Edge Function remains responsible for exchanging the MAIN CREST student session for a short-lived Examination session.
+- crest-student-exams now accepts only p_exam_session_token and validates it against crest_portal_exam_sessions in the Examination database.
+- The browser sends the MAIN CREST token only to super-action; all subsequent examination actions use the Examination session token.
+- The public anon key in exam.js is the same public anon key already present in the saved project file. It is not a service-role key.
+- Do not run the legacy SQL migration pasted in chat.
+
+After deployment, test using a real student account: open the examination page while signed in to MAIN CREST, confirm the exam list loads, start a test exam, save an answer, and submit.

@@ -1,296 +1,144 @@
-
-/* ============================================================
-   CREST EXAMINATION — COMPLETE SHARED CONFIGURATION
-   Connects:
-   1. CREST Examination Supabase
-   2. Existing MAIN CREST student login
-   3. Secure super-action Edge Function
-   4. Existing teacher authentication
-   ============================================================ */
-
+/* CREST Examination — shared connection and secure two-project student bridge */
 (() => {
   "use strict";
 
-  // ==========================================================
-  // 1. CREST EXAMINATION SUPABASE CONFIGURATION
-  // ==========================================================
+  const SUPABASE_URL = "https://rvsmsucxgpdpdequzteb.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2c21zdWN4Z3BkcGRlcXV6dGViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM5Nzg1MjcsImV4cCI6MjEwOTU1NDUyN30.S-HtfXgJFkrZYeglb1Y-cCLg7EhKrkV4DCrw1qwSjw0";
+  // Public anon key only. Never put a service-role key in browser code.
 
-  const SUPABASE_URL =
-    "https://rvsmsucxgpdpdequzteb.supabase.co";
-
-  const SUPABASE_ANON_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2c21zdWN4Z3BkcGRlcXV6dGViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM5Nzg1MjcsImV4cCI6MjEwOTU1NDUyN30.S-HtfXgJFkrZYeglb1Y-cCLg7EhKrkV4DCrw1qwSjw0";
-
-  window.CREST_EXAM = window.CREST_EXAM || {};
-
-  const E = window.CREST_EXAM;
-
-  E.client = null;
-
-  if (!window.supabase || !window.supabase.createClient) {
-    console.error("CREST Supabase library has not loaded.");
-  } else {
-    E.client = window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_ANON_KEY
-    );
+  const E = window.CREST_EXAM = window.CREST_EXAM || {};
+  E.client = E.client || null;
+  if (!E.client && window.supabase?.createClient) {
+    E.client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    });
   }
 
-  // ==========================================================
-  // 2. GET SUPABASE CLIENT
-  // ==========================================================
-
   E.getClient = function () {
-    if (!E.client) {
-      throw new Error(
-        "CREST Supabase could not be initialized. Check your connection."
-      );
-    }
-
+    if (!E.client) throw new Error("Supabase is unavailable. Check the Supabase script and anon key.");
     return E.client;
   };
 
-  // ==========================================================
-  // 3. READ EXISTING MAIN CREST STUDENT LOGIN
-  // ==========================================================
+  E.escape = value => String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  })[c]);
 
-  E.getStudentSessionToken = function () {
-    if (typeof window.getCrestStudentSessionToken === "function") {
-      return window.getCrestStudentSessionToken();
-    }
-
-    const keys = [
-      "crestStudentSession",
-      "crest_student_session",
-      "crestSession",
-      "studentSession",
-      "student_session",
-      "crest_token",
-      "session_token"
-    ];
-
-    for (const key of keys) {
-      const value = localStorage.getItem(key);
-
-      if (!value) continue;
-
-      try {
-        const parsed = JSON.parse(value);
-
-        if (typeof parsed === "string") return parsed;
-
-        if (parsed.token) return parsed.token;
-
-        if (parsed.session_token) return parsed.session_token;
-
-      } catch (_) {
-        return value;
-      }
-    }
-
-    return "";
+  E.formatDate = function (value, fallback = "Not scheduled") {
+    if (!value) return fallback;
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? fallback : d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
   };
-
-  // ==========================================================
-  // 4. CONNECT STUDENT TO EXAMINATION SYSTEM
-  // ==========================================================
-
-  E.connectStudent = async function () {
-    const client = E.getClient();
-
-    const mainToken = E.getStudentSessionToken();
-
-    if (!mainToken) {
-      throw new Error(
-        "Please sign in to your MAIN CREST student portal first."
-      );
-    }
-
-    // Reuse a valid examination session on this browser tab.
-    const cached = sessionStorage.getItem("crestExamSession");
-
-    if (cached) {
-      try {
-        const saved = JSON.parse(cached);
-
-        if (
-          saved.token &&
-          saved.expires_at &&
-          new Date(saved.expires_at).getTime() > Date.now() + 60000
-        ) {
-          return saved;
-        }
-      } catch (_) {
-        sessionStorage.removeItem("crestExamSession");
-      }
-    }
-
-    // Ask the secure Edge Function to validate MAIN CREST.
-    const { data, error } = await client.functions.invoke(
-      "super-action",
-      {
-        body: {
-          session_token: mainToken
-        }
-      }
-    );
-
-    if (error) {
-      console.error("CREST student connection error:", error);
-
-      throw new Error(
-        "Could not connect to CREST examinations. Please sign in again."
-      );
-    }
-
-    if (!data || !data.success || !data.session_token) {
-      throw new Error(
-        data?.error || "Student connection failed."
-      );
-    }
-
-    const examSession = {
-      token: data.session_token,
-      student_name: data.student_name,
-      expires_at: data.expires_at
-    };
-
-    sessionStorage.setItem(
-      "crestExamSession",
-      JSON.stringify(examSession)
-    );
-
-    return examSession;
-  };
-
-  // ==========================================================
-  // 5. GET EXAMINATION SESSION TOKEN
-  // ==========================================================
-
-  E.getExamSessionToken = function () {
-    try {
-      const saved = JSON.parse(
-        sessionStorage.getItem("crestExamSession") || "null"
-      );
-
-      if (
-        saved &&
-        saved.token &&
-        saved.expires_at &&
-        new Date(saved.expires_at).getTime() > Date.now()
-      ) {
-        return saved.token;
-      }
-    } catch (_) {}
-
-    return "";
-  };
-
-  // ==========================================================
-  // 6. CLEAR EXAMINATION SESSION
-  // ==========================================================
-
-  E.clearExamSession = function () {
-    sessionStorage.removeItem("crestExamSession");
-  };
-
-  // ==========================================================
-  // 7. DISPLAY MESSAGES
-  // ==========================================================
 
   E.message = function (element, text, type = "info") {
     if (!element) return;
-
-    element.textContent = text;
-    element.className = "message " + type;
+    element.textContent = text || "";
+    element.className = `message ${type}`;
+    element.setAttribute("role", type === "error" ? "alert" : "status");
   };
 
-  // ==========================================================
-  // 8. SAFE HTML ESCAPING
-  // ==========================================================
-
-  E.escape = function (value) {
-    return String(value ?? "").replace(/[&<>"']/g, c => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;"
-    })[c]);
-  };
-
-  // ==========================================================
-  // 9. FORMAT DATES
-  // ==========================================================
-
-  E.formatDate = function (value) {
-    if (!value) return "Not scheduled";
-
-    const date = new Date(value);
-
-    return Number.isNaN(date.getTime())
-      ? "Not scheduled"
-      : date.toLocaleString();
-  };
-
-  // ==========================================================
-  // 10. DATABASE RPC HELPER
-  // ==========================================================
-
-  E.rpc = async function (name, params) {
-    const { data, error } =
-      await E.getClient().rpc(name, params);
-
+  E.rpc = async function (name, params = {}) {
+    const { data, error } = await E.getClient().rpc(name, params);
     if (error) throw error;
-
     return data;
   };
 
-  // ==========================================================
-  // 11. TEACHER AUTHENTICATION
-  // ==========================================================
+  E.getStudentSessionToken = function () {
+    if (typeof window.getCrestStudentSessionToken === "function") {
+      const value = window.getCrestStudentSessionToken();
+      if (value) return String(value);
+    }
+    const keys = ["crestStudentSession", "crest_student_session", "crestSession", "studentSession", "student_session", "crest_token", "session_token"];
+    for (const key of keys) {
+      try {
+        const raw = window.localStorage?.getItem(key);
+        if (!raw) continue;
+        try {
+          const parsed = JSON.parse(raw);
+          if (typeof parsed === "string") return parsed;
+          if (parsed?.token) return String(parsed.token);
+          if (parsed?.session_token) return String(parsed.session_token);
+        } catch (_) { return raw; }
+      } catch (_) { /* Try the next known portal storage key. */ }
+    }
+    return "";
+  };
+
+  E.clearExamSession = function () {
+    try { window.sessionStorage.removeItem("crestExamSession"); } catch (_) {}
+  };
+
+  E.getExamSessionToken = function () {
+    try {
+      const raw = window.sessionStorage.getItem("crestExamSession");
+      if (!raw) return "";
+      const saved = JSON.parse(raw);
+      if (!saved?.session_token || !saved?.expires_at || new Date(saved.expires_at).getTime() <= Date.now()) {
+        E.clearExamSession();
+        return "";
+      }
+      return String(saved.session_token);
+    } catch (_) { return ""; }
+  };
+
+  E.connectStudent = async function () {
+    const cached = E.getExamSessionToken();
+    if (cached) return cached;
+
+    const mainToken = E.getStudentSessionToken();
+    if (!mainToken) throw new Error("Your MAIN CREST login was not found. Sign in to the main CREST Academy portal first.");
+
+    const { data, error } = await E.getClient().functions.invoke("super-action", {
+      body: { session_token: mainToken }
+    });
+    if (error) throw new Error(error.message || "Could not connect your CREST student account to examinations.");
+    if (!data?.success || !data?.session_token || !data?.expires_at) {
+      throw new Error(data?.error || "The examination session could not be created. Please sign in again.");
+    }
+
+    try {
+      window.sessionStorage.setItem("crestExamSession", JSON.stringify({
+        session_token: data.session_token,
+        student_name: data.student_name || "Student",
+        expires_at: data.expires_at
+      }));
+    } catch (_) {
+      throw new Error("Your browser blocked session storage. Enable session storage and reload this page.");
+    }
+    return data.session_token;
+  };
+
+  // Every student action now uses the short-lived Examination session token.
+  // The MAIN CREST login token is sent only once to super-action for exchange.
+  E.studentAction = async function (action, params = {}) {
+    const examToken = E.getExamSessionToken() || await E.connectStudent();
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/crest-student-exams`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+      },
+      body: JSON.stringify({ action, ...params, p_exam_session_token: examToken })
+    });
+    let payload = {};
+    try { payload = await response.json(); } catch (_) {}
+    if (!response.ok || payload?.error) {
+      if (response.status === 401 || response.status === 403) E.clearExamSession();
+      throw new Error(payload?.error || `Student examination request failed (${response.status}).`);
+    }
+    return payload;
+  };
 
   E.requireTeacher = async function () {
     const client = E.getClient();
-
-    const {
-      data: { user },
-      error
-    } = await client.auth.getUser();
-
-    if (error || !user) {
-      throw new Error(
-        "Please sign in using your CREST teacher account."
-      );
+    const { data: { user }, error } = await client.auth.getUser();
+    if (error || !user) throw new Error("Please sign in using your CREST teacher or administrator account.");
+    const { data: profile, error: profileError } = await client.from("profiles")
+      .select("id, full_name, email, role").eq("id", user.id).maybeSingle();
+    if (profileError) throw profileError;
+    if (!profile || !["teacher", "admin", "super_admin"].includes(profile.role)) {
+      throw new Error("This account does not have permission to manage examinations.");
     }
-
-    const { data: profile, error: profileError } =
-      await client
-        .from("profiles")
-        .select("role, full_name")
-        .eq("id", user.id)
-        .single();
-
-    if (
-      profileError ||
-      !profile ||
-      !["teacher", "admin", "super_admin"].includes(profile.role)
-    ) {
-      throw new Error(
-        "This account is not registered as a CREST teacher or administrator."
-      );
-    }
-
-    return {
-      user,
-      profile
-    };
+    return { user, profile };
   };
-
-  // ==========================================================
-  // 12. INITIALIZATION
-  // ==========================================================
-
-  console.info("CREST Examination configuration loaded.");
-
 })();
