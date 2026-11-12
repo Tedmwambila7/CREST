@@ -1,13 +1,154 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Manage Questions</title><link rel="stylesheet" href="exam.css"></head>
-<body><header><h1>Manage Examination Questions</h1></header><main>
-<div class="card"><div id="message" class="message"></div><p id="examInfo" class="muted"></p>
-<form id="questionForm">
-<label>Question number</label><input name="number" type="number" min="1" required>
-<label>Question</label><textarea name="question" required></textarea>
-<div class="grid"><div><label>Option A</label><input name="a" required></div><div><label>Option B</label><input name="b" required></div><div><label>Option C</label><input name="c" required></div><div><label>Option D</label><input name="d" required></div></div>
-<div class="grid"><div><label>Correct answer</label><select name="correct"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div><div><label>Marks</label><input name="marks" type="number" min="1" value="1" required></div></div>
-<label>Explanation (optional; shown only where permitted)</label><textarea name="explanation"></textarea>
-<button type="submit">Save question</button>
-</form><div class="top-links"><button id="publishBtn">Publish examination</button><a class="button secondary" href="teacher-dashboard.html">Back to dashboard</a></div>
-</div><section class="card"><h2>Saved questions</h2><div id="questionList">Loading...</div></section>
-</main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="exam.js"></script><script src="questions.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#123d2b">
+  <title>Question Management | CREST Academy</title>
+  <link rel="stylesheet" href="exam.css">
+  <link rel="stylesheet" href="questions.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand-link" href="teacher-dashboard.html">← Teacher dashboard</a>
+      <div>
+        <h1>Question Management</h1>
+        <p>Create and organise the questions for an examination.</p>
+      </div>
+    </div>
+  </header>
+  <main>
+    <nav class="top-links" aria-label="Question management navigation">
+      <a class="button secondary" href="crest-master.html">Master dashboard</a>
+      <a class="button secondary" href="teacher-dashboard.html">All examinations</a>
+      <a class="button secondary" href="index.html">Examination home</a>
+    </nav>
+
+    <section class="q-card">
+      <div class="q-toolbar">
+        <div>
+          <h2>Select examination</h2>
+          <p class="muted">Choose which examination to edit.</p>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" id="publishExam" class="secondary-btn">Publish examination</button><button type="button" id="refreshQuestions" class="secondary-btn">Refresh questions</button></div>
+      </div>
+      <label for="examSelect">Examination</label>
+      <select id="examSelect">
+        <option value="">Loading examinations...</option>
+      </select>
+      <div id="pageMessage" class="message" role="status" aria-live="polite"></div>
+    </section>
+
+    <section class="q-card" id="pdfImportCard">
+      <div class="q-section-heading">
+        <div>
+          <p class="eyebrow">PDF QUESTION IMPORT</p>
+          <h2>Upload an existing question paper</h2>
+          <p class="muted">Keep the original PDF and extract its selectable text to help build this online examination.</p>
+        </div>
+      </div>
+      <div class="pdf-import-grid">
+        <div>
+          <label for="questionPdf">Choose a PDF question paper</label>
+          <input id="questionPdf" type="file" accept="application/pdf,.pdf">
+          <p class="field-help">PDF only. Maximum file size: 20 MB.</p>
+          <button type="button" id="uploadExtractPdf">Upload and extract text</button>
+          <p id="pdfImportStatus" class="message" role="status" aria-live="polite"></p>
+          <a id="openOriginalPdf" class="pdf-original-link" href="#" target="_blank" rel="noopener" hidden>Open uploaded original PDF</a>
+        </div>
+        <div>
+          <label for="extractedPdfText">Extracted text — review before using</label>
+          <textarea id="extractedPdfText" rows="12" placeholder="Text extracted from your PDF will appear here. Check it carefully; page layouts may affect extraction."></textarea>
+          <div class="pdf-import-actions">
+            <button type="button" id="usePdfText" class="secondary-btn">Use selected text in question editor</button>
+            <button type="button" id="useAllPdfText" class="secondary-btn">Use all extracted text</button>
+          </div>
+          <p class="field-help">Select one question in the text box and use the first button. Then choose its question type, add options and answers, and save it below. Repeat for each question.</p>
+        </div>
+      </div>
+      <p class="field-help">Scanned/image-only PDFs may not contain selectable text. This version stores the original PDF but does not yet perform OCR; those questions must be typed or transcribed by the teacher.</p>
+    </section>
+
+    <section class="q-card" id="questionEditor">
+      <div class="q-section-heading">
+        <div>
+          <p class="eyebrow">QUESTION EDITOR</p>
+          <h2 id="formHeading">Add a question</h2>
+        </div>
+        <span class="editor-note">Changes are saved to this examination.</span>
+      </div>
+
+      <form id="questionForm">
+        <input type="hidden" id="questionId">
+
+        <label for="questionText">Question text</label>
+        <textarea id="questionText" rows="4" maxlength="10000"
+          placeholder="Write the question clearly..." required></textarea>
+
+        <div class="q-grid">
+          <div>
+            <label for="questionType">Question type</label>
+            <select id="questionType" required>
+              <option value="multiple_choice">Multiple choice</option>
+              <option value="true_false">True / False</option>
+              <option value="short_answer">Short answer</option>
+              <option value="essay">Essay / Written response</option>
+            </select>
+          </div>
+          <div>
+            <label for="questionMarks">Marks</label>
+            <input type="number" id="questionMarks" min="0.1" step="0.1" value="1" required>
+          </div>
+          <div>
+            <label for="questionOrder">Question number</label>
+            <input type="number" id="questionOrder" min="1" step="1" value="1" required>
+          </div>
+        </div>
+
+        <div id="optionsSection">
+          <div class="options-heading">
+            <div>
+              <h3>Answer options</h3>
+              <p class="muted">Choose one correct answer.</p>
+            </div>
+            <button type="button" id="addOption" class="secondary-btn">+ Add option</button>
+          </div>
+          <div id="optionsContainer"></div>
+        </div>
+
+        <label for="correctAnswer">Expected answer / marking guide</label>
+        <textarea id="correctAnswer" rows="3"
+          placeholder="For short-answer and essay questions, enter the marking guide."></textarea>
+
+        <label for="imageUrl">Question image URL (optional)</label>
+        <input type="url" id="imageUrl" placeholder="https://example.com/image.jpg">
+
+        <div class="q-actions">
+          <button type="submit" id="saveQuestion">Save question</button>
+          <button type="button" id="cancelEdit" class="secondary-btn">Clear form</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="q-card">
+      <div class="q-toolbar">
+        <div>
+          <p class="eyebrow">QUESTION BANK</p>
+          <h2>Saved questions</h2>
+          <p id="questionCount" class="muted">0 questions</p>
+        </div>
+      </div>
+      <div id="questionList" aria-live="polite">
+        Select an examination to view its questions.
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="exam.js"></script>
+  <script src="questions.js"></script>
+  <script src="pdf-import.js"></script>
+</body>
+</html>

@@ -1,92 +1,86 @@
-CREST EXAMINATION SYSTEM — INSTALLATION GUIDE
-=============================================
-
-IMPORTANT
----------
-This package adds an examination module to your EXISTING CREST website.
-It does not replace your existing student login or other CREST pages.
+CREST ACADEMY — UNIFIED TEACHER DASHBOARD
+========================================
 
 WHAT IS INCLUDED
 ----------------
-- Teacher dashboard: create and manage examinations.
-- Question editor: add multiple-choice questions and correct answers.
-- Publishing: publish an exam with an access code or open access.
-- Student exam page: validate an existing CREST student session, start an attempt,
-  display questions, save answers, and submit.
-- Server-side marking and result storage.
-- Results page for teachers.
-- Supabase SQL setup script with RPC functions.
+- Teacher sign-in and a unified teacher dashboard.
+- Examination creation and scheduling.
+- Question manager: multiple choice, true/false, short answer and essay.
+- Teacher PDF question-paper upload and selectable-text extraction.
+- Submitted-student list and written-answer marking with feedback.
+- Results register using exam_results.
+- Student examination-paper PDF and confidential marking-scheme PDF.
+- Super Admin and master dashboard pages retained from the supplied project.
 
-BEFORE YOU START
+IMPORTANT DATABASE WORKFLOW
+----------------------------
+This teacher dashboard is aligned to the confirmed tables and functions used
+by the current MASTER 1 and MASTER 2 marking work:
+  examinations, questions, exam_attempts, student_answers, exam_results,
+  exam_students, exam_teachers and profiles.
+
+It does NOT use the parallel V2 tables such as:
+  examination_questions, crest_online_exam_attempts_v2,
+  crest_online_exam_answers_v2 or crest_online_exam_results_v2.
+
+INSTALLATION
+------------
+1. Back up your current website files and Supabase database.
+2. Extract this package.
+3. Upload the contents of its `examination/` folder into your existing
+   website `examination/` folder. Keep the folder name `examination`.
+4. Keep your current `exam.js` if it contains your correct Supabase URL and
+   anon/public key. Never put a service_role key in browser files.
+5. Open the Supabase SQL Editor for the CREST Examination project.
+6. Run `CREST-TEACHER-DASHBOARD-MASTER.sql` once. It creates the secure RPCs
+   used by the teacher dashboard, question manager, results register,
+   examination creation and private PDF uploads. It is additive and does not
+   drop tables or delete student records.
+7. Do NOT rerun MASTER 1 or MASTER 2 if they have already completed
+   successfully. This package expects their marking functions to exist:
+     crest_teacher_marking_exams
+     crest_teacher_marking_list
+     crest_mark_student_question
+8. Hard-refresh the website (Ctrl + Shift + R), then sign in at
+   `examination/teacher-login.html`.
+
+TEACHER WORKFLOW
 ----------------
-1. Make a backup copy of your existing CREST project.
-2. In Supabase, open SQL Editor.
-3. Open the file examinations/database/setup.sql from this package.
-4. Copy its contents into SQL Editor and run it.
-5. If Supabase reports an error, STOP and send the exact error. Do not repeatedly
-   run modified SQL without checking the cause.
-6. In examinations/exam.js, replace:
-      YOUR_SUPABASE_PROJECT_URL
-      YOUR_SUPABASE_ANON_OR_PUBLISHABLE_KEY
-   with your Supabase Project URL and anon/publishable key.
-   NEVER put a service_role key in browser JavaScript.
-7. Connect this module to your existing CREST student session:
-   In exam.js, edit getStudentSessionToken(). It must return the same session
-   token your existing CREST login stores after a student signs in.
-   The helper checks several common localStorage names, but your existing site
-   may use a different name. Search your existing login code for
-   "crest_sessions", "crestStudentSession", or "token".
-8. Teacher pages require Supabase Auth sign-in and a matching row in public.profiles
-   where id = auth.uid() and role = 'teacher' or 'admin'. If your current teacher
-   login uses a different system, it must be connected before teacher RPCs work.
-9. Upload the examinations folder to the same location as your other CREST pages.
-   Keep the existing root site files. Link to:
-      examinations/index.html
+1. Sign in as an authorised teacher.
+2. Open Teacher Dashboard.
+3. Create an examination.
+4. Open Question Manager. Add questions manually or upload a PDF, extract
+   selectable text, review it, and transfer each question into the editor.
+5. Publish the examination when it is ready.
+6. Use Generate examination PDFs to preview and save the student paper or
+   confidential marking scheme.
+7. Use Mark written answers to mark submitted short-answer and essay answers.
+8. Use Results Register to review recorded marks and publication status.
 
-DATABASE NOTES
---------------
-Your existing tables are reused. The SQL adds a UUID column to crest_students
-for examination attempt identity, and creates secure RPC functions.
-It does not expose answer_keys to students. Student operations validate the
-existing crest_sessions token on the server.
+PDF NOTES
+---------
+- PDF upload limit: 20 MB.
+- Uploaded originals are stored in a private Supabase Storage bucket.
+- Selectable PDF text is extracted in the browser using PDF.js.
+- Scanned/image-only PDFs are not OCR-processed; transcribe those questions.
+- Student paper and marking scheme are separate print jobs. Choose
+  "Save as PDF" in the browser print dialog.
 
-The package assumes:
-- crest_sessions.token and crest_sessions.phone identify a current student session.
-- crest_students.phone identifies the same student phone.
-- profiles.id is the authenticated teacher UUID.
-- profiles.role contains 'teacher' or 'admin' for permitted teachers.
+STUDENT DELIVERY COMPATIBILITY
+------------------------------
+The supplied project contains a separate/older student-delivery page and
+parallel V2 database scripts. Those components use a different question and
+attempt data model from MASTER 1 / MASTER 2. This package deliberately does
+not claim that those parallel V2 student pages have been migrated to the
+current `questions` / `exam_attempts` workflow. Do not run the old
+`student-delivery-v2.sql`, `teacher-marking-v2.sql` or `setup.sql` as part of
+this installation. Keep using the student delivery flow already confirmed
+for your live site until its backend is deliberately aligned and tested.
 
-If any of these assumptions do not match your actual CREST login/database,
-the relevant integration must be adjusted. The student token is not guessed:
-connect getStudentSessionToken() to your existing login's actual storage key.
-
-SECURITY
---------
-- Do not share your Supabase service_role key.
-- Do not make answer_keys publicly readable.
-- Student answers are marked on the server.
-- The browser countdown is only a display; the server checks the deadline.
-- Use HTTPS when hosting the site.
-
-SUPPORTED QUESTION TYPE
------------------------
-This first version supports four-option multiple-choice questions (A, B, C, D).
-Your current questions table has option_a through option_d and no written-answer
-field. Written-response questions need a separate schema and marking workflow.
-
-FILES
------
-index.html                 Module landing page
-exam.js                    Supabase setup and shared helpers
-exam.css                   Shared styling
-teacher-dashboard.html     Teacher exam list
-teacher.js                 Teacher dashboard logic
-create-exam.html           Create/edit exam form
-create-exam.js             Create exam logic
-questions.html             Add questions and answer keys
-questions.js               Question editor logic
-student-exam.html          Student exam access and sitting page
-student.js                 Student attempt logic
-results.html               Teacher results page
-results.js                 Results logic
-database/setup.sql         Database migration and secure RPC functions
+SAFETY
+------
+- Test with a draft examination and test student before publishing live work.
+- A question with existing student answers cannot be edited or deleted by
+  the new secure question RPCs.
+- Do not delete tables or records to resolve an error.
+- Never expose answer keys or service_role credentials in public JavaScript.

@@ -1,3 +1,40 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Examination Results</title><link rel="stylesheet" href="exam.css"></head>
-<body><header><h1>CREST — Examination Results</h1></header><main><div class="card"><div id="message" class="message"></div><a class="button secondary" href="teacher-dashboard.html">Back to dashboard</a><h2>Results</h2><div id="results">Loading results...</div></div></main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="exam.js"></script><script src="results.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Examination Results | CREST Academy</title>
+  <link rel="stylesheet" href="exam.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand-link" href="teacher-dashboard.html">← Teacher dashboard</a>
+      <div>
+        <h1>Examination Results</h1>
+        <p>Review submitted student results.</p>
+      </div>
+    </div>
+  </header>
+  <main>
+    <nav class="top-links" aria-label="Results navigation">
+      <a class="button secondary" href="teacher-dashboard.html">All examinations</a>
+      <a class="button secondary" href="crest-master.html">Master dashboard</a>
+    </nav>
+    <section class="card">
+      <div id="message" class="message" role="status"></div>
+      <div class="section-heading">
+        <div>
+          <h2>Results register</h2>
+          <p class="muted">Results are displayed according to your database permissions.</p>
+        </div>
+        <button id="refreshResults" type="button" class="secondary">Refresh</button>
+      </div>
+      <div id="results" class="table-wrap" aria-live="polite">Loading results...</div>
+    </section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="exam.js"></script>
+  <script src="results.js"></script>
+</body>
+</html>
