@@ -1,44 +1,5 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#123d2b">
-  <title>Teacher Dashboard | CREST Academy</title>
-  <link rel="stylesheet" href="exam.css">
-  <link rel="stylesheet" href="teacher-dashboard.css">
-</head>
-<body>
-  <header class="site-header">
-    <div class="header-inner">
-      <a class="brand-link" href="../index.html">CREST Academy</a>
-      <div><h1>Teacher Dashboard</h1><p>One place to create, manage, mark and publish examinations.</p></div>
-    </div>
-  </header>
-  <main class="teacher-main">
-    <div class="teacher-welcome">
-      <div><p class="eyebrow">TEACHER WORKSPACE</p><h2>Examination management</h2><p class="muted">Choose a task below or manage one of your examinations.</p></div>
-      <button id="refreshBtn" class="secondary" type="button">Refresh dashboard</button>
-    </div>
-    <div id="message" class="message" role="status" aria-live="polite"></div>
-
-    <section class="tool-grid" aria-label="Teacher tools">
-      <a class="tool-card primary-tool" href="create-exam.html"><span class="tool-icon">＋</span><span><strong>Create examination</strong><small>Set the title, subject, instructions, marks and schedule.</small></span></a>
-      <a class="tool-card" href="questions.html"><span class="tool-icon">☷</span><span><strong>Question manager & PDF import</strong><small>Add questions manually or upload a question-paper PDF.</small></span></a>
-      <a class="tool-card" href="marking.html"><span class="tool-icon">✓</span><span><strong>Mark written answers</strong><small>Review submitted essays and short-answer responses.</small></span></a>
-      <a class="tool-card" href="results.html"><span class="tool-icon">▤</span><span><strong>Results register</strong><small>Review marks and marking progress.</small></span></a>
-      <a class="tool-card" href="paper.html"><span class="tool-icon">▧</span><span><strong>Generate examination PDFs</strong><small>Print student papers and confidential marking schemes.</small></span></a>
-    </section>
-
-    <section class="card dashboard-exams">
-      <div class="section-heading"><div><h2>Your examinations</h2><p class="muted">Manage questions, view results or prepare a PDF for each examination.</p></div><a class="button" href="create-exam.html">+ New examination</a></div>
-      <div class="dashboard-stats" id="dashboardStats" aria-live="polite"><div><strong>—</strong><span>Total examinations</span></div><div><strong>—</strong><span>Published</span></div><div><strong>—</strong><span>Drafts</span></div></div>
-      <div id="examList" aria-live="polite">Loading examinations...</div>
-    </section>
-    <footer class="teacher-footer"><a href="crest-master.html">Master dashboard</a><span>CREST Academy Examination System</span><a href="index.html">Examination home</a></footer>
-  </main>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="exam.js"></script>
-  <script src="teacher.js"></script>
-</body>
-</html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Teacher Dashboard</title><link rel="stylesheet" href="exam.css"></head>
+<body><header><h1>CREST — Teacher Dashboard</h1></header><main>
+<div class="top-links"><a class="button" href="create-exam.html">Create examination</a><a class="button secondary" href="index.html">Home</a><button id="refreshBtn" class="secondary">Refresh</button></div>
+<div id="message" class="message"></div><section class="card"><h2>Your examinations</h2><div id="examList">Loading examinations...</div></section>
+</main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="exam.js"></script><script src="teacher.js"></script></body></html>
