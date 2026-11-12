@@ -317,8 +317,8 @@
 
   <!-- CHAT WIDGET -->
   <div id="crestChatWidget" style="display:none; position: fixed; bottom: 30px; right: 30px; z-index: 9999; font-family: inherit;">
-    <button id="chatTriggerBtn" onclick="toggleChatWindow()" style="background: linear-gradient(135deg, #0288d1, #38bdf8); color: #040714; border: none; width: 60px; height: 60px; border-radius: 50%; cursor: pointer; box-shadow: 0 8px 32px rgba(56, 189, 248, 0.4); display: flex; align-items: center; justify-content: center; font-size: 24px; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
-      <i class="fas fa-comments" id="chatIcon"></i>
+    <button id="chatTriggerBtn" onclick="toggleChatWindow()" title="Chat" aria-label="Chat" style="background: linear-gradient(135deg, #0288d1, #38bdf8); color: #040714; border: none; width: 60px; height: 60px; border-radius: 50%; cursor: pointer; box-shadow: 0 8px 32px rgba(56, 189, 248, 0.4); display: flex; align-items: center; justify-content: center; font-size: 24px; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+      <i class="fas fa-comments" id="chatIcon"></i><span style="font-size:11px;font-weight:800;margin-left:7px;">Chat</span>
     </button>
 
     <div id="chatBoxContainer" style="display: none; position: absolute; bottom: 80px; right: 0; width: 380px; height: 520px; background: linear-gradient(145deg, #0b112c, #070b1e); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); flex-direction: column; overflow: hidden;">
@@ -405,7 +405,7 @@
     </div>
     <nav style="display: flex; gap: 30px; align-items: center;">
       <a class="nav-link active" onclick="showMainView('home')">Home Directory</a>
-      <a class="nav-link" onclick="showMainView('portal')"><i class="fas fa-file-signature" style="color:#a855f7;"></i> Assignments & Grades</a>
+      <a class="nav-link" onclick="showMainView('portal')"><i class="fas fa-file-signature" style="color:#a855f7;"></i> Assignments & Grades <span id="assignmentCountBadge" style="display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;margin-left:5px;border-radius:999px;background:#a855f7;color:#fff;font-size:11px;font-weight:800;line-height:1;vertical-align:middle;">0</span></a>
       <a href="about.html" class="nav-link">About Portal</a>
       <a href="contact.html" class="nav-link">Help Desk</a>
       <a href="examination/index.html" class="nav-link"><i class="fas fa-file-circle-check"></i> Examinations</a>
@@ -1446,6 +1446,8 @@
       const me = studentSession; if (!me) return;
       const grid = document.getElementById('assignmentsGrid'); grid.innerHTML = '';
       const mine = workItems.filter(w => w.kind === 'assignment' && (w.to === 'all' || w.to === me.phone)).sort((a, b) => b.ts - a.ts);
+      const countBadge = document.getElementById('assignmentCountBadge');
+      if (countBadge) countBadge.textContent = String(mine.length);
       const subs = workItems.filter(w => w.kind === 'submission' && w.phone === me.phone);
       if (!mine.length) grid.innerHTML = '<div class="repo-empty" style="grid-column:1/-1;"><i class="fas fa-clipboard-check"></i>No assignments have been posted for you yet.</div>';
       mine.forEach(a => {
@@ -1459,12 +1461,16 @@
           (a.description ? '<p style="font-size:12px;color:#94a3b8;line-height:1.5;margin:0;white-space:pre-wrap;">' + esc(a.description) + '</p>' : '');
         if (safeUrl(a.fileUrl)) html += '<div style="background:rgba(255,255,255,0.03);padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;"><span style="font-size:12px;color:#f1f5f9;"><i class="fas fa-file" style="color:#ef4444;margin-right:8px;"></i>' + esc(a.fileName || 'Attachment') + '</span><a href="' + esc(a.fileUrl) + '" target="_blank" rel="noopener" style="color:#38bdf8;font-size:12px;font-weight:600;text-decoration:none;"><i class="fas fa-download"></i> Download</a></div>';
         if (sub) {
-          html += '<div style="background:rgba(16,185,129,0.05);padding:12px;border-radius:10px;border:1px solid rgba(16,185,129,0.2);margin-top:auto;"><div style="font-size:12px;color:#10b981;font-weight:700;"><i class="fas fa-circle-check"></i> Work submitted</div><div style="font-size:11px;color:#94a3b8;margin-top:4px;">Sent on ' + esc(fmtDate(sub.ts)) + '. Awaiting grading.</div></div>';
+          const submittedFiles = Array.isArray(sub.attachments) && sub.attachments.length
+            ? sub.attachments
+            : (safeUrl(sub.fileUrl) ? [{ fileUrl: sub.fileUrl, fileName: sub.fileName || 'Attachment' }] : []);
+          html += '<div style="background:rgba(16,185,129,0.05);padding:12px;border-radius:10px;border:1px solid rgba(16,185,129,0.2);margin-top:auto;"><div style="font-size:12px;color:#10b981;font-weight:700;"><i class="fas fa-circle-check"></i> Work submitted</div><div style="font-size:11px;color:#94a3b8;margin-top:4px;">Sent on ' + esc(fmtDate(sub.ts)) + '. Awaiting grading.</div>' +
+            (submittedFiles.length ? '<div style="margin-top:8px;">' + submittedFiles.map((f, i) => safeUrl(f.fileUrl) ? '<div style="font-size:11px;margin-top:5px;"><a href="' + esc(f.fileUrl) + '" target="_blank" rel="noopener" style="color:#38bdf8;text-decoration:none;"><i class="fas fa-paperclip"></i> ' + esc(f.fileName || ('Attachment ' + (i + 1))) + '</a></div>' : '').join('') + '</div>' : '') + '</div>';
         } else {
           html += '<div style="margin-top:10px;border-top:1px solid rgba(255,255,255,0.05);padding-top:15px;">' +
             '<label style="font-size:11px;font-weight:700;color:#a855f7;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:8px;">Submit your work</label>' +
-            '<div class="file-input-wrapper" onclick="document.getElementById(\'af-' + a.id + '\').click()"><i class="fas fa-cloud-arrow-up" style="font-size:20px;color:#38bdf8;margin-bottom:6px;"></i><div style="font-size:12px;color:#fff;font-weight:600;" id="afn-' + a.id + '">Click to attach your file (PDF, DOCX, image)</div>' +
-            '<input type="file" id="af-' + a.id + '" style="display:none;" onchange="updateFileNameDisplay(this, \'afn-' + a.id + '\')" /></div>' +
+            '<div class="file-input-wrapper" onclick="document.getElementById(\'af-' + a.id + '\').click()"><i class="fas fa-cloud-arrow-up" style="font-size:20px;color:#38bdf8;margin-bottom:6px;"></i><div style="font-size:12px;color:#fff;font-weight:600;" id="afn-' + a.id + '">Click to attach multiple files (up to 5)</div><div style="font-size:10px;color:#94a3b8;margin-top:5px;">PDF, DOCX, images and other common file types · 25 MB max per file</div></div>' +
+            '<input type="file" id="af-' + a.id + '" multiple style="display:none;" onchange="updateAssignmentFileNames(this, \'afn-' + a.id + '\')" />' +
             '<textarea id="an-' + a.id + '" placeholder="Optional note or written answer..." rows="2" style="margin-top:10px;padding:10px;font-size:12px;resize:none;"></textarea>' +
             '<button id="ab-' + a.id + '" onclick="submitAssignment(\'' + a.id + '\')" style="width:100%;margin-top:12px;padding:12px;background:linear-gradient(135deg,#10b981,#059669);border:none;border-radius:10px;color:#fff;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;"><i class="fas fa-paper-plane"></i> Transmit Assignment</button></div>';
         }
@@ -1487,16 +1493,44 @@
       }).join('');
     }
 
+    function updateAssignmentFileNames(input, targetId) {
+      const target = document.getElementById(targetId);
+      const files = Array.from(input.files || []);
+      if (files.length > 5) {
+        alert('You can attach a maximum of 5 files to one assignment.');
+        input.value = '';
+        if (target) target.textContent = 'Click to attach multiple files (up to 5)';
+        return;
+      }
+      if (target) target.textContent = files.length
+        ? files.length + ' file(s) selected: ' + files.map(f => f.name).join(', ')
+        : 'Click to attach multiple files (up to 5)';
+    }
+
     async function submitAssignment(id) {
       const fileEl = document.getElementById('af-' + id), noteEl = document.getElementById('an-' + id), btn = document.getElementById('ab-' + id);
-      const file = fileEl.files && fileEl.files[0], note = noteEl.value.trim();
-      if (!file && !note) { alert('Attach your work or write an answer first.'); return; }
-      if (file && file.size > 25 * 1024 * 1024) { alert('That file is larger than 25 MB.'); return; }
-      const label = btn.innerHTML; btn.disabled = true; btn.textContent = 'Sending...';
+      const files = Array.from(fileEl.files || []), note = noteEl.value.trim();
+      if (!files.length && !note) { alert('Attach your work or write an answer first.'); return; }
+      if (files.length > 5) { alert('You can attach a maximum of 5 files.'); return; }
+      const tooLarge = files.find(file => file.size > 25 * 1024 * 1024);
+      if (tooLarge) { alert('"' + tooLarge.name + '" is larger than 25 MB. Each attachment must be 25 MB or less.'); return; }
+      const label = btn.innerHTML; btn.disabled = true; btn.textContent = 'Uploading attachments...';
       try {
-        let url = '';
-        if (file) url = await cloudUpload(file, file.name);
-        const node = { id: newId('s'), kind: 'submission', assignmentId: id, phone: studentSession.phone, name: studentSession.name, fileUrl: url, fileName: file ? file.name : '', note: note, ts: Date.now() };
+        const attachments = [];
+        for (let i = 0; i < files.length; i++) {
+          btn.textContent = 'Uploading file ' + (i + 1) + ' of ' + files.length + '...';
+          const url = await cloudUpload(files[i], files[i].name);
+          attachments.push({ fileUrl: url, fileName: files[i].name });
+        }
+        const first = attachments[0] || { fileUrl: '', fileName: '' };
+        const node = {
+          id: newId('s'), kind: 'submission', assignmentId: id,
+          phone: studentSession.phone, name: studentSession.name,
+          attachments: attachments,
+          // Keep the first-file fields so older admin pages remain compatible.
+          fileUrl: first.fileUrl, fileName: first.fileName,
+          note: note, ts: Date.now()
+        };
         await sbPut('work', node);
         await loadWork();
       } catch (e) { alert('Could not send your work: ' + e.message); btn.disabled = false; btn.innerHTML = label; }
@@ -2036,16 +2070,16 @@
   function kindIcon(k) { return k === 'image' ? 'fa-image' : k === 'video' ? 'fa-video' : k === 'audio' ? 'fa-microphone' : 'fa-file'; }
   function build() {
     btn = document.createElement('button');
-    btn.id = 'myUploadsBtn'; btn.type = 'button'; btn.title = 'My uploads';
-    btn.style.cssText = 'position:fixed;left:16px;bottom:16px;z-index:9998;width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;font-size:22px;box-shadow:0 8px 28px rgba(99,102,241,.5);display:none;align-items:center;justify-content:center;';
-    btn.innerHTML = '<i class="fas fa-folder-open"></i><span id="muDot" style="display:none;position:absolute;top:2px;right:2px;min-width:18px;height:18px;border-radius:9px;background:#10b981;color:#fff;font-size:11px;font-weight:800;line-height:18px;text-align:center;padding:0 4px;"></span>';
+    btn.id = 'myUploadsBtn'; btn.type = 'button'; btn.title = 'Subject Folders'; btn.setAttribute('aria-label', 'Subject Folders');
+    btn.style.cssText = 'position:fixed;left:16px;bottom:16px;z-index:9998;min-width:56px;height:56px;padding:0 14px;border-radius:28px;border:none;cursor:pointer;background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;font-size:13px;font-weight:800;box-shadow:0 8px 28px rgba(99,102,241,.5);display:none;align-items:center;justify-content:center;gap:7px;';
+    btn.innerHTML = '<i class="fas fa-folder-tree"></i><span>Subject Folders</span><span id="muDot" style="display:none;position:absolute;top:2px;right:2px;min-width:18px;height:18px;border-radius:9px;background:#10b981;color:#fff;font-size:11px;font-weight:800;line-height:18px;text-align:center;padding:0 4px;"></span>';
     btn.onclick = openPanel;
     document.body.appendChild(btn);
 
     panel = document.createElement('div');
     panel.style.cssText = 'position:fixed;inset:0;z-index:99998;background:rgba(3,7,24,.85);display:none;align-items:center;justify-content:center;padding:14px;';
     panel.innerHTML = '<div style="width:100%;max-width:640px;max-height:90vh;display:flex;flex-direction:column;background:#0b112c;border:1px solid rgba(168,85,247,.35);border-radius:20px;overflow:hidden;">' +
-      '<div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid rgba(255,255,255,.08);"><div style="font-weight:800;color:#fff;font-size:16px;"><i class="fas fa-folder-open" style="color:#a855f7;margin-right:8px;"></i>My Uploads</div><button type="button" id="muClose" style="background:none;border:none;color:#94a3b8;font-size:18px;cursor:pointer;"><i class="fas fa-xmark"></i></button></div>' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid rgba(255,255,255,.08);"><div style="font-weight:800;color:#fff;font-size:16px;"><i class="fas fa-folder-tree" style="color:#a855f7;margin-right:8px;"></i>Subject Folders</div><button type="button" id="muClose" style="background:none;border:none;color:#94a3b8;font-size:18px;cursor:pointer;"><i class="fas fa-xmark"></i></button></div>' +
       '<div id="muBody" style="padding:16px 18px;overflow-y:auto;"></div></div>';
     panel.addEventListener('click', function (e) { if (e.target === panel) panel.style.display = 'none'; });
     document.body.appendChild(panel);
@@ -2067,14 +2101,30 @@
   }
   function draw() {
     var me = studentSession, body = document.getElementById('muBody'); if (!me || !body) return;
-    var subs = workItems.filter(function (w) { return w.kind === 'submission' && w.phone === me.phone && safeUrl(w.fileUrl); }).sort(function (a, b) { return b.ts - a.ts; })
-      .map(function (s) { var a = workItems.find(function (w) { return w.id === s.assignmentId; }); return { icon: 'fa-file-arrow-up', name: s.fileName || (a ? a.title : 'Submission'), sub: (a ? a.title + ' · ' : '') + fmtDate(s.ts), url: s.fileUrl }; });
+    var grouped = {};
+    workItems.filter(function (w) { return w.kind === 'submission' && w.phone === me.phone; }).forEach(function (sub) {
+      var assignment = workItems.find(function (w) { return w.id === sub.assignmentId; });
+      var subject = (assignment && assignment.subject ? String(assignment.subject) : 'Other').trim() || 'Other';
+      var files = Array.isArray(sub.attachments) && sub.attachments.length ? sub.attachments : (sub.fileUrl ? [{fileUrl:sub.fileUrl,fileName:sub.fileName}] : []);
+      files.forEach(function (f) {
+        if (!safeUrl(f.fileUrl)) return;
+        (grouped[subject] = grouped[subject] || []).push({ icon:'fa-file-arrow-up', name:f.fileName || (assignment ? assignment.title : 'Submission'), sub:(assignment ? assignment.title + ' · ' : '') + fmtDate(sub.ts), url:f.fileUrl, ts:sub.ts || 0 });
+      });
+    });
+    var folderHtml = Object.keys(grouped).sort().map(function (subject) {
+      var rows = grouped[subject].sort(function(a,b){return b.ts-a.ts;});
+      return '<details style="margin:10px 0;border:1px solid rgba(168,85,247,.25);border-radius:12px;background:rgba(168,85,247,.06);overflow:hidden;">' +
+        '<summary style="cursor:pointer;list-style:none;padding:13px 14px;color:#fff;font-weight:800;display:flex;align-items:center;gap:10px;"><i class="fas fa-folder" style="color:#c084fc;"></i>' + esc(subject) + '<span style="margin-left:auto;color:#a78bfa;font-size:12px;">' + rows.length + ' file(s)</span></summary>' +
+        '<div style="padding:0 12px 10px;">' + rows.map(function(r){ return '<div class="file-row"><span><i class="fas '+r.icon+'" style="color:#c084fc;margin-right:10px;"></i>'+esc(r.name)+'<br><small style="color:#64748b;margin-left:24px;">'+esc(r.sub)+'</small></span><a href="#" data-open="'+esc(r.url)+'" data-title="'+esc(r.name)+'"><i class="fas fa-eye"></i> Open</a></div>'; }).join('') + '</div></details>';
+    }).join('');
+    var marked = markedList().map(function (m) { return { icon: 'fa-file-circle-check', name: m.title, sub: 'Returned ' + fmtDate(m.ts) + (m.remarks ? ' · ' + m.remarks : ''), url: m.fileUrl }; });
     var sent = chatThread.filter(function (m) { return !m.isTeacher && !m.pending; }).map(function (m) {
       var k = m.image ? 'image' : m.video ? 'video' : m.audio ? 'audio' : m.document ? 'file' : null, u = m.image || m.video || m.audio || m.document;
       return k && safeUrl(u) ? { icon: kindIcon(k), name: m.message || k, sub: 'Chat · ' + (m.ts ? fmtDate(m.ts) : m.time || ''), url: u, ts: m.ts || 0 } : null;
     }).filter(Boolean).sort(function (a, b) { return b.ts - a.ts; });
-    var marked = markedList().map(function (m) { return { icon: 'fa-file-circle-check', name: m.title, sub: 'Returned ' + fmtDate(m.ts) + (m.remarks ? ' · ' + m.remarks : ''), url: m.fileUrl }; });
-    body.innerHTML = section('Marked scripts returned to me', '#10b981', marked) + section('Assignments I submitted', '#a855f7', subs) + section('Files I sent in chat', '#38bdf8', sent);
+    body.innerHTML = '<div style="font-size:12px;font-weight:800;color:#c084fc;text-transform:uppercase;letter-spacing:.05em;margin:4px 0 8px;">Assignment files by subject</div>' +
+      (folderHtml || '<div style="color:#64748b;font-size:12px;font-style:italic;">No assignment files have been submitted yet.</div>') +
+      section('Marked scripts returned to me', '#10b981', marked) + section('Files I sent in chat', '#38bdf8', sent);
   }
   async function openPanel() {
     panel.style.display = 'flex';
