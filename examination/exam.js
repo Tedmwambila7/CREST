@@ -56,6 +56,41 @@
     return data;
   };
 
+
+  // Exchange the MAIN CREST login token for a short-lived signed exam token.
+  // The signing secret stays server-side in the hyper-responder Edge Function.
+  E.getExamSessionToken = async function () {
+    const sessionToken = E.getStudentSessionToken();
+    if (!sessionToken) {
+      throw new Error("Your CREST student session was not found. Sign in on the main CREST website first.");
+    }
+
+    const MAIN_SUPABASE_URL = "https://otjybdiyoqnsynjbofuj.supabase.co";
+    const MAIN_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90anliZGl5b3Fuc3luamJvZnVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI0ODk1OTgsImV4cCI6MjEwODA2NTU5OH0.itwB7UrJNSNIGj2VN82PniqX9fccquf0d9fBwGB05Jc";
+
+    let response;
+    try {
+      response = await fetch(`${MAIN_SUPABASE_URL}/functions/v1/hyper-responder`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": MAIN_SUPABASE_ANON_KEY,
+          "Authorization": `Bearer ${MAIN_SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify({ session_token: sessionToken })
+      });
+    } catch (_) {
+      throw new Error("Could not connect to the CREST examination authentication service. Check your internet connection.");
+    }
+
+    let result = {};
+    try { result = await response.json(); } catch (_) {}
+    if (!response.ok || !result.exam_session_token) {
+      throw new Error(result.error || `Student authentication failed (HTTP ${response.status}).`);
+    }
+    return result.exam_session_token;
+  };
+
   E.requireTeacher = async function () {
     const client = E.getClient();
     const { data: { user }, error } = await client.auth.getUser();

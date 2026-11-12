@@ -14,9 +14,9 @@
   }
 
   async function loadAvailableExams() {
-    token = E.getStudentSessionToken();
-    if (!token) { message("Your CREST student session was not found. Sign in on the main CREST Academy website first.","error"); return; }
     try {
+      message("Verifying your CREST student session...");
+      token = await E.getExamSessionToken();
       message("Loading available examinations...");
       const exams = await E.rpc("crest_online_list_exams_v2", {p_session_token:token});
       const select = $("examSelect");
