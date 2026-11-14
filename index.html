@@ -1474,6 +1474,7 @@
             '<input type="file" id="af-' + a.id + '" multiple style="display:none;" onchange="updateAssignmentFileNames(this, \'afn-' + a.id + '\')" />' +
             '<button type="button" onclick="document.getElementById(\'cam-' + a.id + '\').click()" style="margin-top:8px;padding:9px 14px;border:1px solid #38bdf8;border-radius:8px;background:transparent;color:#38bdf8;font-weight:700;">Take Photo</button>' +
             '<input type="file" id="cam-' + a.id + '" accept="image/*" capture="environment" style="display:none;" onchange="addAssignmentCameraFile(this, \'af-' + a.id + '\', \'afn-' + a.id + '\')" />' +
+            '<div id="afpreview-' + a.id + '" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;"></div>' +
             '<textarea id="an-' + a.id + '" placeholder="Optional note or written answer..." rows="2" style="margin-top:10px;padding:10px;font-size:12px;resize:none;"></textarea>' +
             '<button id="ab-' + a.id + '" onclick="submitAssignment(\'' + a.id + '\')" style="width:100%;margin-top:12px;padding:12px;background:linear-gradient(135deg,#10b981,#059669);border:none;border-radius:10px;color:#fff;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;"><i class="fas fa-paper-plane"></i> Transmit Assignment</button></div>';
         }
@@ -1515,12 +1516,65 @@
       if (files.length > 5) {
         alert('You can attach a maximum of 5 files to one assignment.');
         input.value = '';
-        if (target) target.textContent = 'Click to attach multiple files (up to 5)';
+        if (target) target.textContent = 'Choose files (up to 5)';
+        renderAssignmentPreviews(input, targetId);
         return;
       }
       if (target) target.textContent = files.length
-        ? files.length + ' file(s) selected: ' + files.map(f => f.name).join(', ')
-        : 'Click to attach multiple files (up to 5)';
+        ? files.length + ' file(s) attached: ' + files.map(f => f.name).join(', ')
+        : 'Choose files (up to 5)';
+      renderAssignmentPreviews(input, targetId);
+    }
+
+    // Show every selected or camera-captured item in the attachment area until submission.
+    function renderAssignmentPreviews(input, targetId) {
+      const assignmentId = targetId.replace(/^afn-/, '');
+      const panel = document.getElementById('afpreview-' + assignmentId);
+      if (!panel) return;
+      panel.innerHTML = '';
+      const files = Array.from(input.files || []);
+      files.forEach((file, index) => {
+        const item = document.createElement('div');
+        item.style.cssText = 'position:relative;width:104px;min-height:94px;padding:6px;border:1px solid rgba(56,189,248,.35);border-radius:10px;background:rgba(56,189,248,.07);display:flex;flex-direction:column;align-items:center;gap:5px;';
+        if (file.type && file.type.startsWith('image/')) {
+          const img = document.createElement('img');
+          const objectUrl = URL.createObjectURL(file);
+          img.src = objectUrl; img.alt = file.name;
+          img.style.cssText = 'width:88px;height:62px;object-fit:cover;border-radius:6px;';
+          img.onload = img.onerror = () => URL.revokeObjectURL(objectUrl);
+          item.appendChild(img);
+        } else {
+          const icon = document.createElement('div');
+          icon.innerHTML = '<i class="fas fa-file-lines" style="font-size:30px;color:#38bdf8;"></i>';
+          icon.style.cssText = 'height:62px;display:flex;align-items:center;';
+          item.appendChild(icon);
+        }
+        const name = document.createElement('div');
+        name.textContent = file.name; name.title = file.name;
+        name.style.cssText = 'width:100%;font-size:10px;color:#e2e8f0;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+        item.appendChild(name);
+        const remove = document.createElement('button');
+        remove.type = 'button'; remove.textContent = '×'; remove.title = 'Remove attachment';
+        remove.setAttribute('aria-label', 'Remove ' + file.name);
+        remove.style.cssText = 'position:absolute;top:2px;right:3px;width:22px;height:22px;border:0;border-radius:50%;background:#dc2626;color:white;font-size:17px;line-height:20px;cursor:pointer;';
+        remove.addEventListener('click', () => removeAssignmentAttachment(input.id, index, targetId));
+        item.appendChild(remove); panel.appendChild(item);
+      });
+      if (!files.length) {
+        const hint = document.createElement('div');
+        hint.textContent = 'Your photos and files will appear here before submission.';
+        hint.style.cssText = 'font-size:11px;color:#94a3b8;padding:4px 0;';
+        panel.appendChild(hint);
+      }
+    }
+
+    function removeAssignmentAttachment(inputId, removeIndex, targetId) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      const transfer = new DataTransfer();
+      Array.from(input.files || []).forEach((file, index) => { if (index !== removeIndex) transfer.items.add(file); });
+      input.files = transfer.files;
+      updateAssignmentFileNames(input, targetId);
     }
 
     async function submitAssignment(id) {
