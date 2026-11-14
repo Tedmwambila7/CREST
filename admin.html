@@ -2008,7 +2008,26 @@
     await Promise.all([worker(), worker(), worker(), worker()]);
   }
 
-  /* ---------- 3. lists: Open & Mark / Open & Edit buttons + returned status ---------- */
+  /* ---------- 3. lists: multi-attachment submissions + returned status ---------- */
+  function submissionFiles(item) {
+    var list = Array.isArray(item && item.attachments) ? item.attachments : [];
+    list = list.filter(function (f) { return f && safeUrl(f.fileUrl); });
+    if (!list.length && item && safeUrl(item.fileUrl)) list = [{ fileUrl: item.fileUrl, fileName: item.fileName || 'Submission' }];
+    return list;
+  }
+  function itemHasMarkableFiles(item) {
+    var files = submissionFiles(item);
+    return files.length > 0 && files.every(function (f) { return fileKind(f.fileUrl, f.fileName) !== 'other'; });
+  }
+  function allPrefetchItems(items) {
+    var out = [];
+    items.forEach(function (x) {
+      var fs = x.kind === 'submission' ? submissionFiles(x) : [{ fileUrl: x.fileUrl, fileName: x.fileName }];
+      fs.forEach(function (f) { if (safeUrl(f.fileUrl)) out.push(f); });
+    });
+    return out;
+  }
+
   window.refreshWork = async function () {
     if (!cloudReady) return;
     try { adminWork = await aItems('work'); } catch (e) { console.error(e); }
@@ -2021,11 +2040,13 @@
     html += subs.length ? subs.map(function (x) {
       var a = adminWork.find(function (w) { return w.id === x.assignmentId; });
       var returned = marked.some(function (m) { return m.srcId === x.id; });
-      var k = fileKind(x.fileUrl, x.fileName), canMark = safeUrl(x.fileUrl) && k !== 'other';
+      var files = submissionFiles(x), canMark = itemHasMarkableFiles(x);
+      var fileLabel = files.length + (files.length === 1 ? ' attachment' : ' attachments');
+      var fileLinks = files.map(function (f, i) { return '<a href="' + esc(f.fileUrl) + '" target="_blank" rel="noopener" style="color:#38bdf8;margin-right:8px;">Photo/file ' + (i + 1) + '</a>'; }).join('');
       return '<div class="mini-row"><div><strong>' + esc(x.name) + '</strong> · ' + esc(a ? a.title : 'Assignment') + (returned ? ' <span style="color:#10b981;font-weight:700;">✔ returned</span>' : '') +
-        '<small>' + esc(new Date(x.ts).toLocaleString()) + (x.note ? ' — ' + esc(x.note) : '') + '</small></div>' +
+        '<small>' + esc(new Date(x.ts).toLocaleString()) + ' · ' + esc(fileLabel) + (x.note ? ' — ' + esc(x.note) : '') + '</small><small>' + fileLinks + '</small></div>' +
         '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">' +
-        (canMark ? '<button class="mini-btn blue" onclick="openMarker(\'' + esc(x.id) + '\')">Open &amp; Mark</button>' : (safeUrl(x.fileUrl) ? '<a class="mini-btn blue" href="' + esc(x.fileUrl) + '" target="_blank" rel="noopener" style="text-decoration:none;">Open</a>' : '')) +
+        (canMark ? '<button class="mini-btn blue" onclick="openMarker(\'' + esc(x.id) + '\')">Open &amp; Mark all</button>' : (files.length ? fileLinks : '')) +
         '<button class="mini-btn blue" onclick="startGradeFor(\'' + esc(x.phone) + '\',\'' + esc(a ? a.title : '') + '\',\'' + esc(a ? a.subject || '' : '') + '\')">Grade</button></div></div>';
     }).join('') : '<p style="color:var(--text-muted);font-style:italic;font-size:12px;">No submissions yet.</p>';
 
@@ -2052,7 +2073,7 @@
     }).join('') : '<p style="color:var(--text-muted);font-style:italic;font-size:12px;">No participants yet. Click Add Participant at the top.</p>';
     box.innerHTML = html;
 
-    prefetchAll(subs.concat(posted));     // newest first: submissions, then posted exercises
+    prefetchAll(allPrefetchItems(subs.concat(posted))); // warm every attachment, not just the first
   };
 
   /* ---------- 4. marking editor ---------- */
@@ -2179,10 +2200,14 @@
   function cloneCanvas(src) { var c = document.createElement('canvas'); c.width = src.width; c.height = src.height; c.getContext('2d').drawImage(src, 0, 0); return c; }
 
   window.openMarker = async function (id) {
-    var item = adminWork.find(function (w) { return w.id === id; }); if (!item || !safeUrl(item.fileUrl)) return;
+    var item = adminWork.find(function (w) { return w.id === id; }); if (!item) return;
+    var isSub = item.kind === 'submission';
+    var files = isSub ? submissionFiles(item) : (safeUrl(item.fileUrl) ? [{ fileUrl: item.fileUrl, fileName: item.fileName || item.title || 'Assignment' }] : []);
+    if (!files.length) { alert('No valid attachments were found for this submission.'); return; }
+    if (files.some(function (f) { return fileKind(f.fileUrl, f.fileName) === 'other'; })) { alert('One or more attachments are not supported by the marking editor. Please use PDF or image files.'); return; }
     ensureModal();
-    var isSub = item.kind === 'submission', kind = fileKind(item.fileUrl, item.fileName);
-    mk = { item: item, mode: isSub ? 'submission' : 'assignment', kind: kind, pages: [], active: null, tool: 'pen', color: '#e11d48', size: 3, token: Date.now() };
+    var kind = files.length > 1 ? 'multi' : fileKind(files[0].fileUrl, files[0].fileName);
+    mk = { item: item, files: files, mode: isSub ? 'submission' : 'assignment', kind: kind, pages: [], active: null, tool: 'pen', color: '#e11d48', size: 3, token: Date.now() };
     var el = document.getElementById('mkModal'), my = mk.token;
     el.classList.remove('pan');
     el.querySelectorAll('[data-tool]').forEach(function (x) { x.classList.toggle('on', x.getAttribute('data-tool') === 'pen'); });
@@ -2196,23 +2221,29 @@
     el.style.display = 'flex'; document.body.style.overflow = 'hidden';
     msg('');
     try {
-      if (kind === 'image') {
-        var blob = await getBlob(item.fileUrl);
+      var totalPages = 0;
+      for (var fi = 0; fi < files.length; fi++) {
         if (!mk || mk.token !== my) return;
-        var im = await loadImg(blob), c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
-        c.getContext('2d').drawImage(im, 0, 0); addPage(c);
-      } else {
-        if (!pageCache.has(item.fileUrl + '|1')) msg('Opening…');
-        var doc = await getPdfDoc(item.fileUrl);
-        for (var n = 1; n <= doc.numPages; n++) {
+        var file = files[fi], fk = fileKind(file.fileUrl, file.fileName);
+        msg('Opening attachment ' + (fi + 1) + ' of ' + files.length + '…');
+        if (fk === 'image') {
+          var blob = await getBlob(file.fileUrl);
           if (!mk || mk.token !== my) return;
-          var cv = await renderPdfPage(item.fileUrl, doc, n);
-          if (!mk || mk.token !== my) return;
-          addPage(cloneCanvas(cv)); if (n === 1) msg('');
+          var im = await loadImg(blob), c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
+          c.getContext('2d').drawImage(im, 0, 0); addPage(c); totalPages++;
+        } else {
+          if (!pageCache.has(file.fileUrl + '|1')) msg('Opening PDF attachment ' + (fi + 1) + '…');
+          var doc = await getPdfDoc(file.fileUrl);
+          for (var n = 1; n <= doc.numPages; n++) {
+            if (!mk || mk.token !== my) return;
+            var cv = await renderPdfPage(file.fileUrl, doc, n);
+            if (!mk || mk.token !== my) return;
+            addPage(cloneCanvas(cv)); totalPages++;
+          }
         }
-        msg(doc.numPages + ' page' + (doc.numPages > 1 ? 's' : ''));
       }
-    } catch (e) { msg('Could not open this file here: ' + e.message, '#f87171'); }
+      msg(totalPages + ' page' + (totalPages === 1 ? '' : 's') + ' loaded from ' + files.length + ' attachment' + (files.length === 1 ? '' : 's'));
+    } catch (e) { msg('Could not open all attachments: ' + e.message, '#f87171'); }
   };
   function closeMarker() {
     var el = document.getElementById('mkModal'); if (!el) return;
@@ -2227,8 +2258,9 @@
     var cx = c.getContext('2d'); cx.drawImage(pg.base, 0, 0); cx.drawImage(pg.ov, 0, 0); return c;
   }
   async function buildOutput() {
-    var nm = String((mk.item.fileName || 'script')).replace(/\.[a-z0-9]{2,5}$/i, '');
-    if (mk.kind === 'image') return { blob: await toJpeg(merged(mk.pages[0]), 0.8), name: 'marked-' + nm + '.jpg' };
+    var sourceName = (mk.files && mk.files.length ? mk.files[0].fileName : mk.item.fileName) || 'script';
+    var nm = String(sourceName).replace(/\.[a-z0-9]{2,5}$/i, '');
+    if (mk.kind === 'image' && mk.pages.length === 1) return { blob: await toJpeg(merged(mk.pages[0]), 0.8), name: 'marked-' + nm + '.jpg' };
     await loadScript(PDFLIB);
     var pdf = await window.PDFLib.PDFDocument.create();
     for (var i = 0; i < mk.pages.length; i++) {
@@ -2236,7 +2268,7 @@
       var pgx = pdf.addPage([c.width / SCALE, c.height / SCALE]); pgx.drawImage(jpg, { x: 0, y: 0, width: c.width / SCALE, height: c.height / SCALE });
     }
     var bytes = await pdf.save();
-    return { blob: new Blob([bytes], { type: 'application/pdf' }), name: 'marked-' + nm + '.pdf' };
+    return { blob: new Blob([bytes], { type: 'application/pdf' }), name: 'marked-' + nm + (mk.files && mk.files.length > 1 ? '-complete-assignment' : '') + '.pdf' };
   }
   async function downloadMarked() {
     if (!mk || !mk.pages.length) return;
