@@ -217,6 +217,59 @@
     </div>
   </div>
 
+  
+  <!-- WEEKLY TIMETABLE MANAGEMENT -->
+  <section class="panel-card" id="crestTimetableAdmin" style="margin-bottom:40px;">
+    <h3><i class="fa-solid fa-calendar-week" style="color:var(--accent-primary);"></i> Weekly Student Timetable</h3>
+    <p style="color:var(--text-muted);font-size:13px;margin:-12px 0 22px;">
+      Add or update lessons for Monday to Friday. Students see only entries after you publish them.
+      Each day has five teaching periods; the break is displayed automatically.
+    </p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;">
+      <div class="form-group"><label>Day</label>
+        <select id="ttDay">
+          <option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Period</label>
+        <select id="ttPeriod">
+          <option value="1">Period 1 · 08:00–08:40</option>
+          <option value="2">Period 2 · 08:40–09:20</option>
+          <option value="3">Period 3 · 09:20–10:00</option>
+          <option value="4">Period 4 · 10:00–10:40</option>
+          <option value="5">Period 5 · 11:00–11:40</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Start time</label><input id="ttStart" type="time" value="08:00"></div>
+      <div class="form-group"><label>End time</label><input id="ttEnd" type="time" value="08:40"></div>
+      <div class="form-group"><label>Subject</label><input id="ttSubject" type="text" placeholder="e.g. Mathematics"></div>
+      <div class="form-group"><label>Teacher (optional)</label><input id="ttTeacher" type="text" placeholder="Teacher name"></div>
+      <div class="form-group"><label>Room (optional)</label><input id="ttRoom" type="text" placeholder="Room"></div>
+    </div>
+    <label style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-main);margin:0 0 18px;">
+      <input type="checkbox" id="ttPublishOnSave" style="width:18px;height:18px;accent-color:#38bdf8;">
+      Publish this lesson immediately
+    </label>
+    <input type="hidden" id="ttEntryId">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="add-part-btn" type="button" onclick="crestTtSave()"><i class="fa-solid fa-floppy-disk"></i> Save lesson</button>
+      <button class="ghost-btn" type="button" style="width:auto;margin:0;" onclick="crestTtClearForm()">Clear form</button>
+      <button class="ghost-btn" type="button" style="width:auto;margin:0;" onclick="crestTtLoad()">Refresh list</button>
+      <button class="ghost-btn" type="button" style="width:auto;margin:0;" onclick="crestTtPublishAll(true)">Publish all</button>
+      <button class="ghost-btn" type="button" style="width:auto;margin:0;" onclick="crestTtPublishAll(false)">Unpublish all</button>
+      <button class="ghost-btn" type="button" style="width:auto;margin:0;" onclick="crestTtSampleWeek()">Create sample week</button>
+    </div>
+    <div id="crestTtStatus" class="status-msg" style="display:block;margin-top:16px;">Timetable manager is ready. Refresh list to load entries.</div>
+    <div style="overflow-x:auto;margin-top:18px;">
+      <table style="width:100%;border-collapse:collapse;min-width:620px;font-size:12px;">
+        <thead><tr style="color:var(--accent-primary);text-align:left;">
+          <th style="padding:10px;">Day / Period</th><th>Time</th><th>Subject</th><th>Teacher / Room</th><th>Status</th><th>Actions</th>
+        </tr></thead>
+        <tbody id="crestTtRows"><tr><td colspan="6" style="padding:14px;color:var(--text-muted);">No entries loaded yet.</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
   <div class="admin-grid">
     
     <!-- Dispatch Panel Card -->
@@ -2310,5 +2363,132 @@
 })();
 
 </script>
+
+<script>
+/* CREST weekly timetable admin integration.
+   Uses the existing admin session key and existing Supabase rpc() helper. */
+(function () {
+  'use strict';
+  const ttDays = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+  const ttSlots = [
+    {p:1,s:'08:00',e:'08:40'}, {p:2,s:'08:40',e:'09:20'},
+    {p:3,s:'09:20',e:'10:00'}, {p:4,s:'10:00',e:'10:40'},
+    {p:5,s:'11:00',e:'11:40'}
+  ];
+  let ttRows = [];
+  const el = id => document.getElementById(id);
+  function ttStatus(message, good) {
+    const box = el('crestTtStatus');
+    if (!box) return;
+    box.textContent = message;
+    box.className = 'status-msg ' + (good ? 'success' : 'danger');
+    box.style.display = 'block';
+  }
+  function ttEscape(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  window.crestTtClearForm = function () {
+    el('ttEntryId').value = '';
+    el('ttDay').value = 'Monday'; el('ttPeriod').value = '1';
+    el('ttStart').value = '08:00'; el('ttEnd').value = '08:40';
+    el('ttSubject').value = ''; el('ttTeacher').value = ''; el('ttRoom').value = '';
+    el('ttPublishOnSave').checked = false;
+  };
+  function ttFillForm(row) {
+    el('ttEntryId').value = row.id || '';
+    el('ttDay').value = row.day; el('ttPeriod').value = String(row.period);
+    el('ttStart').value = String(row.start_time || '').slice(0,5);
+    el('ttEnd').value = String(row.end_time || '').slice(0,5);
+    el('ttSubject').value = row.subject || ''; el('ttTeacher').value = row.teacher || '';
+    el('ttRoom').value = row.room || ''; el('ttPublishOnSave').checked = !!row.published;
+    el('crestTimetableAdmin').scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  function ttRender() {
+    const body = el('crestTtRows');
+    if (!ttRows.length) {
+      body.innerHTML = '<tr><td colspan="6" style="padding:14px;color:var(--text-muted);">No timetable entries yet. Add lessons above or create a sample week.</td></tr>';
+      return;
+    }
+    body.innerHTML = ttRows.map(row => `
+      <tr style="border-top:1px solid rgba(255,255,255,.07);">
+        <td style="padding:10px;">${ttEscape(row.day)} · ${row.period}</td>
+        <td>${ttEscape(String(row.start_time||'').slice(0,5))}–${ttEscape(String(row.end_time||'').slice(0,5))}</td>
+        <td>${ttEscape(row.subject)}</td>
+        <td>${ttEscape([row.teacher,row.room].filter(Boolean).join(' / ') || '—')}</td>
+        <td style="color:${row.published?'#10b981':'#f59e0b'};">${row.published?'Published':'Draft'}</td>
+        <td style="white-space:nowrap;">
+          <button type="button" class="mini-btn blue" data-tt-edit="${ttEscape(row.id)}">Edit</button>
+          <button type="button" class="mini-btn" data-tt-delete="${ttEscape(row.id)}">Delete</button>
+        </td>
+      </tr>`).join('');
+    body.querySelectorAll('[data-tt-edit]').forEach(b => b.addEventListener('click', () => {
+      const row = ttRows.find(x => x.id === b.getAttribute('data-tt-edit')); if (row) ttFillForm(row);
+    }));
+    body.querySelectorAll('[data-tt-delete]').forEach(b => b.addEventListener('click', async () => {
+      const id = b.getAttribute('data-tt-delete');
+      if (!confirm('Delete this timetable lesson?')) return;
+      try {
+        await rpc('crest_timetable_admin_delete', {p_key: adminKey(), p_id: id});
+        ttStatus('Lesson deleted.', true); await window.crestTtLoad();
+      } catch (e) { ttStatus('Could not delete lesson: ' + e.message, false); }
+    }));
+  }
+  window.crestTtLoad = async function () {
+    try {
+      ttRows = await rpc('crest_timetable_admin_list', {p_key: adminKey()}) || [];
+      ttRender(); ttStatus('Loaded ' + ttRows.length + ' timetable entries.', true);
+    } catch (e) { ttStatus('Could not load timetable: ' + e.message, false); }
+  };
+  window.crestTtSave = async function () {
+    const entry = {
+      id: el('ttEntryId').value || null, day: el('ttDay').value,
+      period: Number(el('ttPeriod').value), start_time: el('ttStart').value,
+      end_time: el('ttEnd').value, subject: el('ttSubject').value.trim(),
+      teacher: el('ttTeacher').value.trim(), room: el('ttRoom').value.trim(),
+      published: el('ttPublishOnSave').checked
+    };
+    if (!entry.subject) return ttStatus('Please enter a subject.', false);
+    if (!entry.start_time || !entry.end_time || entry.end_time <= entry.start_time) return ttStatus('Please enter a valid start and end time.', false);
+    try {
+      await rpc('crest_timetable_admin_save', {p_key: adminKey(), p_entry: entry});
+      ttStatus('Lesson saved successfully.', true); window.crestTtClearForm(); await window.crestTtLoad();
+    } catch (e) { ttStatus('Could not save lesson: ' + e.message, false); }
+  };
+  window.crestTtPublishAll = async function (published) {
+    const action = published ? 'publish' : 'unpublish';
+    if (!confirm('Are you sure you want to ' + action + ' every timetable entry?')) return;
+    try {
+      const count = await rpc('crest_timetable_admin_publish_all', {p_key: adminKey(), p_published: published});
+      ttStatus((published?'Published ':'Unpublished ') + count + ' entries.', true); await window.crestTtLoad();
+    } catch (e) { ttStatus('Could not update publication status: ' + e.message, false); }
+  };
+  window.crestTtSampleWeek = async function () {
+    if (!confirm('Create or update the 25 sample lessons? Existing day/period entries will be updated.')) return;
+    const subjects = {
+      Monday:['Mathematics','English','Biology','Geography','Computer Studies'],
+      Tuesday:['Mathematics','Chemistry','Chichewa','History','Agriculture'],
+      Wednesday:['Mathematics','Physics','English','Business Studies','Geography'],
+      Thursday:['Mathematics','Biology','Chemistry','Computer Studies','Chichewa'],
+      Friday:['Mathematics','Physics','History','Agriculture','Life Skills']
+    };
+    try {
+      for (const day of ttDays) {
+        for (const slot of ttSlots) {
+          await rpc('crest_timetable_admin_save', {
+            p_key: adminKey(),
+            p_entry: {day,period:slot.p,start_time:slot.s,end_time:slot.e,
+              subject:subjects[day][slot.p-1],teacher:'',room:'',published:false}
+          });
+        }
+      }
+      ttStatus('Sample week created as drafts. Review the subjects, then choose Publish all when ready.', true);
+      await window.crestTtLoad();
+    } catch (e) { ttStatus('Sample week creation stopped: ' + e.message, false); }
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => window.crestTtLoad());
+  else window.crestTtLoad();
+})();
+</script>
+
 </body>
 </html>

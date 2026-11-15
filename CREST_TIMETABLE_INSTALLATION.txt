@@ -1,0 +1,25 @@
+CREST TIMETABLE — INTEGRATED FILES
+
+This package contains:
+- index.html: your uploaded student home page with a Weekly Timetable link added.
+- admin.html: your uploaded admin page with timetable create/edit/delete/publish controls added.
+- timetable.html: the student-facing timetable page.
+
+INSTALLATION
+1. Back up the current index.html and admin.html in your GitHub repository.
+2. Upload and replace the root index.html and admin.html with the versions in this package.
+3. Upload timetable.html into the same root folder (beside index.html and admin.html).
+4. Commit/push the changes to GitHub Pages.
+5. Open admin.html and sign in as usual. The Weekly Student Timetable panel will be available.
+6. Click “Create sample week” if you want the prepared 25-period sample timetable. It creates drafts only.
+7. Review or edit entries, then click “Publish all”.
+8. Students open Student Workspace > Weekly Timetable.
+
+SUPABASE
+The integration uses the existing main CREST Supabase project and timetable RPC functions that were already created. Do NOT run the timetable SQL again. Do NOT use the separate CREST Exam Supabase project.
+
+NOTES
+- The timetable manager reuses the existing admin session key; it does not create a second login.
+- A saved lesson is a draft unless “Publish this lesson immediately” is checked.
+- Students see only published lessons.
+- Sample week entries are saved as drafts until you publish them.
