@@ -23,3 +23,6 @@ NOTES
 - A saved lesson is a draft unless “Publish this lesson immediately” is checked.
 - Students see only published lessons.
 - Sample week entries are saved as drafts until you publish them.
+
+LIVE VOICE & VIDEO CALLS
+This package now also includes a LiveKit calling integration. Follow LIVEKIT_CALLS_SETUP.txt before expecting calls to work. It uses the main CREST Supabase project, not CREST Exam. Do not rerun the timetable SQL. The LiveKit API secret must be stored only in Supabase Edge Function Secrets and must never be added to website files or GitHub.

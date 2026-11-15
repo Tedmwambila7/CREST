@@ -1,0 +1,73 @@
+CREST GROUP VOICE & VIDEO CALLS — SETUP GUIDE
+
+WHAT THIS PACKAGE ADDS
+- LiveKit group voice and video calls inside the existing student and admin chat areas.
+- Signed-in students appear in the calling lobby while their CREST page is open.
+- The CREST administrator can start a voice or video group call and invite all online students.
+- Students can accept or decline. Students cannot start student-to-student calls.
+- Microphone controls, optional camera controls, participant tiles, leave-call control, and teacher end-call control.
+- Student cameras start OFF. A student chooses whether to turn their camera on after accepting.
+- Calls are not recorded by this integration.
+
+FILES
+- index.html — updated student page; preserves the existing timetable integration.
+- admin.html — updated admin page; preserves the existing timetable and admin features.
+- timetable.html — existing student timetable page.
+- crest-calls.js — shared LiveKit browser integration.
+- supabase/functions/crest-livekit-token/index.ts — secure server-side token function.
+- supabase/config.toml — disables Supabase JWT verification for this function because it validates CREST's existing custom student/admin sessions itself.
+
+IMPORTANT: USE THE MAIN CREST SUPABASE PROJECT
+Project URL: https://otjybdiyoqnsynjbofuj.supabase.co
+Do not use the separate CREST Exam project. Do not rerun the timetable SQL.
+
+STEP 1 — SET LIVEKIT SECRETS IN MAIN CREST SUPABASE
+1. Open the main CREST project in Supabase.
+2. Open Edge Functions, then Secrets (sometimes shown as Edge Function Secrets).
+3. Add these three secrets:
+   LIVEKIT_API_KEY = the API key from your LiveKit project.
+   LIVEKIT_API_SECRET = the API secret from LiveKit (keep this private; do not put it in HTML, GitHub, or chat).
+   LIVEKIT_URL = wss://crest-group-calls-siyc48vs.livekit.cloud
+4. Save the secrets.
+
+STEP 2 — DEPLOY THE TOKEN FUNCTION
+1. In main CREST Supabase, open Edge Functions and create a function named exactly:
+   crest-livekit-token
+2. Paste the complete contents of:
+   supabase/functions/crest-livekit-token/index.ts
+3. Deploy the function.
+4. In the function settings, turn OFF “Verify JWT with legacy secret” / JWT verification for this function. This is required because CREST uses its existing custom student/admin sessions; the function validates those sessions itself using the existing admin_check and student_me RPCs.
+5. The included supabase/config.toml has the same setting for CLI deployment.
+
+STEP 3 — UPLOAD THE WEBSITE FILES TO GITHUB
+1. Back up the current root index.html and admin.html.
+2. Replace the root index.html and admin.html with the files in this package.
+3. Upload timetable.html and crest-calls.js into the same repository root folder.
+4. Keep the timetable page in the root beside index.html.
+5. Commit the changes and wait for GitHub Pages to publish.
+
+STEP 4 — TEST
+1. Open the CREST website and sign in as a student in one browser/device.
+2. Sign in as the administrator in another browser/device.
+3. Open the admin chat and check the online student count.
+4. Start a voice call. The signed-in student should see an incoming call and can Accept or Decline.
+5. Repeat with a video call. Camera is OFF initially; the student may turn it on voluntarily.
+6. End the call from the administrator side and confirm that participants return to the chat.
+
+SECURITY / PRIVACY NOTES
+- Never put LIVEKIT_API_SECRET in index.html, admin.html, crest-calls.js, GitHub, or a chat message.
+- The browser receives only short-lived room access tokens from the Supabase Edge Function.
+- Only the admin can create a call invitation. Students need a valid, signed invitation to join a call room.
+- The browser asks for microphone/camera permission only when a user accepts and joins a call. Camera starts off.
+- Calls are not recorded by this integration. Participants can leave at any time.
+- Use the calling feature only with people who are expected to participate in the school community, and follow school safeguarding and privacy rules.
+
+TROUBLESHOOTING
+- “Calling service is not configured”: check the three LIVEKIT_* secrets in the main CREST Supabase project.
+- “Admin session could not be verified”: sign out and back into the admin console; ensure the function is connected to the main CREST project.
+- “Student session could not be verified”: sign out and back into the student portal.
+- If the page reports that the calling library did not load, check the device internet connection and refresh; the LiveKit browser SDK is loaded from jsDelivr.
+- If microphone/camera permission is denied, enable the permission in the browser's site settings. Calls require HTTPS, which GitHub Pages provides.
+
+NOT YET LIVE-TESTED
+The package is syntax-checked, but it has not been connected to your live LiveKit project or deployed to Supabase/GitHub. The function deployment, secrets, browser permissions, and a two-device call test are still required before calls will work on the live site.
