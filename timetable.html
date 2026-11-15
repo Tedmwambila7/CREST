@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CREST Academy — Weekly Timetable</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#040714;color:#f1f5f9;font-family:Poppins,sans-serif}header{padding:18px 5%;background:#0b112c;border-bottom:1px solid #1e3553;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}header a{color:#38bdf8;text-decoration:none;font-weight:600}main{max-width:1250px;margin:28px auto;padding:0 16px}.hero{padding:24px;border:1px solid #164e73;border-radius:18px;background:linear-gradient(135deg,#0b112c,#091c3f);margin-bottom:18px}.hero h1{margin:0 0 6px;font-size:clamp(22px,4vw,30px)}.muted{color:#94a3b8;font-size:13px}.status{padding:12px;border-radius:10px;background:#0f172a;color:#94a3b8;margin:12px 0}.table-wrap{overflow-x:auto;background:#0b112c;border:1px solid #1e3553;border-radius:16px}table{width:100%;min-width:760px;border-collapse:collapse}th,td{padding:13px 12px;text-align:left;border-bottom:1px solid #1e293b;font-size:13px}th{color:#38bdf8;font-size:11px;text-transform:uppercase;letter-spacing:.06em;background:#0d1833}td:first-child{font-weight:700;color:#fff}.lesson{font-weight:600;color:#e2e8f0}.teacher,.room{display:block;color:#94a3b8;font-size:11px;margin-top:3px}.break td{text-align:center;color:#fbbf24;background:#211b0c;font-weight:700;letter-spacing:.08em}.empty{color:#64748b;font-weight:400}.refresh{border:0;border-radius:10px;padding:10px 14px;background:#0288d1;color:white;font-weight:700;cursor:pointer;font-family:inherit}
+@media(max-width:600px){header{align-items:flex-start}main{margin:16px auto}.hero{padding:18px}}
+</style>
+</head>
+<body>
+<header><div><strong>🏰 CREST INTERNATIONAL</strong><div class="muted">Student timetable</div></div><a href="index.html"><i class="fa fa-arrow-left"></i> Back to Student Portal</a></header>
+<main>
+<section class="hero"><h1><i class="fa fa-calendar-days" style="color:#38bdf8"></i> Weekly Class Timetable</h1><p class="muted">Monday to Friday · Published timetable</p><button class="refresh" onclick="loadTimetable()"><i class="fa fa-rotate"></i> Refresh</button></section>
+<div id="ttStatus" class="status" role="status">Loading published timetable…</div>
+<div class="table-wrap"><table><thead><tr><th>Period</th><th>Time</th><th>Monday</th><th>Tuesday</th><th>Wednesday</th><th>Thursday</th><th>Friday</th></tr></thead><tbody id="ttBody"></tbody></table></div>
+<p class="muted">If a subject is not shown, it may not have been published by the administrator yet.</p>
+</main>
+<script>
+const SUPABASE_URL='https://otjybdiyoqnsynjbofuj.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90anliZGl5b3Fuc3luamJvZnVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI0ODk1OTgsImV4cCI6MjEwODA2NTU5OH0.itwB7UrJNSNIGj2VN82PniqX9fccquf0d9fBwGB05Jc';
+const days=['Monday','Tuesday','Wednesday','Thursday','Friday'];
+const slots=[{p:1,s:'08:00',e:'08:40'},{p:2,s:'08:40',e:'09:20'},{p:3,s:'09:20',e:'10:00'},{p:4,s:'10:00',e:'10:40'},{p:5,s:'11:00',e:'11:40'}];
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+async function loadTimetable(){const status=document.getElementById('ttStatus'),body=document.getElementById('ttBody');status.textContent='Loading published timetable…';try{const res=await fetch(SUPABASE_URL+'/rest/v1/rpc/crest_timetable_public',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY},body:'{}'});const raw=await res.text();let rows;try{rows=JSON.parse(raw)}catch{throw new Error(raw||'Unexpected response')}if(!res.ok)throw new Error(rows.message||'Could not load timetable');const lookup={};(rows||[]).forEach(r=>lookup[r.day+'|'+r.period]=r);let html='';slots.forEach(slot=>{if(slot.p===5)html+='<tr class="break"><td colspan="7">BREAK · 10:40–11:00</td></tr>';html+='<tr><td>Period '+slot.p+'</td><td>'+slot.s+'–'+slot.e+'</td>'+days.map(day=>{const r=lookup[day+'|'+slot.p];return '<td>'+(r?'<span class="lesson">'+esc(r.subject)+'</span>'+(r.teacher?'<span class="teacher">'+esc(r.teacher)+'</span>':'')+(r.room?'<span class="room">'+esc(r.room)+'</span>':''):'<span class="empty">—</span>')+'</td>'}).join('')+'</tr>'});body.innerHTML=html;status.textContent=rows&&rows.length?'Showing '+rows.length+' published timetable periods.':'No timetable has been published yet.';}catch(e){status.textContent='Unable to load timetable: '+e.message;body.innerHTML='<tr><td colspan="7" class="empty">Please try refreshing later or contact the administrator.</td></tr>';}}
+loadTimetable();
+</script>
+</body></html>

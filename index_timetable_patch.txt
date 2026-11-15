@@ -1,0 +1,11 @@
+CREST STUDENT TIMETABLE LINK — INDEX.HTML PATCH
+
+In your existing index.html, find the Student Workspace block in the left sidebar. Immediately after the Assignments & Grades button, insert:
+
+<button class="folder-item-btn" onclick="window.location.href='timetable.html'" style="background:rgba(56,189,248,0.12);border-color:rgba(56,189,248,0.3);color:#fff;">
+  <span><i class="fas fa-calendar-days left-icon" style="color:#38bdf8;"></i> Weekly Timetable</span>
+  <i class="fas fa-arrow-right" style="color:#38bdf8;"></i>
+</button>
+
+Upload timetable.html into the same root folder as index.html and admin.html.
+This patch is provided for reference; it is not automatically inserted into your existing index.html.
