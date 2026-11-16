@@ -117,6 +117,95 @@
         article.append(img);
       }
 
+      // Optional spoken or handwritten response attachments for this question.
+      const mediaBox = document.createElement("div");
+      mediaBox.className = "answer-media-tools";
+      const mediaTitle = document.createElement("strong");
+      mediaTitle.textContent = "Attach an answer (optional)";
+      mediaBox.append(mediaTitle);
+
+      const audioRow = document.createElement("div");
+      audioRow.className = "media-action-row";
+      const recordBtn = document.createElement("button");
+      recordBtn.type = "button";
+      recordBtn.className = "secondary-btn";
+      recordBtn.textContent = "Record voice answer";
+      const audioStatus = document.createElement("span");
+      audioStatus.className = "media-status";
+      audioStatus.textContent = "Allow microphone access when asked.";
+      audioRow.append(recordBtn, audioStatus);
+      mediaBox.append(audioRow);
+
+      let recorder = null;
+      let audioChunks = [];
+      let recordingStream = null;
+      recordBtn.addEventListener("click", async () => {
+        if (recorder && recorder.state === "recording") {
+          recorder.stop();
+          recordBtn.textContent = "Record voice answer";
+          return;
+        }
+        if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+          audioStatus.textContent = "Voice recording is not supported by this browser.";
+          return;
+        }
+        try {
+          recordingStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          const preferred = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"].find(type => MediaRecorder.isTypeSupported(type));
+          recorder = new MediaRecorder(recordingStream, preferred ? { mimeType: preferred } : undefined);
+          audioChunks = [];
+          recorder.ondataavailable = event => { if (event.data?.size) audioChunks.push(event.data); };
+          recorder.onerror = () => { audioStatus.textContent = "Recording failed. Please try again."; };
+          recorder.onstop = async () => {
+            recordingStream?.getTracks().forEach(track => track.stop());
+            const blob = new Blob(audioChunks, { type: recorder.mimeType || "audio/webm" });
+            if (blob.size > 15 * 1024 * 1024) {
+              audioStatus.textContent = "Voice note exceeds 15 MB. Record a shorter answer.";
+              return;
+            }
+            audioStatus.textContent = "Uploading voice answer...";
+            try {
+              await uploadMedia(card, blob, "audio");
+              audioStatus.textContent = "Voice answer uploaded.";
+            } catch (error) {
+              audioStatus.textContent = error.message || "Voice upload failed.";
+            }
+          };
+          recorder.start();
+          recordBtn.textContent = "Stop and upload";
+          audioStatus.textContent = "Recording…";
+        } catch (error) {
+          audioStatus.textContent = error.message || "Microphone permission was not granted.";
+        }
+      });
+      const photoRow = document.createElement("div");
+      photoRow.className = "media-action-row";
+      const photoLabel = document.createElement("label");
+      photoLabel.className = "media-file-label";
+      photoLabel.textContent = "Take photo / upload handwritten answer";
+      const photoInput = document.createElement("input");
+      photoInput.type = "file";
+      photoInput.accept = "image/jpeg,image/png,image/webp";
+      photoInput.setAttribute("capture", "environment");
+      photoInput.className = "media-file-input";
+      const photoStatus = document.createElement("span");
+      photoStatus.className = "media-status";
+      photoInput.addEventListener("change", async () => {
+        const file = photoInput.files?.[0];
+        if (!file) return;
+        photoStatus.textContent = "Uploading photo...";
+        try {
+          await uploadMedia(card, file, "image");
+          photoStatus.textContent = "Photo uploaded.";
+        } catch (error) {
+          photoStatus.textContent = error.message || "Photo upload failed.";
+        } finally { photoInput.value = ""; }
+      });
+      photoLabel.append(photoInput);
+      photoRow.append(photoLabel, photoStatus);
+      mediaBox.append(photoRow);
+      article.append(mediaBox);
+
       if (Array.isArray(q.options) && q.options.length) {
         q.options.forEach(option => {
           const label = document.createElement("label");
@@ -154,6 +243,25 @@
       }
 
       host.append(article);
+    });
+  }
+
+  async function uploadMedia(card, file, mediaType) {
+    if (!attemptId) throw new Error("Start the examination before uploading.");
+    if (file.size > 15 * 1024 * 1024) throw new Error("Each attachment must be 15 MB or smaller.");
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result).split(",")[1] || "");
+      reader.onerror = () => reject(new Error("Could not read the selected file."));
+      reader.readAsDataURL(file);
+    });
+    const mime = (file.type || (mediaType === "image" ? "image/jpeg" : "audio/webm")).split(";")[0].toLowerCase();
+    await examCall("upload_media", {
+      p_attempt_id: attemptId,
+      p_question_id: card.dataset.qid,
+      p_media_type: mediaType,
+      p_mime_type: mime,
+      p_file_base64: base64
     });
   }
 
