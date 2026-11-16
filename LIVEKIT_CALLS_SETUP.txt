@@ -31,13 +31,14 @@ STEP 1 — SET LIVEKIT SECRETS IN MAIN CREST SUPABASE
 4. Save the secrets.
 
 STEP 2 — DEPLOY THE TOKEN FUNCTION
-1. In main CREST Supabase, open Edge Functions and create a function named exactly:
-   crest-livekit-token
-2. Paste the complete contents of:
+1. The complete function source is stored in this repository at:
    supabase/functions/crest-livekit-token/index.ts
-3. Deploy the function.
-4. In the function settings, turn OFF “Verify JWT with legacy secret” / JWT verification for this function. This is required because CREST uses its existing custom student/admin sessions; the function validates those sessions itself using the existing admin_check and student_me RPCs.
-5. The included supabase/config.toml has the same setting for CLI deployment.
+   Its configuration is in supabase/config.toml.
+2. Link the Supabase CLI to the MAIN CREST project, then deploy:
+   supabase functions deploy crest-livekit-token --no-verify-jwt
+   Alternatively, create the function in the Supabase Dashboard and paste the complete index.ts file.
+3. Confirm that Verify JWT is OFF for this function. This is required because CREST uses its existing custom student/admin sessions; the function validates those sessions itself using admin_check and student_me.
+4. Do not deploy this function to the separate CREST Exam project.
 
 STEP 3 — UPLOAD THE WEBSITE FILES TO GITHUB
 1. Back up the current root index.html and admin.html.
