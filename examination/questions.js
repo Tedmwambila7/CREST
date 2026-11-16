@@ -138,5 +138,6 @@
   examSelect.addEventListener('change', loadQuestions);
   form.addEventListener('submit', saveQuestion);
   publishButton?.addEventListener('click', publishExam);
+  window.CREST_EXAM_REFRESH_QUESTIONS = loadQuestions;
   loadExaminations();
 })();
