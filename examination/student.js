@@ -252,19 +252,28 @@
   async function uploadMedia(card, file, mediaType) {
     if (!attemptId) throw new Error("Start the examination before uploading.");
     if (file.size > 15 * 1024 * 1024) throw new Error("Each attachment must be 15 MB or smaller.");
-    const base64 = await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result).split(",")[1] || "");
-      reader.onerror = () => reject(new Error("Could not read the selected file."));
-      reader.readAsDataURL(file);
-    });
     const mime = (file.type || (mediaType === "image" ? "image/jpeg" : "audio/webm")).split(";")[0].toLowerCase();
-    await examCall("upload_media", {
+    const prepared = await examCall("prepare_media_upload", {
       p_attempt_id: attemptId,
       p_question_id: card.dataset.qid,
       p_media_type: mediaType,
       p_mime_type: mime,
-      p_file_base64: base64
+      p_file_size: file.size
+    });
+    const { error: uploadError } = await E.getClient().storage
+      .from("crest-exam-answers")
+      .uploadToSignedUrl(prepared.path, prepared.token, file, {
+        contentType: mime,
+        upsert: false
+      });
+    if (uploadError) throw uploadError;
+    await examCall("register_media", {
+      p_attempt_id: attemptId,
+      p_question_id: card.dataset.qid,
+      p_storage_path: prepared.path,
+      p_media_type: mediaType,
+      p_mime_type: mime,
+      p_file_size: file.size
     });
   }
 
