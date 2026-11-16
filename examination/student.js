@@ -17,6 +17,7 @@
   let deadline = 0;
   let timer = null;
   let saving = false;
+  let choosingPhoto = false;
 
   function message(text, type = "info") {
     E.message(msg, text, type);
@@ -190,7 +191,9 @@
       photoInput.className = "media-file-input";
       const photoStatus = document.createElement("span");
       photoStatus.className = "media-status";
+      photoInput.addEventListener("click", () => { choosingPhoto = true; });
       photoInput.addEventListener("change", async () => {
+        choosingPhoto = false;
         const file = photoInput.files?.[0];
         if (!file) return;
         photoStatus.textContent = "Uploading photo...";
@@ -359,10 +362,12 @@
 
   // Strict exam mode: leaving the examination tab submits the attempt.
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden" && attemptId && !done.classList.contains("hidden")) {
+    if (document.visibilityState === "hidden" && attemptId && !choosingPhoto && !done.classList.contains("hidden")) {
       submitExam();
     }
   });
+
+  window.addEventListener("focus", () => { choosingPhoto = false; });
 
   function updateTimer() {
     const remaining = Math.max(0, deadline - Date.now());
