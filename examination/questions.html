@@ -65,9 +65,12 @@
             <button type="button" id="useAllPdfText" class="secondary-btn">Use all extracted text</button>
           </div>
           <p class="field-help">Select one question in the text box and use the first button. Then choose its question type, add options and answers, and save it below. Repeat for each question.</p>
+          <div id="parsedQuestionPreview" class="parsed-question-preview" aria-live="polite"></div>
+          <button type="button" id="parsePdfQuestions" class="secondary-btn">Detect questions and options</button>
+          <button type="button" id="importParsedQuestions" hidden>Import reviewed questions</button>
         </div>
       </div>
-      <p class="field-help">Scanned/image-only PDFs may not contain selectable text. This version stores the original PDF but does not yet perform OCR; those questions must be typed or transcribed by the teacher.</p>
+      <p class="field-help">If the PDF is scanned, use OCR when prompted. Always review the detected question wording and select the correct answer for every multiple-choice question before importing.</p>
     </section>
 
     <section class="q-card" id="questionEditor">
