@@ -78,10 +78,37 @@
         <div class="answer-card-heading"><strong>Question ${esc(q.question_number || index + 1)}</strong><span>Maximum: ${Number(q.max_marks || 0).toFixed(2)} marks</span></div>
         <p class="mark-question">${esc(q.question_text || "")}</p>
         <div class="student-answer"><strong>Student's answer</strong><p>${esc(q.answer_text || "No answer text was submitted.").replace(/\n/g, "<br>")}</p></div>
+        <div class="submitted-media" data-media-question="${esc(q.question_id)}"><strong>Voice notes and handwritten uploads</strong><p class="muted">Checking attachments...</p></div>
         <label>Marks awarded</label><input class="awarded-marks" type="number" min="0" max="${Number(q.max_marks || 0)}" step="0.01" value="${q.awarded_marks == null ? "" : Number(q.awarded_marks)}" placeholder="0 to ${Number(q.max_marks || 0)}">
         <label>Teacher feedback</label><textarea class="teacher-feedback" rows="3" placeholder="Feedback for the student">${esc(q.teacher_feedback || "")}</textarea>
         <div class="mark-save-row"><button type="button" class="save-mark">Save marks</button><span class="mark-save-status">${q.marked_at ? `Last marked: ${esc(E.formatDate(q.marked_at))}` : "Not marked yet"}</span></div>
       </article>`).join("")}`;
+
+
+    answerPanel.querySelectorAll("[data-media-question]").forEach(async host => {
+      try {
+        const { data: sessionData } = await E.getClient().auth.getSession();
+        const accessToken = sessionData?.session?.access_token;
+        if (!accessToken) throw new Error("Teacher sign-in is required to view attachments.");
+        const { data, error } = await E.getClient().functions.invoke("crest-student-exams", {
+          body: { action: "teacher_media", p_attempt_id: activeAttemptId, p_question_id: host.dataset.mediaQuestion },
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        if (error) throw error;
+        const media = data?.media || [];
+        if (!media.length) {
+          host.innerHTML = "<strong>Voice notes and handwritten uploads</strong><p class='muted'>No attachments for this question.</p>";
+          return;
+        }
+        host.innerHTML = "<strong>Submitted attachments</strong>" + media.map(item => {
+          const url = E.escape(item.url);
+          if (item.media_type === "audio") return `<div class="media-preview"><audio controls preload="none" src="${url}"></audio><p><a href="${url}" target="_blank" rel="noopener">Open voice note</a></p></div>`;
+          return `<div class="media-preview"><a href="${url}" target="_blank" rel="noopener"><img src="${url}" alt="Student handwritten answer" loading="lazy" style="display:block;max-width:100%;max-height:520px;border-radius:8px;margin-top:8px"></a><p><a href="${url}" target="_blank" rel="noopener">Open full-size photo</a></p></div>`;
+        }).join("");
+      } catch (error) {
+        host.innerHTML = "<strong>Attachments</strong><p class='muted'>Could not load attachments: " + esc(error.message || String(error)) + "</p>";
+      }
+    });
 
     answerPanel.querySelectorAll(".answer-card").forEach(card => {
       card.querySelector(".save-mark").addEventListener("click", async () => {
