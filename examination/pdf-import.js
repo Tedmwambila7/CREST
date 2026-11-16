@@ -120,18 +120,18 @@
   let parsedQuestions = [];
 
   function parseQuestionPaper(raw) {
-    const text = String(raw || "").replace(/\\r/g, "").replace(/--- Page \\d+ ---/g, "\\n");
-    const lines = text.split("\\n").map(line => line.trim()).filter(Boolean);
+    const text = String(raw || "").replace(/\r/g, "").replace(/--- Page \d+ ---/g, "\n");
+    const lines = text.split("\n").map(line => line.trim()).filter(Boolean);
     const starts = [];
     lines.forEach((line, index) => {
-      const match = line.match(/^(?:question\\s*)?(\\d{1,3})[.)、:-]\\s*(.*)$/i);
+      const match = line.match(/^(?:question\s*)?(\d{1,3})[.)、:-]\s*(.*)$/i);
       if (match && Number(match[1]) > 0) starts.push({ index, number: Number(match[1]), first: match[2] || "" });
     });
     const unique = starts.filter((item, index) => index === 0 || item.index !== starts[index - 1].index);
     return unique.map((start, index) => {
       const end = unique[index + 1]?.index ?? lines.length;
       const block = [start.first, ...lines.slice(start.index + 1, end)].filter(Boolean);
-      const optionPattern = /^([A-H])[).:、-]\\s*(.+)$/i;
+      const optionPattern = /^([A-H])[).:、-]\s*(.+)$/i;
       const optionStart = block.findIndex(line => optionPattern.test(line));
       const promptLines = optionStart < 0 ? block : block.slice(0, optionStart);
       const optionLines = optionStart < 0 ? [] : block.slice(optionStart);
@@ -139,7 +139,7 @@
         const match = line.match(optionPattern);
         return match ? { label: match[1].toUpperCase(), text: match[2].trim() } : null;
       }).filter(Boolean);
-      const questionText = promptLines.join(" ").replace(/\\s+/g, " ").trim();
+      const questionText = promptLines.join(" ").replace(/\s+/g, " ").trim();
       if (!questionText) return null;
       const isTF = options.length === 2 &&
         options.map(o => o.text.toLowerCase()).sort().join("|") === "false|true";
@@ -157,29 +157,34 @@
     const importButton = $("importParsedQuestions");
     if (!host || !importButton) return;
     if (!parsedQuestions.length) {
-      host.innerHTML = "<p class='field-help'>No numbered questions were detected. Try adjusting the extracted text or use the question editor manually.</p>";
+      host.innerHTML = "<p class='field-help'>No numbered questions were detected. Adjust the extracted text or use the question editor manually.</p>";
       importButton.hidden = true;
       return;
     }
-    host.innerHTML = parsedQuestions.map((q, index) => `
-      <article class="parsed-question-card" data-parsed-index="${index}">
-        <strong>Detected question ${index + 1} (paper number ${q.number})</strong>
-        <small>Detected type: ${q.type.replaceAll("_", " ")}</small>
-        <textarea class="parsed-question-text" rows="3">${E.escape(q.text)}</textarea>
-        ${q.options.length ? `<p><strong>Options — select the correct answer</strong></p>${q.options.map((o, oi) => `
-          <label class="parsed-option-row"><input type="radio" name="correct-${index}" value="${oi}"><input type="text" class="parsed-option-text" value="${E.escape(o.text)}" aria-label="Option ${o.label}"></label>
-        `).join("")}` : ""}
-        <label>Marks <input class="parsed-question-marks" type="number" min="0.1" step="0.1" value="1"></label>
-      </article>`).join("");
+    host.innerHTML = parsedQuestions.map((q, index) => {
+      const optionsHtml = q.options.length
+        ? "<p><strong>Options — select the correct answer</strong></p>" + q.options.map((o, oi) =>
+            "<label class='parsed-option-row'><input type='radio' name='correct-" + index + "' value='" + oi + "'>" +
+            "<input type='text' class='parsed-option-text' value='" + E.escape(o.text) + "' aria-label='Option " + o.label + "'></label>"
+          ).join("")
+        : "";
+      return "<article class='parsed-question-card' data-parsed-index='" + index + "'>" +
+        "<strong>Detected question " + (index + 1) + " (paper number " + q.number + ")</strong>" +
+        "<small>Detected type: " + q.type.replaceAll("_", " ") + "</small>" +
+        "<textarea class='parsed-question-text' rows='3'>" + E.escape(q.text) + "</textarea>" +
+        optionsHtml +
+        "<label>Marks <input class='parsed-question-marks' type='number' min='0.1' step='0.1' value='1'></label>" +
+        "</article>";
+    }).join("");
     importButton.hidden = false;
-    importButton.textContent = `Import ${parsedQuestions.length} reviewed question(s)`;
+    importButton.textContent = "Import " + parsedQuestions.length + " reviewed question(s)";
   }
 
   $("parsePdfQuestions")?.addEventListener("click", () => {
     parsedQuestions = parseQuestionPaper($("extractedPdfText").value);
     renderParsedQuestions();
     status(parsedQuestions.length
-      ? `${parsedQuestions.length} question(s) detected. Review every question and select the correct answer for each multiple-choice question before importing.`
+      ? parsedQuestions.length + " question(s) detected. Review the wording and select the correct answer for each multiple-choice question."
       : "No numbered questions were detected. Check the extracted text format.", parsedQuestions.length ? "success" : "warning");
   });
 
@@ -192,7 +197,7 @@
       const questionText = card.querySelector(".parsed-question-text").value.trim();
       const marks = Number(card.querySelector(".parsed-question-marks").value);
       const optionTexts = [...card.querySelectorAll(".parsed-option-text")].map(input => input.value.trim());
-      const correct = card.querySelector('input[type="radio"]:checked');
+      const correct = card.querySelector("input[type=radio]:checked");
       const options = q.options.map((o, oi) => ({
         label: o.label, text: optionTexts[oi], is_correct: Boolean(correct && Number(correct.value) === oi)
       }));
@@ -220,18 +225,13 @@
         });
         saved += 1;
       }
-      status(`${saved} question(s) imported successfully. Refreshing the question bank...`, "success");
-      if (typeof window.CREST_EXAM_REFRESH_QUESTIONS === "function") {
-        await window.CREST_EXAM_REFRESH_QUESTIONS();
-      } else {
-        $("questionText").value = "";
-        $("questionText").placeholder = "Questions imported. Refresh the question list to review them.";
-      }
+      status(saved + " question(s) imported successfully. The question bank has been refreshed.", "success");
+      if (typeof window.CREST_EXAM_REFRESH_QUESTIONS === "function") await window.CREST_EXAM_REFRESH_QUESTIONS();
       parsedQuestions = [];
       $("parsedQuestionPreview").innerHTML = "";
       button.hidden = true;
     } catch (error) {
-      status(`${saved} question(s) imported before an error: ${error.message || error}. Check the question bank before retrying to avoid duplicates.`, "error");
+      status(saved + " question(s) imported before an error: " + (error.message || error) + ". Check the question bank before retrying to avoid duplicates.", "error");
     } finally {
       button.disabled = false;
     }
@@ -252,17 +252,19 @@
     const pdf = await window.pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
     const results = [];
     for (let pageNo = 1; pageNo <= pdf.numPages; pageNo += 1) {
-      status(`OCR reading page ${pageNo} of ${pdf.numPages}...`, "info");
+      status("OCR reading page " + pageNo + " of " + pdf.numPages + "...", "info");
       const page = await pdf.getPage(pageNo);
       const viewport = page.getViewport({ scale: 1.7 });
       const canvas = document.createElement("canvas");
-      canvas.width = viewport.width; canvas.height = viewport.height;
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
       await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
       const result = await window.Tesseract.recognize(canvas, "eng");
-      results.push(`--- Page ${pageNo} ---\\n${result.data.text || ""}`);
-      canvas.width = 0; canvas.height = 0;
+      results.push("--- Page " + pageNo + " ---\n" + (result.data.text || ""));
+      canvas.width = 0;
+      canvas.height = 0;
     }
-    return results.join("\\n\\n");
+    return results.join("\n\n");
   }
 
   const ocrButton = document.createElement("button");
@@ -276,9 +278,12 @@
     try {
       const text = await runOcrOnPdf(file);
       $("extractedPdfText").value = text;
-      status("OCR completed. Review the extracted wording carefully, then detect questions and options.", "success");
-    } catch (error) { status(error.message || String(error), "error"); }
-    finally { ocrButton.disabled = false; }
+      status("OCR completed. Review the wording carefully, then detect questions and options.", "success");
+    } catch (error) {
+      status(error.message || String(error), "error");
+    } finally {
+      ocrButton.disabled = false;
+    }
   });
   $("parsePdfQuestions")?.insertAdjacentElement("afterend", ocrButton);
 
