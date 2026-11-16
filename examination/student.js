@@ -357,6 +357,13 @@
     }
   }
 
+  // Strict exam mode: leaving the examination tab submits the attempt.
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden" && attemptId && !done.classList.contains("hidden")) {
+      submitExam();
+    }
+  });
+
   function updateTimer() {
     const remaining = Math.max(0, deadline - Date.now());
     const seconds = Math.floor(remaining / 1000);
