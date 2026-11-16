@@ -222,26 +222,27 @@
   <section class="panel-card" id="crestTimetableAdmin" style="margin-bottom:40px;">
     <h3><i class="fa-solid fa-calendar-week" style="color:var(--accent-primary);"></i> Weekly Student Timetable</h3>
     <p style="color:var(--text-muted);font-size:13px;margin:-12px 0 22px;">
-      Add or update lessons for Monday to Friday. Students see only entries after you publish them.
-      Each day has five teaching periods; the break is displayed automatically.
+      Add or update lessons for Tuesday to Friday. Students see only entries after you publish them.
+      Each day has six one-hour classes.
     </p>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;">
       <div class="form-group"><label>Day</label>
         <select id="ttDay">
-          <option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option>
+          <option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option>
         </select>
       </div>
       <div class="form-group"><label>Period</label>
         <select id="ttPeriod">
-          <option value="1">Period 1 · 08:00–08:40</option>
-          <option value="2">Period 2 · 08:40–09:20</option>
-          <option value="3">Period 3 · 09:20–10:00</option>
-          <option value="4">Period 4 · 10:00–10:40</option>
-          <option value="5">Period 5 · 11:00–11:40</option>
+          <option value="1">Period 1 · 08:00–09:00</option>
+          <option value="2">Period 2 · 09:00–10:00</option>
+          <option value="3">Period 3 · 10:00–11:00</option>
+          <option value="4">Period 4 · 11:00–12:00</option>
+          <option value="5">Period 5 · 12:00–13:00</option>
+          <option value="6">Period 6 · 13:00–14:00</option>
         </select>
       </div>
       <div class="form-group"><label>Start time</label><input id="ttStart" type="time" value="08:00"></div>
-      <div class="form-group"><label>End time</label><input id="ttEnd" type="time" value="08:40"></div>
+      <div class="form-group"><label>End time</label><input id="ttEnd" type="time" value="09:00"></div>
       <div class="form-group"><label>Subject</label><input id="ttSubject" type="text" placeholder="e.g. Mathematics"></div>
       <div class="form-group"><label>Teacher (optional)</label><input id="ttTeacher" type="text" placeholder="Teacher name"></div>
       <div class="form-group"><label>Room (optional)</label><input id="ttRoom" type="text" placeholder="Room"></div>
@@ -2369,11 +2370,11 @@
    Uses the existing admin session key and existing Supabase rpc() helper. */
 (function () {
   'use strict';
-  const ttDays = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+  const ttDays = ['Tuesday','Wednesday','Thursday','Friday'];
   const ttSlots = [
-    {p:1,s:'08:00',e:'08:40'}, {p:2,s:'08:40',e:'09:20'},
-    {p:3,s:'09:20',e:'10:00'}, {p:4,s:'10:00',e:'10:40'},
-    {p:5,s:'11:00',e:'11:40'}
+    {p:1,s:'08:00',e:'09:00'}, {p:2,s:'09:00',e:'10:00'},
+    {p:3,s:'10:00',e:'11:00'}, {p:4,s:'11:00',e:'12:00'},
+    {p:5,s:'12:00',e:'13:00'}, {p:6,s:'13:00',e:'14:00'}
   ];
   let ttRows = [];
   const el = id => document.getElementById(id);
@@ -2389,8 +2390,8 @@
   }
   window.crestTtClearForm = function () {
     el('ttEntryId').value = '';
-    el('ttDay').value = 'Monday'; el('ttPeriod').value = '1';
-    el('ttStart').value = '08:00'; el('ttEnd').value = '08:40';
+    el('ttDay').value = 'Tuesday'; el('ttPeriod').value = '1';
+    el('ttStart').value = '08:00'; el('ttEnd').value = '09:00';
     el('ttSubject').value = ''; el('ttTeacher').value = ''; el('ttRoom').value = '';
     el('ttPublishOnSave').checked = false;
   };
@@ -2463,13 +2464,12 @@
     } catch (e) { ttStatus('Could not update publication status: ' + e.message, false); }
   };
   window.crestTtSampleWeek = async function () {
-    if (!confirm('Create or update the 25 sample lessons? Existing day/period entries will be updated.')) return;
+    if (!confirm('Create or update the 24 fixed lessons for Tuesday to Friday? English and Mathematics will appear every day.')) return;
     const subjects = {
-      Monday:['Mathematics','English','Biology','Geography','Computer Studies'],
-      Tuesday:['Mathematics','Chemistry','Chichewa','History','Agriculture'],
-      Wednesday:['Mathematics','Physics','English','Business Studies','Geography'],
-      Thursday:['Mathematics','Biology','Chemistry','Computer Studies','Chichewa'],
-      Friday:['Mathematics','Physics','History','Agriculture','Life Skills']
+      Tuesday:['Mathematics','Chemistry','English','Chichewa','History','Agriculture'],
+      Wednesday:['Physics','English','Business Studies','Mathematics','Geography','Biology'],
+      Thursday:['Biology','Mathematics','Chemistry','Computer Studies','English','Life Skills'],
+      Friday:['English','Physics','History','Mathematics','Agriculture','Geography']
     };
     try {
       for (const day of ttDays) {
@@ -2481,7 +2481,7 @@
           });
         }
       }
-      ttStatus('Sample week created as drafts. Review the subjects, then choose Publish all when ready.', true);
+      ttStatus('24 fixed lessons created as drafts. Review them, then choose Publish all when ready.', true);
       await window.crestTtLoad();
     } catch (e) { ttStatus('Sample week creation stopped: ' + e.message, false); }
   };
