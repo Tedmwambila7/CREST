@@ -177,9 +177,10 @@
         const answer = optionDescription(q);
         const options = asArray(q.options);
         const optionHtml = options.length ? `<ul class="muted">${options.map(o => `<li>${esc(o.label || "")}. ${esc(o.text || "")}</li>`).join("")}</ul>` : "";
+        const isPdfAnswer = /^PDF ANSWER SHEET QUESTION \d+$/i.test(String(q.question_text || ""));
         return `<article class="answer-card" data-question="${esc(q.question_id)}">
           <div class="answer-card-heading"><strong>Question ${esc(q.question_number || index + 1)}</strong><span>Maximum: ${max.toFixed(2)} marks</span></div>
-          <p class="mark-question">${esc(q.question_text || "")}</p>
+          <p class="mark-question">${isPdfAnswer ? "Student selected an answer for this question in the uploaded PDF paper." : esc(q.question_text || "")}</p>
           ${optionHtml}
           <div class="student-answer"><strong>Student's submitted answer</strong><p>${esc(answer).replace(/\n/g, "<br>")}</p></div>
           <div class="submitted-media" data-media-question="${esc(q.question_id)}" data-media-attempt="${esc(attempt.attempt_id)}"><strong>Submitted attachments</strong><p class="muted">Checking photos and voice recordings...</p></div>
