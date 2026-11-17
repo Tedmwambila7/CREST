@@ -5,7 +5,13 @@
   const $ = id => document.getElementById(id);
   const examSelect = $("examSelect"), loadBtn = $("loadBtn"), refreshBtn = $("refreshBtn");
   const submissionList = $("submissionList"), answerPanel = $("answerPanel"), message = $("message");
-  if (!E || !examSelect || !loadBtn || !submissionList || !answerPanel) return;
+  if (!E || !examSelect || !loadBtn || !submissionList || !answerPanel) {
+    const fallback = document.getElementById("pageError");
+    if (fallback) fallback.textContent = "The marking scripts could not start. Please refresh this page. If the problem continues, contact the CREST administrator.";
+    return;
+  }
+  const pageError = $("pageError");
+  if (pageError) pageError.textContent = "Connecting to CREST and loading your examinations...";
 
   let attempts = [], activeAttemptId = null, busy = false;
   const esc = value => E.escape(value ?? "");
@@ -85,6 +91,7 @@
       console.error("Load marking examinations:", error);
       examSelect.innerHTML = '<option value="">Could not load examinations</option>';
       say(error.message || String(error), "error");
+      if (pageError) pageError.textContent = "Could not load the marking workspace: " + (error.message || String(error));
     } finally { examSelect.disabled = false; }
   }
 
@@ -92,6 +99,7 @@
     if (!attempts.length) {
       submissionList.innerHTML = '<div class="empty-state">No submitted attempts were found for this examination.</div>';
       answerPanel.innerHTML = '<div class="empty-state">There are no submitted answers to mark yet.</div>';
+      if (pageError) pageError.textContent = "No submitted attempts were found for this examination.";
       activeAttemptId = null;
       return;
     }
