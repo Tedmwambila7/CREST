@@ -518,8 +518,10 @@
 
       const percent = Number(result.percentage || 0).toFixed(1);
 
-      $("doneText").textContent =
-        `Your examination has been submitted. Score: ${result.automatic_marks} out of ${result.total_marks} (${percent}%).`;
+      $("doneText").textContent = activePdfPaper
+        ? "Your PDF answer sheet has been submitted successfully. Your teacher will review answers without an automatic answer key, and the administrator will confirm your final result."
+        : `Your examination has been submitted. Score: ${result.automatic_marks} out of ${result.total_marks} (${percent}%).`;
+      activePdfPaper = null;
     } catch (error) {
       btn.disabled = false;
       message(error.message || String(error), "error");
