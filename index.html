@@ -1591,7 +1591,7 @@
       if (files.length > 6 || files.filter(f => f.type && f.type.startsWith('image/')).length > 5 || files.filter(f => f.type && f.type.startsWith('audio/')).length > 1) {
         alert('You can attach up to 5 photos and 1 voice recording (6 attachments total).');
         input.value = '';
-        if (target) target.textContent = 'Choose files (up to 5)';
+        if (target) target.textContent = 'Choose files (up to 5 photos + voice recording)';
         renderAssignmentPreviews(input, targetId);
         return;
       }
@@ -1661,7 +1661,7 @@
       const fileEl = document.getElementById('af-' + id), noteEl = document.getElementById('an-' + id), btn = document.getElementById('ab-' + id);
       const files = Array.from(fileEl.files || []), note = noteEl.value.trim();
       if (!files.length && !note) { alert('Attach your work or write an answer first.'); return; }
-      if (files.length > 5) { alert('You can attach up to 5 photos and 1 voice recording (6 attachments total).'); return; }
+      if (files.length > 6 || files.filter(f => f.type && f.type.startsWith('image/')).length > 5 || files.filter(f => f.type && f.type.startsWith('audio/')).length > 1) { alert('You can attach up to 5 photos and 1 voice recording.'); return; }
       const tooLarge = files.find(file => file.size > 25 * 1024 * 1024 && !/^image\//i.test(file.type));
       if (tooLarge) { alert('"' + tooLarge.name + '" is larger than 25 MB. Each attachment must be 25 MB or less.'); return; }
       const label = btn.innerHTML; btn.disabled = true; btn.textContent = 'Uploading attachments...';
