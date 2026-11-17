@@ -83,6 +83,11 @@
       E.message(message, "The end time must be later than the start time.", "error");
       return;
     }
+    const autoPublish = values.get("autoPublish") === "on";
+    if (autoPublish && !start) {
+      E.message(message, "Set a start date and time before enabling automatic publishing.", "error");
+      return;
+    }
 
     button.disabled = true;
     button.textContent = "Creating...";
@@ -103,8 +108,16 @@
 
       const examId = typeof result === "string" ? result : result?.id;
       if (!examId) throw new Error("The database did not return an examination ID.");
+      if (autoPublish) {
+        await E.rpc("crest_teacher_set_exam_auto_publish", {
+          p_exam_id: examId,
+          p_enabled: true
+        });
+      }
 
-      E.message(message, "Examination created. Opening Question Management...", "success");
+      E.message(message, autoPublish
+        ? "Examination created and automatic publishing scheduled. Add questions before the start time."
+        : "Examination created. Opening Question Management...", "success");
       window.location.href = `questions.html?exam=${encodeURIComponent(examId)}`;
     } catch (error) {
       console.error("Create examination:", error);
