@@ -26,6 +26,19 @@
 <body>
   <header><a href="../index.html" style="color:#fff;text-decoration:none;font-size:13px">← CREST Academy home</a><h1>CREST Student Examination</h1></header>
   <main>
+    <section class="card" id="studentResultsLauncher">
+      <h2>Student examination services</h2>
+      <button type="button" id="showResults" class="secondary-btn">▤ EXAM RESULTS</button>
+      <p class="muted">View results after they have been confirmed by the administrator.</p>
+    </section>
+    <section class="card hidden" id="studentResultsCard">
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
+        <h2>EXAM RESULTS</h2>
+        <button type="button" id="closeResults" class="secondary-btn">Back to examinations</button>
+      </div>
+      <div id="studentResultsMessage" class="message" role="status"></div>
+      <div id="studentResultsList">Loading confirmed results...</div>
+    </section>
     <section class="card" id="accessCard">
       <h2>Available examinations</h2><p class="muted">Choose an examination assigned and published by your teacher.</p>
       <div id="message" class="message" role="status" aria-live="polite"></div>
