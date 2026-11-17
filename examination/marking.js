@@ -19,7 +19,20 @@
       body: { action, ...params },
       headers: { Authorization: `Bearer ${accessToken}` }
     });
-    if (error) throw error;
+    if (error) {
+      let details = error.message || "The examination request failed.";
+      try {
+        const response = error.context;
+        if (response && typeof response.clone === "function") {
+          const payload = await response.clone().json();
+          details = payload?.error || payload?.message || details;
+        } else if (response && typeof response.json === "function") {
+          const payload = await response.json();
+          details = payload?.error || payload?.message || details;
+        }
+      } catch (_) {}
+      throw new Error(details);
+    }
     if (data?.error) throw new Error(data.error);
     return data;
   }
@@ -44,8 +57,28 @@
         examSelect.appendChild(option);
       });
       const requested = new URLSearchParams(location.search).get("exam");
-      if (requested && rows.some(row => row.id === requested)) examSelect.value = requested;
-      else if (rows.length === 1) examSelect.value = rows[0].id;
+      if (requested && rows.some(row => row.id === requested)) {
+        examSelect.value = requested;
+      } else {
+        // Prefer the examination that actually has submitted students,
+        // rather than leaving teachers on a newly-created empty exam.
+        for (const row of rows) {
+          if (String(row.status || "").toLowerCase() === "draft") continue;
+          try {
+            const check = await teacherCall("teacher_submissions", { p_exam_id: row.id });
+            if (asArray(check?.submissions).length) {
+              examSelect.value = row.id;
+              break;
+            }
+          } catch (checkError) {
+            console.warn("Could not check submissions for", row.title, checkError);
+          }
+        }
+        if (!examSelect.value && rows.length) {
+          const firstAvailable = rows.find(row => String(row.status || "").toLowerCase() !== "draft") || rows[0];
+          examSelect.value = firstAvailable.id;
+        }
+      }
       if (examSelect.value) await loadSubmissions();
       else say(rows.length ? "Select an examination to view submissions." : "No examinations are available for marking.", "info");
     } catch (error) {
