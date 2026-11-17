@@ -143,8 +143,21 @@
       let recorder = null;
       let audioChunks = [];
       let recordingStream = null;
+      let examRecordingTimer = null;
+      let examRecordingStartedAt = 0;
+      const EXAM_RECORDING_LIMIT_MS = 5 * 60 * 1000;
+      const formatRecordingTime = seconds => {
+        const minutes = Math.floor(seconds / 60);
+        const remainder = seconds % 60;
+        return String(minutes).padStart(2, "0") + ":" + String(remainder).padStart(2, "0");
+      };
+      const clearExamRecordingTimer = () => {
+        if (examRecordingTimer) clearInterval(examRecordingTimer);
+        examRecordingTimer = null;
+      };
       recordBtn.addEventListener("click", async () => {
         if (recorder && recorder.state === "recording") {
+          clearExamRecordingTimer();
           recorder.stop();
           recordBtn.textContent = "Record voice answer";
           return;
@@ -168,6 +181,7 @@
           recorder.ondataavailable = event => { if (event.data?.size) audioChunks.push(event.data); };
           recorder.onerror = () => { audioStatus.textContent = "Recording failed. Please try again."; };
           recorder.onstop = async () => {
+            clearExamRecordingTimer();
             mediaRecordingInProgress = false;
             recordBtn.removeAttribute("data-recording");
             recordBtn.disabled = false;
@@ -189,10 +203,23 @@
           };
           recorder.start(1000);
           mediaRecordingInProgress = true;
+          examRecordingStartedAt = Date.now();
           recordBtn.dataset.recording = "true";
           recordBtn.textContent = "Stop and upload";
-          audioStatus.textContent = "Recording… Speak clearly, then press Stop and upload";
+          audioStatus.textContent = "Recording… 00:00 / 05:00. Press Stop and upload when finished.";
+          clearExamRecordingTimer();
+          examRecordingTimer = setInterval(() => {
+            const elapsed = Date.now() - examRecordingStartedAt;
+            const remaining = Math.max(0, Math.ceil((EXAM_RECORDING_LIMIT_MS - elapsed) / 1000));
+            audioStatus.textContent = "Recording… " + formatRecordingTime(Math.floor(elapsed / 1000)) + " / 05:00";
+            if (remaining <= 0 && recorder && recorder.state === "recording") {
+              clearExamRecordingTimer();
+              audioStatus.textContent = "Five-minute limit reached. Preparing your voice answer…";
+              recorder.stop();
+            }
+          }, 250);
         } catch (error) {
+          clearExamRecordingTimer();
           mediaRecordingInProgress = false;
           recordBtn.disabled = false;
           recordBtn.removeAttribute("data-recording");
