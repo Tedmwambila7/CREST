@@ -36,6 +36,7 @@
     const originalSize = originalPage.getSize();
     const headerHeight = 82;
     const embeddedOriginal = await pdfDoc.embedPage(originalPage);
+    pdfDoc.removePage(0);
     const brandedPage = pdfDoc.insertPage(0, [
       originalSize.width,
       originalSize.height + headerHeight
