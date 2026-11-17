@@ -17,6 +17,54 @@
     return $("examSelect")?.value || "";
   }
 
+  async function brandQuestionPdf(file, subject) {
+    if (!window.PDFLib?.PDFDocument) {
+      throw new Error("The PDF branding library did not load. Refresh the page and try again.");
+    }
+    const cleanSubject = String(subject || "").trim();
+    if (!cleanSubject) {
+      throw new Error("This examination has no subject saved. Add its subject before uploading the PDF.");
+    }
+
+    const { PDFDocument, StandardFonts, rgb } = window.PDFLib;
+    const pdfDoc = await PDFDocument.load(await file.arrayBuffer());
+    if (!pdfDoc.getPageCount()) throw new Error("The selected PDF has no pages.");
+
+    // Add a dedicated header band above page one instead of covering existing
+    // content. This keeps every original question, diagram and option intact.
+    const originalPage = pdfDoc.getPage(0);
+    const originalSize = originalPage.getSize();
+    const headerHeight = 82;
+    const embeddedOriginal = await pdfDoc.embedPage(originalPage);
+    pdfDoc.removePage(0);
+    const brandedPage = pdfDoc.insertPage(0, [
+      originalSize.width,
+      originalSize.height + headerHeight
+    ]);
+    brandedPage.drawPage(embeddedOriginal, { x: 0, y: 0, width: originalSize.width, height: originalSize.height });
+
+    const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const heading = "SIR TAYYDAYO";
+    const subjectHeading = cleanSubject.toLocaleUpperCase() + " TEST";
+    const headingSize = Math.min(17, originalSize.width / 24);
+    const subjectSize = Math.min(13, originalSize.width / 30);
+    const centerText = (value, size, y) => {
+      const width = font.widthOfTextAtSize(value, size);
+      brandedPage.drawText(value, {
+        x: Math.max(18, (originalSize.width - width) / 2),
+        y,
+        size,
+        font,
+        color: rgb(0.08, 0.08, 0.08)
+      });
+    };
+    centerText(heading, headingSize, originalSize.height + 49);
+    centerText(subjectHeading, subjectSize, originalSize.height + 25);
+
+    const bytes = await pdfDoc.save();
+    return new File([bytes], file.name, { type: "application/pdf", lastModified: Date.now() });
+  }
+
   async function extractPdfText(file) {
     if (!window.pdfjsLib) throw new Error("The PDF reader did not load. Refresh the page and try again.");
     window.pdfjsLib.GlobalWorkerOptions.workerSrc =
@@ -65,15 +113,21 @@
 
     const button = $("uploadExtractPdf");
     button.disabled = true;
-    button.textContent = "Uploading and reading PDF...";
+    button.textContent = "Branding and uploading PDF...";
     $("openOriginalPdf").hidden = true;
-    status("Uploading the original PDF to the private CREST storage area...", "info");
+    status("Adding the CREST heading to page one without covering the original questions...", "info");
 
     try {
+      const selectedOption = $("examSelect").selectedOptions?.[0];
+      const subject = selectedOption?.dataset.subject || "";
+      const brandedFile = await brandQuestionPdf(file, subject);
+      if (brandedFile.size > MAX_BYTES) {
+        throw new Error("The branded PDF is larger than 20 MB. Please choose a smaller source PDF.");
+      }
       const client = E.getClient();
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-100) || "question-paper.pdf";
       const path = `${currentUser.id}/${examId}/${crypto.randomUUID()}-${safeName}`;
-      const { error: uploadError } = await client.storage.from("crest-question-papers").upload(path, file, {
+      const { error: uploadError } = await client.storage.from("crest-question-papers").upload(path, brandedFile, {
         contentType: "application/pdf", upsert: false
       });
       if (uploadError) throw uploadError;
@@ -84,7 +138,7 @@
         created_by: currentUser.id,
         file_name: file.name,
         storage_path: path,
-        file_size: file.size
+        file_size: brandedFile.size
       });
       if (recordError) {
         await client.storage.from("crest-question-papers").remove([path]);
@@ -99,8 +153,8 @@
         $("openOriginalPdf").hidden = false;
       }
 
-      status("Original PDF uploaded. Extracting selectable text in your browser...", "info");
-      const text = await extractPdfText(file);
+      status("Branded PDF uploaded. Extracting selectable text in your browser...", "info");
+      const text = await extractPdfText(brandedFile);
       $("extractedPdfText").value = text;
       if (!text || text.replace(/--- Page \d+ ---/g, "").trim().length < 20) {
         status("The PDF was safely uploaded, but little or no selectable text was found. It may be scanned. Use the Run OCR for scanned PDF button, then review the extracted text.", "warning");
@@ -112,7 +166,7 @@
       status(error.message || String(error), "error");
     } finally {
       button.disabled = false;
-      button.textContent = "Upload and extract text";
+      button.textContent = "Brand PDF, upload and extract text";
     }
   });
 
