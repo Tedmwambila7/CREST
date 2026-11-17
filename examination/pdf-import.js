@@ -171,6 +171,56 @@
   });
 
 
+  $("uploadPdfOnly")?.addEventListener("click", async () => {
+    const file = $("questionPdf").files?.[0];
+    const examId = selectedExamId();
+    if (!examId) return status("Select an examination first.", "error");
+    if (!file) return status("Choose a PDF file first.", "error");
+    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+      return status("Only PDF files are accepted.", "error");
+    }
+    if (file.size > MAX_BYTES) return status("The PDF is larger than 20 MB.", "error");
+    if (!currentUser) return status("Your teacher session could not be verified. Sign in again.", "error");
+    const button = $("uploadPdfOnly");
+    button.disabled = true;
+    button.textContent = "Uploading PDF...";
+    try {
+      const selectedOption = $("examSelect").selectedOptions?.[0];
+      const subject = selectedOption?.dataset.subject || "";
+      const brandedFile = await brandQuestionPdf(file, subject);
+      if (brandedFile.size > MAX_BYTES) throw new Error("The branded PDF is larger than 20 MB.");
+      const client = E.getClient();
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-100) || "question-paper.pdf";
+      const path = currentUser.id + "/" + examId + "/" + crypto.randomUUID() + "-" + safeName;
+      const { error: uploadError } = await client.storage.from("crest-question-papers").upload(path, brandedFile, {
+        contentType: "application/pdf", upsert: false
+      });
+      if (uploadError) throw uploadError;
+      const { error: recordError } = await client.from("examination_pdf_uploads").insert({
+        examination_id: examId, created_by: currentUser.id, file_name: file.name,
+        storage_path: path, file_size: brandedFile.size
+      });
+      if (recordError) {
+        await client.storage.from("crest-question-papers").remove([path]);
+        throw recordError;
+      }
+      const { data: signed, error: signedError } = await client.storage
+        .from("crest-question-papers").createSignedUrl(path, 3600);
+      if (!signedError && signed?.signedUrl) {
+        $("openOriginalPdf").href = signed.signedUrl;
+        $("openOriginalPdf").hidden = false;
+      }
+      $("extractedPdfText").value = "";
+      status("PDF uploaded successfully without extracting its text. Publish the examination to make the paper available to students.", "success");
+    } catch (error) {
+      console.error("PDF-only upload:", error);
+      status(error.message || String(error), "error");
+    } finally {
+      button.disabled = false;
+      button.textContent = "Upload PDF only (no extraction)";
+    }
+  });
+
   let parsedQuestions = [];
 
   function parseQuestionPaper(raw) {
