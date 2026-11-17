@@ -21,6 +21,8 @@
   let mediaUploadsInProgress = 0;
   let mediaRecordingInProgress = false;
   let mediaPickerStartedAt = 0;
+  let pdfPapers = [];
+  let activePdfPaper = null;
 
   function message(text, type = "info") {
     E.message(msg, text, type);
@@ -404,6 +406,48 @@
     }
   }
 
+  function renderPdfAnswerSheet(questions, paper) {
+    const host = $("questions");
+    host.innerHTML = "";
+    const heading = document.createElement("h3");
+    heading.textContent = "Original question paper — " + (paper.file_name || "");
+    const frame = document.createElement("iframe");
+    frame.title = "Original PDF examination paper";
+    frame.src = paper.url;
+    frame.style.cssText = "width:100%;height:72vh;border:1px solid #cbd5d1;border-radius:10px;background:#fff";
+    host.append(heading, frame);
+
+    const launcher = document.createElement("button");
+    launcher.type = "button";
+    launcher.id = "floatingAnswerSheet";
+    launcher.textContent = "▤ ANSWER SHEET";
+    launcher.style.cssText = "position:fixed;right:20px;bottom:20px;z-index:1000;border:0;border-radius:999px;padding:15px 20px;background:#123d2b;color:#fff;font-weight:800;box-shadow:0 5px 20px #0004;cursor:pointer";
+    const panel = document.createElement("section");
+    panel.id = "pdfAnswerPanel";
+    panel.style.cssText = "display:none;position:fixed;right:16px;bottom:82px;z-index:999;width:min(390px,calc(100vw - 32px));max-height:72vh;overflow:auto;background:#fff;border:2px solid #123d2b;border-radius:14px;padding:14px;box-shadow:0 8px 28px #0005";
+    const title = document.createElement("h3"); title.textContent = "PDF ANSWER SHEET";
+    const note = document.createElement("p"); note.textContent = "Choose A, B, C or D. Your answers save automatically."; note.className = "muted";
+    panel.append(title, note);
+    questions.forEach((q,index) => {
+      const card = document.createElement("article");
+      card.className = "question-item"; card.dataset.qid = q.id; card.style.margin = "10px 0";
+      const h = document.createElement("strong"); h.textContent = "Question " + (q.question_order || index+1) + " (" + q.marks + " marks)";
+      const row = document.createElement("div"); row.style.cssText = "display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:10px";
+      (q.options || []).forEach(option => {
+        const label=document.createElement("label"); label.style.cssText="display:flex;gap:5px;align-items:center;border:1px solid #ccd5cf;border-radius:8px;padding:9px;cursor:pointer";
+        const radio=document.createElement("input"); radio.type="radio"; radio.name="q_"+q.id; radio.value=option.id;
+        radio.addEventListener("change",()=>saveAnswer(card));
+        const span=document.createElement("span"); span.textContent=option.label;
+        label.append(radio,span); row.append(label);
+      });
+      card.append(h,row); host.append(card);
+    });
+    launcher.addEventListener("click",()=>{panel.style.display=panel.style.display==="none"?"block":"none";});
+    const close=document.createElement("button"); close.type="button"; close.textContent="Close answer sheet"; close.className="secondary-btn";
+    close.addEventListener("click",()=>{panel.style.display="none";});
+    panel.append(close); document.body.append(panel,launcher);
+  }
+
   async function startExam(event) {
     event.preventDefault();
 
@@ -433,7 +477,9 @@
         p_attempt_id: attemptId
       });
 
-      renderQuestions(questions || []);
+      const pdfPaper = activePdfPaper && activePdfPaper.examination_id === examId ? activePdfPaper : null;
+      if (pdfPaper) renderPdfAnswerSheet(questions || [], pdfPaper);
+      else renderQuestions(questions || []);
 
       access.classList.add("hidden");
       examCard.classList.remove("hidden");
@@ -465,6 +511,8 @@
       });
 
       clearInterval(timer);
+      document.getElementById("pdfAnswerPanel")?.remove();
+      document.getElementById("floatingAnswerSheet")?.remove();
       examCard.classList.add("hidden");
       done.classList.remove("hidden");
 
@@ -549,7 +597,8 @@
     try {
       if (!token) token = await E.getExamSessionToken();
       const papers = await examCall("papers");
-      if (!papers?.length) {
+      pdfPapers = Array.isArray(papers) ? papers : [];
+      if (!pdfPapers.length) {
         $("studentPapersList").innerHTML = '<div class="empty-state">No published PDF papers are available at the moment.</div>';
         E.message($("studentPapersMessage"), "Check again after your teacher publishes a PDF examination.", "info");
         return;
@@ -557,15 +606,28 @@
       $("studentPapersList").innerHTML = papers.map((paper, index) =>
         '<article class="question-item"><h3>' + E.escape(paper.title || "Examination paper") + '</h3><p>' +
         E.escape(paper.subject || "") + ' · ' + E.escape(paper.file_name || "PDF paper") +
-        '</p><button type="button" class="open-student-paper" data-paper-index="' + index + '">Open paper</button></article>'
+        '</p><button type="button" class="open-student-paper" data-paper-index="' + index + '">Open paper</button> <button type="button" class="start-pdf-answer-sheet" data-paper-index="' + index + '">Start exam &amp; answer</button></article>'
       ).join("");
-      $("studentPapersList").querySelectorAll("[data-paper-index]").forEach(button => {
+      $("studentPapersList").querySelectorAll(".open-student-paper").forEach(button => {
         button.addEventListener("click", () => {
-          const paper = papers[Number(button.dataset.paperIndex)];
-          const viewer = $("studentPaperViewer");
-          viewer.src = paper.url;
-          viewer.style.display = "block";
+          const paper = pdfPapers[Number(button.dataset.paperIndex)];
+          const viewer = $("studentPaperViewer"); viewer.src = paper.url; viewer.style.display = "block";
           viewer.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      });
+      $("studentPapersList").querySelectorAll(".start-pdf-answer-sheet").forEach(button => {
+        button.addEventListener("click", () => {
+          const paper = pdfPapers[Number(button.dataset.paperIndex)];
+          const select = $("examSelect");
+          if (![...select.options].some(option => option.value === paper.examination_id)) {
+            E.message($("studentPapersMessage"), "This paper has no configured answer sheet yet. Ask your teacher to configure it in Question Management.", "error");
+            return;
+          }
+          activePdfPaper = paper;
+          select.value = paper.examination_id;
+          $("studentPapersCard").classList.add("hidden");
+          $("studentPaperViewer").src = "";
+          $("accessForm").requestSubmit();
         });
       });
       E.message($("studentPapersMessage"), papers.length + " published PDF paper(s) available.", "success");
