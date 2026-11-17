@@ -11,6 +11,19 @@
   const esc = value => E.escape(value ?? "");
   const say = (text, type = "info") => E.message(message, text, type);
 
+  async function teacherCall(action, params = {}) {
+    const { data: sessionData } = await E.getClient().auth.getSession();
+    const accessToken = sessionData?.session?.access_token;
+    if (!accessToken) throw new Error("Teacher sign-in is required.");
+    const { data, error } = await E.getClient().functions.invoke("crest-student-exams", {
+      body: { action, ...params },
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    return data;
+  }
+
   function asArray(value) {
     if (Array.isArray(value)) return value;
     if (typeof value === "string") { try { const parsed = JSON.parse(value); return Array.isArray(parsed) ? parsed : []; } catch (_) { return []; } }
@@ -22,7 +35,7 @@
     examSelect.innerHTML = '<option value="">Loading examinations...</option>';
     try {
       await E.requireTeacher();
-      const rows = await E.rpc("crest_teacher_marking_exams") || [];
+      const rows = await E.rpc("crest_teacher_dashboard_exams") || [];
       examSelect.innerHTML = '<option value="">Choose an examination</option>';
       rows.forEach(row => {
         const option = document.createElement("option");
@@ -87,14 +100,10 @@
 
     answerPanel.querySelectorAll("[data-media-question]").forEach(async host => {
       try {
-        const { data: sessionData } = await E.getClient().auth.getSession();
-        const accessToken = sessionData?.session?.access_token;
-        if (!accessToken) throw new Error("Teacher sign-in is required to view attachments.");
-        const { data, error } = await E.getClient().functions.invoke("crest-student-exams", {
-          body: { action: "teacher_media", p_attempt_id: host.dataset.mediaAttempt, p_question_id: host.dataset.mediaQuestion },
-          headers: { Authorization: `Bearer ${accessToken}` }
+        const data = await teacherCall("teacher_media", {
+          p_attempt_id: host.dataset.mediaAttempt,
+          p_question_id: host.dataset.mediaQuestion
         });
-        if (error) throw error;
         const media = data?.media || [];
         if (!media.length) {
           host.innerHTML = "<strong>Voice notes and handwritten uploads</strong><p class='muted'>No attachments for this question.</p>";
@@ -123,7 +132,7 @@
         }
         button.disabled = true; status.textContent = "Saving...";
         try {
-          const result = await E.rpc("crest_mark_student_question", {
+          const result = await teacherCall("teacher_mark_answer", {
             p_attempt_id: activeAttemptId,
             p_question_id: card.dataset.question,
             p_marks: marks,
@@ -156,8 +165,8 @@
     answerPanel.innerHTML = '<div class="empty-state">Loading answers...</div>';
     say("Loading submitted attempts and written answers...", "info");
     try {
-      const result = await E.rpc("crest_teacher_marking_list", { p_exam_id: examId });
-      attempts = asArray(result);
+      const result = await teacherCall("teacher_submissions", { p_exam_id: examId });
+      attempts = asArray(result.submissions);
       activeAttemptId = attempts[0]?.attempt_id || null;
       renderSubmissions();
       say(`${attempts.length} submitted attempt(s) loaded.`, "success");
