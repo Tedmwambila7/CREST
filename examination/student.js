@@ -583,8 +583,15 @@
         E.message(status, "The results section is working, but there are currently no confirmed results for this student account.", "info");
         return;
       }
-      list.innerHTML = '<div class="table-wrap"><table><thead><tr><th>Examination</th><th>Subject</th><th>Score</th><th>Total</th><th>Percentage</th><th>Confirmed</th></tr></thead><tbody>' +
-        rows.map(row => '<tr><td>' + E.escape(row.title || "Examination") + '</td><td>' + E.escape(row.subject || "—") + '</td><td>' + Number(row.total_score || 0).toFixed(2) + '</td><td>' + Number(row.total_marks || 0).toFixed(2) + '</td><td>' + Number(row.percentage || 0).toFixed(1) + '%</td><td>' + E.escape(E.formatDate(row.confirmed_at)) + '</td></tr>').join("") +
+      list.innerHTML = '<div class="table-wrap"><table><thead><tr><th>Examination</th><th>Subject</th><th>Score</th><th>Total</th><th>Percentage</th><th>Result status</th></tr></thead><tbody>' +
+        rows.map(row => {
+          const pending = row.status !== "confirmed" || !row.confirmed_at;
+          return '<tr><td>' + E.escape(row.title || "Examination") + '</td><td>' + E.escape(row.subject || "—") + '</td><td>' +
+            (pending ? "—" : Number(row.total_score || 0).toFixed(2)) + '</td><td>' +
+            Number(row.total_marks || 0).toFixed(2) + '</td><td>' +
+            (pending ? "—" : Number(row.percentage || 0).toFixed(1) + "%") + '</td><td>' +
+            (pending ? "Awaiting teacher/admin confirmation" : "Confirmed " + E.escape(E.formatDate(row.confirmed_at))) + '</td></tr>';
+        }).join("") +
         '</tbody></table></div>';
       E.message(status, rows.length + " confirmed result(s) available.", "success");
     } catch (error) {
