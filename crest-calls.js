@@ -11,6 +11,7 @@
   let displayName = '', activeTicket = null, activeCallId = null, activeMode = null;
   let incoming = null, onlineCount = 0, callJoined = false, joiningCall = false, localMic = true, localCamera = true;
   let connectTimer = null, inviteTimer = null, invitePollTimer = null;
+  let lobbyConnecting = false;
   const $ = id => document.getElementById(id);
   const enc = value => new TextEncoder().encode(JSON.stringify(value));
   const dec = bytes => { try { return JSON.parse(new TextDecoder().decode(bytes)); } catch (_) { return null; } };
@@ -108,18 +109,59 @@
   async function connectLobby() {
     if (!LK) { setStatus('Calling library did not load. Refresh the page and try again.'); return; }
     const c = currentCredentials();
-    if (!c) { if (lobby) { await lobby.disconnect(); lobby = null; } sessionSignature = ''; updateOnlineCount(); return; }
-    if (lobby && sessionSignature === c.signature && lobby.state === LK.ConnectionState.Connected) return;
-    if (lobby) { try { await lobby.disconnect(); } catch (_) {} lobby = null; }
-    sessionSignature = c.signature; role = c.role; displayName = c.displayName; identity = randomId();
+    if (!c) {
+      if (lobby) { try { await lobby.disconnect(); } catch (_) {} lobby = null; }
+      sessionSignature = '';
+      updateOnlineCount();
+      return;
+    }
+
+    // Do not tear down a room while its WebSocket handshake is still in progress.
+    // The old 4-second health check could disconnect a slow connection and
+    // produce LiveKit's "Client initiated disconnect" message.
+    if (lobbyConnecting) return;
+    if (lobby && sessionSignature === c.signature) {
+      const state = lobby.state;
+      if (
+        state === LK.ConnectionState.Connected ||
+        state === LK.ConnectionState.Connecting ||
+        state === LK.ConnectionState.Reconnecting ||
+        state === LK.ConnectionState.SignalReconnecting
+      ) return;
+    }
+
+    lobbyConnecting = true;
     try {
-      const token = await requestToken('lobby', { room: LOBBY });
-      lobby = new LK.Room({ adaptiveStream: true, dynacast: true });
-      lobby.on(LK.RoomEvent.DataReceived, onLobbyData);
-      lobby.on(LK.RoomEvent.ParticipantConnected, updateOnlineCount);
-      lobby.on(LK.RoomEvent.ParticipantDisconnected, updateOnlineCount);
-      lobby.on(LK.RoomEvent.Disconnected, updateOnlineCount);
-      await lobby.connect(LIVEKIT_URL, token.token);
+      if (lobby) { try { await lobby.disconnect(); } catch (_) {} lobby = null; }
+      sessionSignature = c.signature;
+      role = c.role;
+      displayName = c.displayName;
+      identity = randomId();
+
+      const grant = await requestToken('lobby', { room: LOBBY });
+      const serverUrl = grant.serverUrl || LIVEKIT_URL;
+      if (!grant.token) throw new Error('The calling service did not return a LiveKit access token.');
+      if (!/^wss:\/\//i.test(serverUrl)) throw new Error('The LiveKit server address is invalid.');
+
+      const room = new LK.Room({ adaptiveStream: true, dynacast: true });
+      lobby = room;
+      room.on(LK.RoomEvent.DataReceived, onLobbyData);
+      room.on(LK.RoomEvent.ParticipantConnected, updateOnlineCount);
+      room.on(LK.RoomEvent.ParticipantDisconnected, updateOnlineCount);
+      room.on(LK.RoomEvent.Disconnected, (reason) => {
+        updateOnlineCount();
+        console.warn('CREST LiveKit lobby disconnected', reason || 'no reason supplied');
+      });
+      room.on(LK.RoomEvent.ConnectionStateChanged, (state) => {
+        console.info('CREST LiveKit lobby state:', state);
+      });
+
+      await room.connect(serverUrl, grant.token);
+      if (lobby !== room) {
+        try { await room.disconnect(); } catch (_) {}
+        return;
+      }
+
       updateOnlineCount();
       if (isAdminPage()) setStatus('You are online. Start a call to invite everyone who is online.');
       else setStatus('You are online and can receive a teacher’s group call invitation.');
@@ -127,9 +169,11 @@
       if ($('crestStartVideo')) $('crestStartVideo').disabled = false;
     } catch (e) {
       console.error('CREST lobby connection failed', e);
-      setStatus('Calling is not ready: ' + e.message);
+      setStatus('Calling is not ready: ' + (e?.message || String(e)));
       if ($('crestStartVoice')) $('crestStartVoice').disabled = true;
       if ($('crestStartVideo')) $('crestStartVideo').disabled = true;
+    } finally {
+      lobbyConnecting = false;
     }
   }
 
