@@ -103,7 +103,7 @@
       const text = await extractPdfText(file);
       $("extractedPdfText").value = text;
       if (!text || text.replace(/--- Page \d+ ---/g, "").trim().length < 20) {
-        status("The PDF was safely uploaded, but little or no selectable text was found. It may be a scanned PDF. OCR is not included yet; please transcribe the questions into the editor.", "warning");
+        status("The PDF was safely uploaded, but little or no selectable text was found. It may be scanned. Use the Run OCR for scanned PDF button, then review the extracted text.", "warning");
       } else {
         status("PDF uploaded and text extracted. Review the text carefully, then transfer each question to the editor below.", "success");
       }
