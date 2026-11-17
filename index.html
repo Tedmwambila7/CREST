@@ -1516,6 +1516,17 @@
     }
 
     let assignmentRecorder = null, assignmentRecordingId = null, assignmentRecordingStream = null, assignmentAudioChunks = [];
+    let assignmentRecordingTimer = null, assignmentRecordingStartedAt = 0;
+    const ASSIGNMENT_RECORDING_LIMIT_MS = 5 * 60 * 1000;
+    function formatAssignmentRecordingTime(seconds) {
+      const minutes = Math.floor(seconds / 60);
+      const remainder = seconds % 60;
+      return String(minutes).padStart(2, '0') + ':' + String(remainder).padStart(2, '0');
+    }
+    function clearAssignmentRecordingTimer() {
+      if (assignmentRecordingTimer) clearInterval(assignmentRecordingTimer);
+      assignmentRecordingTimer = null;
+    }
     function toggleAssignmentVoice(id) {
       const button = document.getElementById('ar-' + id);
       const status = document.getElementById('ars-' + id);
@@ -1525,6 +1536,7 @@
       if (assignmentRecorder && assignmentRecorder.state === 'recording') {
         if (assignmentRecordingId !== id) { status.textContent = 'Finish the current voice recording first.'; return; }
         button.disabled = true;
+        clearAssignmentRecordingTimer();
         status.textContent = 'Finishing recording and preparing upload...';
         assignmentRecorder.stop();
         return;
@@ -1543,6 +1555,7 @@
         assignmentRecorder.ondataavailable = event => { if (event.data && event.data.size) assignmentAudioChunks.push(event.data); };
         assignmentRecorder.onerror = () => { status.textContent = 'Recording failed. Check your microphone and try again.'; };
         assignmentRecorder.onstop = () => {
+          clearAssignmentRecordingTimer();
           const type = assignmentRecorder.mimeType || 'audio/webm';
           const blob = new Blob(assignmentAudioChunks, { type });
           assignmentRecordingStream?.getTracks().forEach(track => track.stop());
@@ -1563,9 +1576,23 @@
           status.textContent = 'Voice recording attached. It will upload when you submit the assignment.';
         };
         assignmentRecorder.start(1000);
+        assignmentRecordingStartedAt = Date.now();
         button.innerHTML = '<i class="fas fa-stop"></i> Stop recording';
-        status.textContent = 'Recording… press Stop recording when finished.';
+        status.textContent = 'Recording… 00:00 / 05:00. Press Stop recording when finished.';
+        clearAssignmentRecordingTimer();
+        assignmentRecordingTimer = setInterval(() => {
+          const elapsed = Date.now() - assignmentRecordingStartedAt;
+          const remaining = Math.max(0, Math.ceil((ASSIGNMENT_RECORDING_LIMIT_MS - elapsed) / 1000));
+          status.textContent = 'Recording… ' + formatAssignmentRecordingTime(Math.floor(elapsed / 1000)) + ' / 05:00';
+          if (remaining <= 0 && assignmentRecorder && assignmentRecorder.state === 'recording') {
+            clearAssignmentRecordingTimer();
+            status.textContent = 'Five-minute limit reached. Preparing your voice answer…';
+            button.disabled = true;
+            assignmentRecorder.stop();
+          }
+        }, 250);
       }).catch(error => {
+        clearAssignmentRecordingTimer();
         assignmentRecordingStream?.getTracks().forEach(track => track.stop());
         assignmentRecordingStream = null;
         status.textContent = error.name === 'NotAllowedError' ? 'Microphone permission was denied. Allow microphone access in browser settings.' : (error.message || 'Could not start microphone.');
