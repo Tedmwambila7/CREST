@@ -371,7 +371,7 @@
 
   // Strict exam mode: leaving the examination tab submits the attempt.
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden" && attemptId && !choosingPhoto && !done.classList.contains("hidden")) {
+    if (document.visibilityState === "hidden" && attemptId && !choosingPhoto && !examCard.classList.contains("hidden")) {
       submitExam();
     }
   });
