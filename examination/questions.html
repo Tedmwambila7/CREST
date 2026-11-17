@@ -73,6 +73,20 @@
       <p class="field-help">If the PDF is scanned, use OCR when prompted. Always review the detected question wording and select the correct answer for every multiple-choice question before importing.</p>
     </section>
 
+    <section class="q-card" id="pdfAnswerSetup">
+      <p class="eyebrow">PDF ANSWER SHEET SETUP</p>
+      <h2>Configure the PDF answer sheet</h2>
+      <p class="muted">After uploading the PDF-only paper, set the number of multiple-choice questions. Students will read the original PDF and select A, B, C or D in a floating answer sheet. You may enter an answer key now or leave it blank for teacher marking.</p>
+      <div class="q-grid">
+        <div><label for="pdfQuestionCount">Number of questions</label><input id="pdfQuestionCount" type="number" min="1" max="200" value="20"></div>
+        <div><label for="pdfQuestionMarks">Marks per question</label><input id="pdfQuestionMarks" type="number" min="0.1" max="100" step="0.1" value="1"></div>
+      </div>
+      <label for="pdfAnswerKey">Optional answer key (one per line, e.g. 1=A)</label>
+      <textarea id="pdfAnswerKey" rows="5" placeholder="1=A&#10;2=C&#10;3=B"></textarea>
+      <button type="button" id="createPdfAnswerSheet">Create / update PDF answer sheet</button>
+      <p id="pdfAnswerSetupStatus" class="message" role="status"></p>
+    </section>
+
     <section class="q-card" id="questionEditor">
       <div class="q-section-heading">
         <div>
@@ -153,6 +167,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="exam.js"></script>
   <script src="questions.js"></script>
-  <script src="pdf-import.js?v=20261118pdfonly"></script>
+  <script src="pdf-import.js?v=20261118pdfonly"></script><script src="pdf-answer-setup.js?v=20261118a1"></script>
 </body>
 </html>
