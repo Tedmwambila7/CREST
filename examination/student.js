@@ -508,6 +508,38 @@
     }
   }
 
+  async function loadStudentResults() {
+    const panel = $("studentResultsCard");
+    const list = $("studentResultsList");
+    const status = $("studentResultsMessage");
+    panel.classList.remove("hidden");
+    access.classList.add("hidden");
+    done.classList.add("hidden");
+    list.textContent = "Loading confirmed results...";
+    try {
+      if (!token) token = await E.getExamSessionToken();
+      const rows = await E.rpc("crest_online_student_results", { p_session_token: token }) || [];
+      if (!rows.length) {
+        list.innerHTML = '<div class="empty-state">No confirmed results are available yet. Your results will appear here after the administrator reviews and confirms them.</div>';
+        E.message(status, "Only confirmed results are displayed.", "info");
+        return;
+      }
+      list.innerHTML = '<div class="table-wrap"><table><thead><tr><th>Examination</th><th>Subject</th><th>Score</th><th>Total</th><th>Percentage</th><th>Confirmed</th></tr></thead><tbody>' +
+        rows.map(row => '<tr><td>' + E.escape(row.title || "Examination") + '</td><td>' + E.escape(row.subject || "—") + '</td><td>' + Number(row.total_score || 0).toFixed(2) + '</td><td>' + Number(row.total_marks || 0).toFixed(2) + '</td><td>' + Number(row.percentage || 0).toFixed(1) + '%</td><td>' + E.escape(E.formatDate(row.confirmed_at)) + '</td></tr>').join("") +
+        '</tbody></table></div>';
+      E.message(status, rows.length + " confirmed result(s) available.", "success");
+    } catch (error) {
+      list.innerHTML = '<div class="empty-state">Results could not be loaded. ' + E.escape(error.message || String(error)) + '</div>';
+      E.message(status, error.message || String(error), "error");
+    }
+  }
+
+  $("showResults")?.addEventListener("click", loadStudentResults);
+  $("closeResults")?.addEventListener("click", () => {
+    $("studentResultsCard").classList.add("hidden");
+    access.classList.remove("hidden");
+  });
+
   form.addEventListener("submit", startExam);
   $("submitBtn").addEventListener("click", submitExam);
   $("reloadExams").addEventListener("click", loadAvailableExams);
