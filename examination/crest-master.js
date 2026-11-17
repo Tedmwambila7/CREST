@@ -152,7 +152,7 @@
               Manage questions
             </a>
 
-            <a href="results.html?exam=${encodeURIComponent(exam.id)}">
+            <a href="marking.html?exam=${encodeURIComponent(exam.id)}">\n              MARK PAPERS\n            </a>\n\n            <a href="results.html?exam=${encodeURIComponent(exam.id)}">
               View results
             </a>
 
