@@ -168,6 +168,10 @@
         <p class="muted">Student number: ${esc(attempt.student_number || "—")} · Submitted: ${esc(E.formatDate(attempt.submitted_at))}</p>
         <p>Automatic marks: <strong>${Number(attempt.automatic_marks || 0).toFixed(2)}</strong> · Manual marks: <strong>${Number(attempt.manual_marks || 0).toFixed(2)}</strong> · Total available: <strong>${Number(attempt.total_marks || 0).toFixed(2)}</strong></p>
       </div>
+      <div class="confirm-result-row" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:14px 0;padding:12px;background:#f2f7f4;border-radius:10px">
+        <button type="button" class="confirm-result-btn">Confirm &amp; publish result</button>
+        <span class="confirm-result-status">Result remains private until you confirm it.</span>
+      </div>
       ${questions.map((q, index) => {
         const max = Number(q.max_marks || 0);
         const answer = optionDescription(q);
@@ -188,6 +192,24 @@
       }).join("")}`;
 
     answerPanel.querySelectorAll("[data-media-question]").forEach(host => loadMedia(host));
+
+    const confirmButton = answerPanel.querySelector(".confirm-result-btn");
+    const confirmStatus = answerPanel.querySelector(".confirm-result-status");
+    confirmButton?.addEventListener("click", async () => {
+      if (!confirm("Confirm this student's final result and make it visible in EXAM RESULTS?")) return;
+      confirmButton.disabled = true;
+      confirmStatus.textContent = "Confirming result...";
+      try {
+        const result = await rpc("crest_online_teacher_confirm_result", { p_attempt_id: attempt.attempt_id });
+        confirmStatus.textContent = "Result confirmed and published. Score: " + Number(result.total_score || 0).toFixed(2) + " / " + Number(result.total_marks || 0).toFixed(2) + ".";
+        confirmButton.textContent = "Result published";
+        say("The result is now confirmed and visible to the student.", "success");
+      } catch (error) {
+        confirmStatus.textContent = error.message || "Could not confirm result.";
+        confirmButton.disabled = false;
+        say(error.message || String(error), "error");
+      }
+    });
 
     answerPanel.querySelectorAll(".answer-card").forEach(card => {
       card.querySelector(".save-mark").addEventListener("click", async () => {
