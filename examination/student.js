@@ -18,6 +18,8 @@
   let timer = null;
   let saving = false;
   let choosingPhoto = false;
+  let mediaUploadsInProgress = 0;
+  let mediaPickerStartedAt = 0;
 
   function message(text, type = "info") {
     E.message(msg, text, type);
@@ -166,22 +168,23 @@
           recorder.onerror = () => { audioStatus.textContent = "Recording failed. Please try again."; };
           recorder.onstop = async () => {
             recordingStream?.getTracks().forEach(track => track.stop());
+            recordingStream = null;
             const blob = new Blob(audioChunks, { type: recorder.mimeType || "audio/webm" });
-            if (blob.size > 15 * 1024 * 1024) {
-              audioStatus.textContent = "Voice note exceeds 15 MB. Record a shorter answer.";
-              return;
-            }
+            if (!blob.size) { audioStatus.textContent = "No audio was captured. Check your microphone and try again."; return; }
+            if (blob.size > 15 * 1024 * 1024) { audioStatus.textContent = "Voice note exceeds 15 MB. Record a shorter answer."; return; }
             audioStatus.textContent = "Uploading voice answer...";
+            mediaUploadsInProgress++;
             try {
               await uploadMedia(article, blob, "audio");
-              audioStatus.textContent = "Voice answer uploaded.";
+              addUploadedPreview(article, blob, "audio", "Voice answer");
+              audioStatus.textContent = "Voice answer uploaded and attached to this question.";
             } catch (error) {
               audioStatus.textContent = error.message || "Voice upload failed.";
-            }
+            } finally { mediaUploadsInProgress = Math.max(0, mediaUploadsInProgress - 1); }
           };
           recorder.start(1000);
           recordBtn.textContent = "Stop and upload";
-          audioStatus.textContent = "Recording…";
+          audioStatus.textContent = "Recording… Speak clearly, then press Stop and upload";
         } catch (error) {
           recordingStream?.getTracks().forEach(track => track.stop());
           recordingStream = null;
@@ -204,23 +207,32 @@
       photoInput.className = "media-file-input";
       const photoStatus = document.createElement("span");
       photoStatus.className = "media-status";
-      photoInput.addEventListener("click", () => { choosingPhoto = true; });
+      photoInput.addEventListener("click", () => { choosingPhoto = true; mediaPickerStartedAt = Date.now(); });
       photoInput.addEventListener("cancel", () => { choosingPhoto = false; });
       photoInput.addEventListener("change", async () => {
         choosingPhoto = false;
         const file = photoInput.files?.[0];
         if (!file) return;
         photoStatus.textContent = "Uploading photo...";
+        mediaUploadsInProgress++;
         try {
           await uploadMedia(article, file, "image");
-          photoStatus.textContent = "Photo uploaded.";
+          addUploadedPreview(article, file, "image", file.name || "Photo answer");
+          photoStatus.textContent = "Photo uploaded and attached to this question.";
         } catch (error) {
           photoStatus.textContent = error.message || "Photo upload failed.";
-        } finally { photoInput.value = ""; }
+        } finally {
+          mediaUploadsInProgress = Math.max(0, mediaUploadsInProgress - 1);
+          photoInput.value = "";
+        }
       });
       photoLabel.append(photoInput);
       photoRow.append(photoLabel, photoStatus);
       mediaBox.append(photoRow);
+      const previewList = document.createElement("div");
+      previewList.className = "answer-media-previews";
+      previewList.setAttribute("aria-live", "polite");
+      mediaBox.append(previewList);
       article.append(mediaBox);
 
       if (Array.isArray(q.options) && q.options.length) {
@@ -261,6 +273,32 @@
 
       host.append(article);
     });
+  }
+
+  function addUploadedPreview(card, file, mediaType, label) {
+    const host = card.querySelector(".answer-media-previews");
+    if (!host) return;
+    const item = document.createElement("div");
+    item.className = "answer-media-preview";
+    const title = document.createElement("strong");
+    title.textContent = label;
+    const detail = document.createElement("span");
+    detail.textContent = mediaType === "image" ? "Photo uploaded" : "Voice recording uploaded";
+    item.append(title, detail);
+    if (mediaType === "image") {
+      const img = document.createElement("img");
+      img.alt = label;
+      const objectUrl = URL.createObjectURL(file);
+      img.src = objectUrl;
+      img.onload = img.onerror = () => URL.revokeObjectURL(objectUrl);
+      item.prepend(img);
+    } else {
+      const audio = document.createElement("audio");
+      audio.controls = true;
+      audio.src = URL.createObjectURL(file);
+      item.append(audio);
+    }
+    host.append(item);
   }
 
   async function uploadMedia(card, file, mediaType) {
@@ -405,13 +443,19 @@
 
   // Strict exam mode: leaving the examination tab submits the attempt.
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden" && attemptId && !choosingPhoto && !examCard.classList.contains("hidden")) {
-      submitExam();
-    }
+    // Mobile camera/gallery pickers hide this tab temporarily; do not auto-submit.
+    if (document.visibilityState === "hidden" && attemptId && !choosingPhoto &&
+        mediaUploadsInProgress === 0 && !document.querySelector("button[data-recording='true']") &&
+        !examCard.classList.contains("hidden")) submitExam();
   });
 
   window.addEventListener("focus", () => {
-    setTimeout(() => { if (choosingPhoto && !document.querySelector(".media-file-input:focus")) choosingPhoto = false; }, 1800);
+    // Some mobile browsers omit the file-input cancel event.
+    if (choosingPhoto && Date.now() - mediaPickerStartedAt > 3000) {
+      setTimeout(() => {
+        if (choosingPhoto && document.visibilityState === "visible") choosingPhoto = false;
+      }, 30000);
+    }
   });
 
   function updateTimer() {
