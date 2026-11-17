@@ -19,6 +19,7 @@
   let saving = false;
   let choosingPhoto = false;
   let mediaUploadsInProgress = 0;
+  let mediaRecordingInProgress = false;
   let mediaPickerStartedAt = 0;
 
   function message(text, type = "info") {
@@ -167,6 +168,10 @@
           recorder.ondataavailable = event => { if (event.data?.size) audioChunks.push(event.data); };
           recorder.onerror = () => { audioStatus.textContent = "Recording failed. Please try again."; };
           recorder.onstop = async () => {
+            mediaRecordingInProgress = false;
+            recordBtn.removeAttribute("data-recording");
+            recordBtn.disabled = false;
+            recordBtn.textContent = "Record voice answer";
             recordingStream?.getTracks().forEach(track => track.stop());
             recordingStream = null;
             const blob = new Blob(audioChunks, { type: recorder.mimeType || "audio/webm" });
@@ -183,9 +188,14 @@
             } finally { mediaUploadsInProgress = Math.max(0, mediaUploadsInProgress - 1); }
           };
           recorder.start(1000);
+          mediaRecordingInProgress = true;
+          recordBtn.dataset.recording = "true";
           recordBtn.textContent = "Stop and upload";
           audioStatus.textContent = "Recording… Speak clearly, then press Stop and upload";
         } catch (error) {
+          mediaRecordingInProgress = false;
+          recordBtn.disabled = false;
+          recordBtn.removeAttribute("data-recording");
           recordingStream?.getTracks().forEach(track => track.stop());
           recordingStream = null;
           audioStatus.textContent = error.name === "NotAllowedError"
@@ -445,7 +455,7 @@
   document.addEventListener("visibilitychange", () => {
     // Mobile camera/gallery pickers hide this tab temporarily; do not auto-submit.
     if (document.visibilityState === "hidden" && attemptId && !choosingPhoto &&
-        mediaUploadsInProgress === 0 && !document.querySelector("button[data-recording='true']") &&
+        mediaUploadsInProgress === 0 && !mediaRecordingInProgress &&
         !examCard.classList.contains("hidden")) submitExam();
   });
 
