@@ -283,6 +283,7 @@
           input.type = "radio";
           input.name = `q_${q.id}`;
           input.value = option.id;
+          input.checked = String(q.saved_answer ?? "") === String(option.id);
 
           const span = document.createElement("span");
           span.textContent = `${option.label}. ${option.text}`;
@@ -306,6 +307,7 @@
         if (field.tagName === "TEXTAREA") field.rows = 5;
 
         field.maxLength = 20000;
+        field.value = q.saved_answer ?? "";
         field.addEventListener("change", () => saveAnswer(article));
         article.append(field);
       }
@@ -436,6 +438,7 @@
       (q.options || []).forEach(option => {
         const label=document.createElement("label"); label.style.cssText="display:flex;gap:5px;align-items:center;border:1px solid #ccd5cf;border-radius:8px;padding:9px;cursor:pointer";
         const radio=document.createElement("input"); radio.type="radio"; radio.name="q_"+q.id; radio.value=option.id;
+        radio.checked = String(q.saved_answer ?? "") === String(option.id);
         radio.addEventListener("change",()=>saveAnswer(card));
         const span=document.createElement("span"); span.textContent=option.label;
         label.append(radio,span); row.append(label);
