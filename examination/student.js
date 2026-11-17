@@ -410,45 +410,101 @@
 
   function renderPdfAnswerSheet(questions, paper) {
     const host = $("questions");
-    host.innerHTML = "";
-    const heading = document.createElement("h3");
-    heading.textContent = "Original question paper — " + (paper.file_name || "");
-    const frame = document.createElement("iframe");
-    frame.title = "Original PDF examination paper";
-    frame.src = paper.url;
-    frame.style.cssText = "width:100%;height:72vh;border:1px solid #cbd5d1;border-radius:10px;background:#fff";
-    host.append(heading, frame);
+    host.replaceChildren();
 
-    const launcher = document.createElement("button");
-    launcher.type = "button";
-    launcher.id = "floatingAnswerSheet";
-    launcher.textContent = "▤ ANSWER SHEET";
-    launcher.style.cssText = "position:fixed;right:20px;bottom:20px;z-index:1000;border:0;border-radius:999px;padding:15px 20px;background:#123d2b;color:#fff;font-weight:800;box-shadow:0 5px 20px #0004;cursor:pointer";
-    const panel = document.createElement("section");
-    panel.id = "pdfAnswerPanel";
-    panel.style.cssText = "display:none;position:fixed;right:16px;bottom:82px;z-index:999;width:min(390px,calc(100vw - 32px));max-height:72vh;overflow:auto;background:#fff;border:2px solid #123d2b;border-radius:14px;padding:14px;box-shadow:0 8px 28px #0005";
-    const title = document.createElement("h3"); title.textContent = "PDF ANSWER SHEET";
-    const note = document.createElement("p"); note.textContent = "Choose A, B, C or D. Your answers save automatically."; note.className = "muted";
-    panel.append(title, note);
-    questions.forEach((q,index) => {
+    const layout = document.createElement("div");
+    layout.className = "pdf-exam-layout";
+    layout.style.cssText = "display:grid;grid-template-columns:minmax(0,1.55fr) minmax(300px,.8fr);gap:16px;align-items:start;width:100%";
+
+    const paperPane = document.createElement("section");
+    paperPane.className = "pdf-paper-pane";
+    paperPane.style.cssText = "min-width:0;background:#f3f6f4;border:1px solid #ccd8d1;border-radius:12px;padding:10px";
+    const paperHeading = document.createElement("h3");
+    paperHeading.textContent = "QUESTION PAPER — " + (paper.file_name || "");
+    paperHeading.style.cssText = "margin:4px 0 10px;font-size:16px";
+    const frame = document.createElement("iframe");
+    frame.title = "Original PDF examination paper with questions and answer choices";
+    frame.src = paper.url + "#toolbar=1&navpanes=0&view=FitH";
+    frame.setAttribute("allow", "fullscreen");
+    frame.style.cssText = "display:block;width:100%;height:78vh;min-height:560px;border:1px solid #cbd5d1;border-radius:8px;background:#fff";
+    const openTab = document.createElement("a");
+    openTab.href = paper.url;
+    openTab.target = "_blank";
+    openTab.rel = "noopener";
+    openTab.textContent = "Open PDF in a separate tab";
+    openTab.style.cssText = "display:inline-block;margin:9px 2px 2px;font-size:13px";
+    paperPane.append(paperHeading, frame, openTab);
+
+    const answerPane = document.createElement("section");
+    answerPane.className = "pdf-answer-pane";
+    answerPane.style.cssText = "min-width:0;position:sticky;top:10px;max-height:84vh;overflow:auto;background:#fff;border:2px solid #123d2b;border-radius:12px;padding:14px;box-shadow:0 3px 14px #0001";
+    const title = document.createElement("h3");
+    title.textContent = "ANSWER SHEET";
+    title.style.cssText = "margin:0 0 6px;color:#123d2b";
+    const note = document.createElement("p");
+    note.textContent = "Read each question in the PDF, then select A, B, C or D here. Your answers save automatically.";
+    note.className = "muted";
+    note.style.cssText = "font-size:13px;margin:0 0 12px";
+    const savedStatus = document.createElement("p");
+    savedStatus.textContent = "Answers are saved as you select them.";
+    savedStatus.style.cssText = "font-size:12px;color:#28734d;margin:0 0 12px";
+    answerPane.append(title, note, savedStatus);
+
+    questions.forEach((q, index) => {
       const card = document.createElement("article");
-      card.className = "question-item"; card.dataset.qid = q.id; card.style.margin = "10px 0";
-      const h = document.createElement("strong"); h.textContent = "Question " + (q.question_order || index+1) + " (" + q.marks + " marks)";
-      const row = document.createElement("div"); row.style.cssText = "display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:10px";
+      card.className = "question-item";
+      card.dataset.qid = q.id;
+      card.style.cssText = "margin:10px 0;padding:10px;border:1px solid #dce5e0;border-radius:9px";
+      const h = document.createElement("strong");
+      h.textContent = "Question " + (q.question_order || index + 1) + " (" + q.marks + " marks)";
+      const row = document.createElement("div");
+      row.style.cssText = "display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:9px";
       (q.options || []).forEach(option => {
-        const label=document.createElement("label"); label.style.cssText="display:flex;gap:5px;align-items:center;border:1px solid #ccd5cf;border-radius:8px;padding:9px;cursor:pointer";
-        const radio=document.createElement("input"); radio.type="radio"; radio.name="q_"+q.id; radio.value=option.id;
+        const label = document.createElement("label");
+        label.style.cssText = "display:flex;gap:5px;align-items:center;justify-content:center;border:1px solid #ccd5cf;border-radius:8px;padding:10px 5px;cursor:pointer;font-weight:700";
+        const radio = document.createElement("input");
+        radio.type = "radio";
+        radio.name = "q_" + q.id;
+        radio.value = option.id;
         radio.checked = String(q.saved_answer ?? "") === String(option.id);
-        radio.addEventListener("change",()=>saveAnswer(card));
-        const span=document.createElement("span"); span.textContent=option.label;
-        label.append(radio,span); row.append(label);
+        radio.addEventListener("change", async () => {
+          label.style.background = "#e8f4ec";
+          savedStatus.textContent = "Saving your answer for Question " + (q.question_order || index + 1) + "…";
+          try {
+            await saveAnswer(card);
+            savedStatus.textContent = "Answer saved ✓";
+          } catch (_) {
+            savedStatus.textContent = "Could not save this answer. Please select it again.";
+          }
+        });
+        const span = document.createElement("span");
+        span.textContent = option.label;
+        label.append(radio, span);
+        row.append(label);
       });
-      card.append(h,row); host.append(card);
+      card.append(h, row);
+      answerPane.append(card);
     });
-    launcher.addEventListener("click",()=>{panel.style.display=panel.style.display==="none"?"block":"none";});
-    const close=document.createElement("button"); close.type="button"; close.textContent="Close answer sheet"; close.className="secondary-btn";
-    close.addEventListener("click",()=>{panel.style.display="none";});
-    panel.append(close); document.body.append(panel,launcher);
+
+    layout.append(paperPane, answerPane);
+    host.append(layout);
+
+    // On narrow screens, stack the PDF above the answer sheet so neither is hidden.
+    const style = document.createElement("style");
+    style.id = "pdfExamResponsiveStyle";
+    style.textContent = `
+      @media(max-width:850px){
+        .pdf-exam-layout{grid-template-columns:minmax(0,1fr)!important}
+        .pdf-answer-pane{position:static!important;max-height:none!important;overflow:visible!important}
+        .pdf-paper-pane iframe{height:68vh!important;min-height:420px!important}
+      }
+      @media(max-width:480px){
+        .pdf-paper-pane{padding:6px!important}
+        .pdf-paper-pane iframe{height:62vh!important;min-height:360px!important}
+        .pdf-answer-pane{padding:10px!important}
+      }`;
+    document.getElementById("pdfExamResponsiveStyle")?.remove();
+    document.head.append(style);
   }
 
   async function startExam(event) {
@@ -631,7 +687,7 @@
           const paper = pdfPapers[Number(button.dataset.paperIndex)];
           const viewer = $("studentPaperViewer");
           // Keep the PDF inside CREST instead of navigating the student away.
-          viewer.src = paper.url + (paper.url.includes("?") ? "&" : "?") + "download=0";
+          viewer.src = paper.url + "#toolbar=1&navpanes=0&view=FitH";
           viewer.style.display = "block";
           viewer.scrollIntoView({ behavior: "smooth", block: "start" });
         });
