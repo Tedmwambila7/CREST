@@ -540,6 +540,48 @@
     access.classList.remove("hidden");
   });
 
+  async function loadStudentPapers() {
+    $("studentPapersCard").classList.remove("hidden");
+    access.classList.add("hidden");
+    $("studentResultsCard").classList.add("hidden");
+    $("studentPapersList").textContent = "Loading PDF papers...";
+    $("studentPaperViewer").style.display = "none";
+    try {
+      if (!token) token = await E.getExamSessionToken();
+      const papers = await examCall("papers");
+      if (!papers?.length) {
+        $("studentPapersList").innerHTML = '<div class="empty-state">No published PDF papers are available at the moment.</div>';
+        E.message($("studentPapersMessage"), "Check again after your teacher publishes a PDF examination.", "info");
+        return;
+      }
+      $("studentPapersList").innerHTML = papers.map((paper, index) =>
+        '<article class="question-item"><h3>' + E.escape(paper.title || "Examination paper") + '</h3><p>' +
+        E.escape(paper.subject || "") + ' · ' + E.escape(paper.file_name || "PDF paper") +
+        '</p><button type="button" class="open-student-paper" data-paper-index="' + index + '">Open paper</button></article>'
+      ).join("");
+      $("studentPapersList").querySelectorAll("[data-paper-index]").forEach(button => {
+        button.addEventListener("click", () => {
+          const paper = papers[Number(button.dataset.paperIndex)];
+          const viewer = $("studentPaperViewer");
+          viewer.src = paper.url;
+          viewer.style.display = "block";
+          viewer.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      });
+      E.message($("studentPapersMessage"), papers.length + " published PDF paper(s) available.", "success");
+    } catch (error) {
+      $("studentPapersList").innerHTML = '<div class="empty-state">' + E.escape(error.message || String(error)) + '</div>';
+      E.message($("studentPapersMessage"), error.message || String(error), "error");
+    }
+  }
+
+  $("showPapers")?.addEventListener("click", loadStudentPapers);
+  $("closePapers")?.addEventListener("click", () => {
+    $("studentPapersCard").classList.add("hidden");
+    $("studentPaperViewer").src = "";
+    access.classList.remove("hidden");
+  });
+
   form.addEventListener("submit", startExam);
   $("submitBtn").addEventListener("click", submitExam);
   $("reloadExams").addEventListener("click", loadAvailableExams);
