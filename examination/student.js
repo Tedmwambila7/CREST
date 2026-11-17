@@ -146,13 +146,20 @@
           recordBtn.textContent = "Record voice answer";
           return;
         }
+        if (!window.isSecureContext) {
+          audioStatus.textContent = "Microphone access requires the secure HTTPS CREST website.";
+          return;
+        }
         if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
-          audioStatus.textContent = "Voice recording is not supported by this browser.";
+          audioStatus.textContent = "This browser cannot record audio. Please use the latest Chrome or Edge.";
           return;
         }
         try {
           recordingStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          const preferred = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"].find(type => MediaRecorder.isTypeSupported(type));
+          const preferred = [
+            "audio/webm;codecs=opus", "audio/webm",
+            "audio/ogg;codecs=opus", "audio/ogg", "audio/mp4"
+          ].find(type => MediaRecorder.isTypeSupported(type));
           recorder = new MediaRecorder(recordingStream, preferred ? { mimeType: preferred } : undefined);
           audioChunks = [];
           recorder.ondataavailable = event => { if (event.data?.size) audioChunks.push(event.data); };
@@ -166,7 +173,7 @@
             }
             audioStatus.textContent = "Uploading voice answer...";
             try {
-              await uploadMedia(card, blob, "audio");
+              await uploadMedia(article, blob, "audio");
               audioStatus.textContent = "Voice answer uploaded.";
             } catch (error) {
               audioStatus.textContent = error.message || "Voice upload failed.";
@@ -186,19 +193,20 @@
       photoLabel.textContent = "Take photo / upload handwritten answer";
       const photoInput = document.createElement("input");
       photoInput.type = "file";
-      photoInput.accept = "image/jpeg,image/png,image/webp";
+      photoInput.accept = "image/*";
       photoInput.setAttribute("capture", "environment");
       photoInput.className = "media-file-input";
       const photoStatus = document.createElement("span");
       photoStatus.className = "media-status";
       photoInput.addEventListener("click", () => { choosingPhoto = true; });
+      photoInput.addEventListener("cancel", () => { choosingPhoto = false; });
       photoInput.addEventListener("change", async () => {
         choosingPhoto = false;
         const file = photoInput.files?.[0];
         if (!file) return;
         photoStatus.textContent = "Uploading photo...";
         try {
-          await uploadMedia(card, file, "image");
+          await uploadMedia(article, file, "image");
           photoStatus.textContent = "Photo uploaded.";
         } catch (error) {
           photoStatus.textContent = error.message || "Photo upload failed.";
@@ -376,7 +384,9 @@
     }
   });
 
-  window.addEventListener("focus", () => { choosingPhoto = false; });
+  window.addEventListener("focus", () => {
+    setTimeout(() => { if (choosingPhoto && !document.querySelector(".media-file-input:focus")) choosingPhoto = false; }, 1800);
+  });
 
   function updateTimer() {
     const remaining = Math.max(0, deadline - Date.now());
