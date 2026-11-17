@@ -93,12 +93,27 @@
 
   E.requireTeacher = async function () {
     const client = E.getClient();
-    const { data: { user }, error } = await client.auth.getUser();
 
-    if (error || !user) {
-      throw new Error("Please sign in using your CREST teacher or administrator account.");
+    // Recover an expired access token before checking the staff identity.
+    let { data: sessionData, error: sessionError } = await client.auth.getSession();
+    if (sessionError) throw sessionError;
+
+    if (!sessionData?.session) {
+      const refreshed = await client.auth.refreshSession();
+      if (refreshed.error) {
+        throw new Error("Your CREST examination login has expired. Please sign out, sign back in with your teacher/administrator account, then reopen Question Management.");
+      }
+      sessionData = { session: refreshed.data.session };
     }
 
+    const { data: userData, error: userError } = await client.auth.getUser(
+      sessionData.session?.access_token
+    );
+    if (userError || !userData?.user) {
+      throw new Error("Your CREST examination login could not be verified. Please sign out and sign back in with your teacher/administrator account.");
+    }
+
+    const user = userData.user;
     const { data: profile, error: profileError } = await client
       .from("profiles")
       .select("id, full_name, email, role")
@@ -109,7 +124,7 @@
 
     const allowedRoles = ["teacher", "admin", "super_admin"];
     if (!profile || !allowedRoles.includes(profile.role)) {
-      throw new Error("This account does not have permission to manage examinations.");
+      throw new Error("You are signed in, but this account is not registered as a CREST teacher or administrator in the examination system. Ask the administrator to link your staff account.");
     }
 
     return { user, profile };
