@@ -53,7 +53,7 @@
           <label for="questionPdf">Choose a PDF question paper</label>
           <input id="questionPdf" type="file" accept="application/pdf,.pdf">
           <p class="field-help">PDF only. Maximum file size: 20 MB.</p>
-          <button type="button" id="uploadExtractPdf">Brand PDF, upload and extract text</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" id="uploadPdfOnly" class="secondary-btn">Upload PDF only (no extraction)</button><button type="button" id="uploadExtractPdf">Brand PDF, upload and extract text</button></div>
           <p id="pdfImportStatus" class="message" role="status" aria-live="polite"></p>
           <a id="openOriginalPdf" class="pdf-original-link" href="#" target="_blank" rel="noopener" hidden>Open uploaded original PDF</a>
         </div>
