@@ -51,7 +51,7 @@
       await E.requireTeacher();
       const data = await E.rpc('crest_teacher_dashboard_exams') || [];
       examSelect.innerHTML = '<option value="">Choose an examination</option>';
-      (data || []).forEach(exam => { const o = document.createElement('option'); o.value = exam.id; o.textContent = `${exam.title} — ${exam.subject || 'No subject'} (${exam.status || 'draft'})`; examSelect.appendChild(o); });
+      (data || []).forEach(exam => { const o = document.createElement('option'); o.value = exam.id; o.dataset.subject = exam.subject || ''; o.textContent = `${exam.title} — ${exam.subject || 'No subject'} (${exam.status || 'draft'})`; examSelect.appendChild(o); });
       const wanted = new URLSearchParams(location.search).get('exam');
       if (wanted && (data || []).some(x => x.id === wanted)) examSelect.value = wanted; else if ((data || []).length === 1) examSelect.value = data[0].id;
       if (examSelect.value) await loadQuestions(); else { questionList.textContent = 'Choose an examination to manage its questions.'; show('Select an examination to begin.', 'info'); }
