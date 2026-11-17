@@ -452,7 +452,7 @@
   }
 
   async function startExam(event) {
-    event.preventDefault();
+    event?.preventDefault?.();
 
     const examId = $("examSelect").value;
     if (!examId) {
@@ -493,8 +493,14 @@
 
       message("");
     } catch (error) {
-      message(error.message || String(error), "error");
       btn.disabled = false;
+      if (activePdfPaper) {
+        $("studentPapersCard").classList.remove("hidden");
+        access.classList.add("hidden");
+        E.message($("studentPapersMessage"), error.message || String(error), "error");
+      } else {
+        message(error.message || String(error), "error");
+      }
     }
   }
 
@@ -573,8 +579,8 @@
       if (!token) token = await E.getExamSessionToken();
       const rows = await E.rpc("crest_online_student_results", { p_session_token: token }) || [];
       if (!rows.length) {
-        list.innerHTML = '<div class="empty-state">No confirmed results are available yet. Your results will appear here after the administrator reviews and confirms them.</div>';
-        E.message(status, "Only confirmed results are displayed.", "info");
+        list.innerHTML = '<div class="empty-state"><strong>No confirmed results yet.</strong><p>Your marks will appear here after your teacher completes marking and the administrator confirms the result. Please check again later.</p></div>';
+        E.message(status, "The results section is working, but there are currently no confirmed results for this student account.", "info");
         return;
       }
       list.innerHTML = '<div class="table-wrap"><table><thead><tr><th>Examination</th><th>Subject</th><th>Score</th><th>Total</th><th>Percentage</th><th>Confirmed</th></tr></thead><tbody>' +
@@ -616,7 +622,10 @@
       $("studentPapersList").querySelectorAll(".open-student-paper").forEach(button => {
         button.addEventListener("click", () => {
           const paper = pdfPapers[Number(button.dataset.paperIndex)];
-          const viewer = $("studentPaperViewer"); viewer.src = paper.url; viewer.style.display = "block";
+          const viewer = $("studentPaperViewer");
+          // Keep the PDF inside CREST instead of navigating the student away.
+          viewer.src = paper.url + (paper.url.includes("?") ? "&" : "?") + "download=0";
+          viewer.style.display = "block";
           viewer.scrollIntoView({ behavior: "smooth", block: "start" });
         });
       });
@@ -630,9 +639,11 @@
           }
           activePdfPaper = paper;
           select.value = paper.examination_id;
-          $("studentPapersCard").classList.add("hidden");
           $("studentPaperViewer").src = "";
-          $("accessForm").requestSubmit();
+          $("studentPaperViewer").style.display = "none";
+          E.message($("studentPapersMessage"), "Starting your examination...", "info");
+          // Call the start routine directly; do not submit a hidden form.
+          startExam({ preventDefault() {} });
         });
       });
       E.message($("studentPapersMessage"), papers.length + " published PDF paper(s) available.", "success");
