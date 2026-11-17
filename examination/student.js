@@ -179,11 +179,17 @@
               audioStatus.textContent = error.message || "Voice upload failed.";
             }
           };
-          recorder.start();
+          recorder.start(1000);
           recordBtn.textContent = "Stop and upload";
           audioStatus.textContent = "Recording…";
         } catch (error) {
-          audioStatus.textContent = error.message || "Microphone permission was not granted.";
+          recordingStream?.getTracks().forEach(track => track.stop());
+          recordingStream = null;
+          audioStatus.textContent = error.name === "NotAllowedError"
+            ? "Microphone permission was blocked. Allow microphone access for tedmwambila7.github.io in your browser settings."
+            : error.name === "NotFoundError"
+            ? "No microphone was found on this device."
+            : (error.message || "Microphone could not start. Check browser permissions and try again.");
         }
       });
       const photoRow = document.createElement("div");
@@ -259,7 +265,27 @@
 
   async function uploadMedia(card, file, mediaType) {
     if (!attemptId) throw new Error("Start the examination before uploading.");
-    if (file.size > 15 * 1024 * 1024) throw new Error("Each attachment must be 15 MB or smaller.");
+    if (mediaType === "image" && window.createImageBitmap) {
+      try {
+        const bitmap = await createImageBitmap(file);
+        const scale = Math.min(1, 2200 / Math.max(bitmap.width, bitmap.height));
+        if (scale < 1 || file.size > 4 * 1024 * 1024) {
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+          canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+          const context = canvas.getContext("2d");
+          context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+          const compressed = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.84));
+          bitmap.close?.();
+          if (compressed) file = new File([compressed], "handwritten-answer.jpg", { type: "image/jpeg" });
+        } else {
+          bitmap.close?.();
+        }
+      } catch (_) {
+        // Keep the original file; the server accepts common mobile image formats.
+      }
+    }
+    if (file.size > 15 * 1024 * 1024) throw new Error("This attachment is still over 15 MB after compression. Please take a lower-resolution photo.");
     const mime = (file.type || (mediaType === "image" ? "image/jpeg" : "audio/webm")).split(";")[0].toLowerCase();
     const prepared = await examCall("prepare_media_upload", {
       p_attempt_id: attemptId,
