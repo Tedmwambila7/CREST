@@ -39,6 +39,20 @@
       <div id="studentResultsMessage" class="message" role="status"></div>
       <div id="studentResultsList">Loading confirmed results...</div>
     </section>
+    <section class="card" id="studentPapersLauncher">
+      <h2>PDF Examination Papers</h2>
+      <button type="button" id="showPapers" class="secondary-btn">▣ OPEN PDF PAPERS</button>
+      <p class="muted">Read the examination paper in PDF format. No text extraction is required.</p>
+    </section>
+    <section class="card hidden" id="studentPapersCard">
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
+        <h2>Available PDF Papers</h2>
+        <button type="button" id="closePapers" class="secondary-btn">Back</button>
+      </div>
+      <div id="studentPapersMessage" class="message" role="status"></div>
+      <div id="studentPapersList">Loading PDF papers...</div>
+      <iframe id="studentPaperViewer" title="Examination PDF paper" style="display:none;width:100%;height:75vh;border:1px solid #ccd5cf;border-radius:10px;margin-top:16px"></iframe>
+    </section>
     <section class="card" id="accessCard">
       <h2>Available examinations</h2><p class="muted">Choose an examination assigned and published by your teacher.</p>
       <div id="message" class="message" role="status" aria-live="polite"></div>
