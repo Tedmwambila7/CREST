@@ -21,7 +21,7 @@
       return `<article class="exam-item">
         <div class="exam-item-heading"><div><h3>${E.escape(exam.title)}</h3><p class="muted">${E.escape(exam.subject || "Subject not specified")}</p></div><span class="status-badge status-${status}">${E.escape(exam.status || "draft")}</span></div>
         <div class="exam-meta-grid"><span><b>Duration</b>${E.escape(exam.duration_minutes ?? 60)} minutes</span><span><b>Total marks</b>${E.escape(exam.total_marks ?? 0)}</span><span><b>Starts</b>${E.escape(E.formatDate(exam.scheduled_at || exam.start_time))}</span><span><b>Ends</b>${E.escape(E.formatDate(exam.ends_at))}</span></div>
-        <div class="exam-actions"><a class="button" href="questions.html?exam=${id}#pdfImportCard">Upload PDF for students</a><a class="button secondary" href="questions.html?exam=${id}">Manage questions / Publish</a><a class="button secondary" href="marking.html?exam=${id}">Mark submissions</a><a class="button secondary" href="results.html?exam=${id}">View results</a><a class="button secondary" href="paper.html?exam=${id}">Generate PDF</a></div>
+        <div class="exam-actions"><a class="button" href="questions.html?exam=${id}#pdfImportCard">Upload PDF for students</a><a class="button secondary" href="questions.html?exam=${id}">Manage questions / Publish</a><a class="button secondary" href="marking.html?exam=${id}">View & mark submissions</a><a class="button secondary" href="results.html?exam=${id}">View results</a><a class="button secondary" href="paper.html?exam=${id}">Generate PDF</a></div>
       </article>`;
     }).join("");
   }
