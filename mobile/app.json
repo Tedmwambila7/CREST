@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "CREST Academy",
+    "slug": "crest-academy",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "android": {
+      "package": "mw.crestacademy.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#071426"
+      }
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "[confirm: add Expo EAS project ID when configuring builds]"
+      }
+    }
+  }
+}
