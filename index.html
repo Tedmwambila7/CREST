@@ -321,6 +321,68 @@
       body.student-view main > div:first-child h1 { font-size:29px!important; }
     }
     @media(prefers-reduced-motion:reduce) { .crest-action-card { transition:none; } .crest-action-card:hover { transform:none; } }
+
+    /* Keep the CREST brand mark and navigation steady while the page scrolls.
+       Use the same sticky header on desktop, tablets and phones. */
+    body.student-view > header {
+      position: -webkit-sticky !important;
+      position: sticky !important;
+      top: 0 !important;
+      z-index: 10020 !important;
+      width: 100%;
+      box-sizing: border-box;
+      background: rgba(4,7,20,.97) !important;
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+      isolation: isolate;
+      transform: translateZ(0);
+      backface-visibility: hidden;
+      will-change: transform;
+      flex-shrink: 0;
+    }
+    body.student-view > header > div:first-child {
+      flex: 0 0 auto;
+      white-space: nowrap;
+      min-height: 38px;
+    }
+    body.student-view > header > div:first-child > span {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      flex: 0 0 38px;
+      line-height: 1;
+    }
+    body.student-view > header nav .nav-link,
+    body.student-view > header nav button {
+      transform: none !important;
+      transition: background-color .18s ease, border-color .18s ease, color .18s ease;
+    }
+    @media (max-width: 900px) {
+      body > header {
+        position: -webkit-sticky !important;
+        position: sticky !important;
+        top: 0 !important;
+        padding: 10px 4% !important;
+        gap: 8px;
+      }
+      body.student-view > header nav {
+        max-height: min(34vh, 190px);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-width: thin;
+      }
+    }
+    @media (max-width: 600px) {
+      body.student-view > header > div:first-child { gap: 8px !important; }
+      body.student-view > header > div:first-child > span { width: 34px; height: 34px; flex-basis: 34px; font-size: 23px !important; }
+      body.student-view > header > div:first-child > div { font-size: 16px !important; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      body.student-view > header { scroll-behavior: auto; }
+      body.student-view > header * { transition-duration: .01ms !important; }
+    }
   </style>
 </head>
 <body class="student-view">
