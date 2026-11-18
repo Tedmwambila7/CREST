@@ -78,3 +78,25 @@ export async function signOutCrest(session: CrestSession) {
   }
   await clearCrestSession();
 }
+
+export async function loginStudent(name: string, phone: string, password: string): Promise<CrestSession> {
+  return signInStudent(name, phone, password);
+}
+export async function loginAdmin(name: string, password: string): Promise<CrestSession> {
+  return signInAdmin(name, password);
+}
+export async function restore(): Promise<CrestSession | null> {
+  const session = await loadCrestSession();
+  if (!session) return null;
+  try {
+    if (await validateCrestSession(session)) return session;
+    await clearCrestSession();
+    return null;
+  } catch {
+    // Preserve a saved session during a temporary network outage.
+    return session;
+  }
+}
+export async function logout(session: CrestSession) {
+  return signOutCrest(session);
+}
