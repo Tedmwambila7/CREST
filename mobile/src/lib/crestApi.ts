@@ -64,7 +64,7 @@ export async function signInAdmin(name: string, password: string): Promise<Admin
   const valid = await crestRpc<boolean>("admin_check", { p_key: adminKey });
   if (!valid) throw new Error("The administrator name or password is incorrect.");
   const session: AdminSession = { role: "admin", name: name.trim(), adminKey };
-  await saveCrestSession(session);
+  // Do not persist the administrator password-derived key on the device.
   return session;
 }
 export async function validateCrestSession(session: CrestSession): Promise<boolean> {
