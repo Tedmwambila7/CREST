@@ -1,24 +1,18 @@
 # CREST Academy mobile app
+The Expo / React Native Android app lives in `mobile/`. The existing website and database are not replaced.
 
-This is the first Expo / React Native Android app scaffold for the existing CREST Academy repository. The current GitHub Pages website remains in place; the mobile app is added separately under `mobile/`.
+## Shared CREST sign-in
+The app uses the same Supabase RPC authentication functions as the website:
+- Students: `student_login` with registered name, phone number and password.
+- Student session validation: `student_me`; sign-out: `student_logout`.
+- Administrator: `admin_check` using the existing normalised name + password key.
+No separate mobile registration is provided. Student accounts continue to be created through the existing CREST administration process.
 
 ## Setup
+1. Copy `.env.example` to `.env`.
+2. Set the existing CREST Supabase project URL and anon/publishable key.
+3. Never put a service-role key in the app.
+4. Run `npm install` and `npx expo start` from this folder.
 
-1. Install Node.js LTS on your development computer.
-2. Copy `.env.example` to `.env`.
-3. Set the Supabase project URL and publishable/anon key for the existing CREST project. Never place a service-role key in a mobile app.
-4. From this folder run `npm install`, then `npx expo start`.
-5. Use Expo Go for an initial development preview, or configure an Android development build for native testing.
-
-## Current first version
-
-- Supabase email/password sign-in with persisted sessions.
-- Home dashboard and navigation placeholders for Library, Assignments and Exams.
-- Account screen and sign-out.
-- Dark CREST visual theme.
-
-## Before production
-
-The library, assignment, examination, messaging and teacher workflows still need to be connected to the existing database schema and verified Row Level Security policies. Confirm the current Supabase Auth method and account roles before enabling sign-up or privileged actions. Do not put service-role keys, LiveKit secrets or other server secrets in this app.
-
-The mobile app has not yet been built or tested on a physical Android device.
+## Current scope
+Shared student/admin sign-in and session storage are wired. Library, assignments, exams, messaging and administration workflows remain placeholders until their existing RPC contracts and policies are confirmed and tested. The current website's visible authentication supports students and administrator; this scaffold does not invent a separate teacher account model. Android build and device testing are still required.
