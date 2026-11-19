@@ -56,6 +56,19 @@
     return data;
   }
 
+  function examScheduleState(exam) {
+    const now = Date.now();
+    const start = exam.start_time || exam.scheduled_at;
+    const end = exam.end_time || exam.ends_at;
+    if (start && new Date(start).getTime() > now) return "upcoming";
+    if (end && new Date(end).getTime() < now) return "closed";
+    return "ongoing";
+  }
+
+  function examScheduleLabel(state) {
+    return state === "upcoming" ? "UPCOMING" : state === "closed" ? "CLOSED" : "ONGOING";
+  }
+
   function safeUrl(value) {
     try {
       const u = new URL(value, location.href);
@@ -89,8 +102,9 @@
       (exams || []).forEach(exam => {
         const option = document.createElement("option");
         option.value = exam.id;
-        option.textContent =
-          `${exam.title} — ${exam.subject || "General"} (${exam.duration_minutes} min)`;
+        const state = examScheduleState(exam);
+        option.textContent = `${exam.title} — ${exam.subject || "General"} (${exam.duration_minutes} min) · ${examScheduleLabel(state)}`;
+        option.disabled = state !== "ongoing";
         select.appendChild(option);
       });
 
@@ -690,7 +704,9 @@
         '<article class="question-item"><h3>' + E.escape(paper.title || "Examination paper") + '</h3><p>' +
         E.escape(paper.subject || "") + ' · ' + E.escape(paper.file_name || "PDF paper") +
         '</p><p class="muted">The paper will open automatically inside the examination page, above the answer sheet.</p>' +
-        '<button type="button" class="start-pdf-answer-sheet" data-paper-index="' + index + '">Start Exam</button></article>'
+        '<p class="exam-schedule-status"><strong>' + examScheduleLabel(examScheduleState(paper)) + '</strong></p>' +
+        '<button type="button" class="start-pdf-answer-sheet" data-paper-index="' + index + '"' +
+        (examScheduleState(paper) !== "ongoing" ? ' disabled aria-disabled="true"' : '') + '>Start Exam</button></article>'
       ).join("");
       $("studentPapersList").querySelectorAll(".start-pdf-answer-sheet").forEach(button => {
         button.addEventListener("click", () => {
