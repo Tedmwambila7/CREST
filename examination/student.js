@@ -73,6 +73,15 @@
       message("Loading available examinations...");
       const exams = await examCall("list");
 
+      // Load published PDF papers alongside the examination list so that
+      // selecting a PDF examination opens its paper automatically.
+      try {
+        const papers = await examCall("papers");
+        pdfPapers = Array.isArray(papers) ? papers : [];
+      } catch (_) {
+        pdfPapers = [];
+      }
+
       const select = $("examSelect");
       select.innerHTML =
         '<option value="">Choose an examination</option>';
@@ -414,7 +423,8 @@
 
     const layout = document.createElement("div");
     layout.className = "pdf-exam-layout";
-    layout.style.cssText = "display:grid;grid-template-columns:minmax(0,1.55fr) minmax(300px,.8fr);gap:16px;align-items:start;width:100%";
+    // Option A: full-width paper first, answer sheet underneath.
+    layout.style.cssText = "display:flex;flex-direction:column;gap:18px;align-items:stretch;width:100%";
 
     const paperPane = document.createElement("section");
     paperPane.className = "pdf-paper-pane";
@@ -425,19 +435,14 @@
     const frame = document.createElement("iframe");
     frame.title = "Original PDF examination paper with questions and answer choices";
     frame.src = paper.url + "#toolbar=1&navpanes=0&view=FitH";
+    frame.loading = "eager";
     frame.setAttribute("allow", "fullscreen");
     frame.style.cssText = "display:block;width:100%;height:78vh;min-height:560px;border:1px solid #cbd5d1;border-radius:8px;background:#fff";
-    const openTab = document.createElement("a");
-    openTab.href = paper.url;
-    openTab.target = "_blank";
-    openTab.rel = "noopener";
-    openTab.textContent = "Open PDF in a separate tab";
-    openTab.style.cssText = "display:inline-block;margin:9px 2px 2px;font-size:13px";
-    paperPane.append(paperHeading, frame, openTab);
+    paperPane.append(paperHeading, frame);
 
     const answerPane = document.createElement("section");
     answerPane.className = "pdf-answer-pane";
-    answerPane.style.cssText = "min-width:0;position:sticky;top:10px;max-height:84vh;overflow:auto;background:#fff;border:2px solid #123d2b;border-radius:12px;padding:14px;box-shadow:0 3px 14px #0001";
+    answerPane.style.cssText = "width:100%;min-width:0;position:static;max-height:none;overflow:visible;background:#fff;border:2px solid #123d2b;border-radius:12px;padding:14px;box-shadow:0 3px 14px #0001";
     const title = document.createElement("h3");
     title.textContent = "ANSWER SHEET";
     title.style.cssText = "margin:0 0 6px;color:#123d2b";
@@ -489,13 +494,15 @@
     layout.append(paperPane, answerPane);
     host.append(layout);
 
-    // On narrow screens, stack the PDF above the answer sheet so neither is hidden.
+    // Keep the paper comfortably readable on phones, tablets and desktops.
     const style = document.createElement("style");
     style.id = "pdfExamResponsiveStyle";
     style.textContent = `
+      .pdf-exam-layout{display:flex!important;flex-direction:column!important;width:100%!important}
+      .pdf-paper-pane,.pdf-answer-pane{width:100%!important;min-width:0!important}
+      .pdf-answer-pane{position:static!important;max-height:none!important;overflow:visible!important}
+      .pdf-paper-pane iframe{width:100%!important;height:78vh!important;min-height:520px!important}
       @media(max-width:850px){
-        .pdf-exam-layout{grid-template-columns:minmax(0,1fr)!important}
-        .pdf-answer-pane{position:static!important;max-height:none!important;overflow:visible!important}
         .pdf-paper-pane iframe{height:68vh!important;min-height:420px!important}
       }
       @media(max-width:480px){
@@ -514,6 +521,12 @@
     if (!examId) {
       message("Select an examination first.", "error");
       return;
+    }
+
+    // If this examination has a published PDF, attach it automatically.
+    const matchingPdf = pdfPapers.find(paper => String(paper.examination_id) === String(examId));
+    if (!activePdfPaper || String(activePdfPaper.examination_id) !== String(examId)) {
+      activePdfPaper = matchingPdf || null;
     }
 
     const btn = $("startExamBtn");
