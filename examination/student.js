@@ -549,7 +549,7 @@
         p_attempt_id: attemptId
       });
 
-      const pdfPaper = activePdfPaper && activePdfPaper.examination_id === examId ? activePdfPaper : null;
+      const pdfPaper = activePdfPaper && String(activePdfPaper.examination_id) === String(examId) ? activePdfPaper : null;
       if (pdfPaper) renderPdfAnswerSheet(questions || [], pdfPaper);
       else renderQuestions(questions || []);
 
@@ -563,13 +563,9 @@
       message("");
     } catch (error) {
       btn.disabled = false;
-      if (activePdfPaper) {
-        $("studentPapersCard").classList.remove("hidden");
-        access.classList.add("hidden");
-        E.message($("studentPapersMessage"), error.message || String(error), "error");
-      } else {
-        message(error.message || String(error), "error");
-      }
+      // Keep the student on the examination selection page if anything fails.
+      // Never send them to Downloads or a separate PDF page.
+      message(error.message || String(error), "error");
     }
   }
 
@@ -693,18 +689,9 @@
       $("studentPapersList").innerHTML = papers.map((paper, index) =>
         '<article class="question-item"><h3>' + E.escape(paper.title || "Examination paper") + '</h3><p>' +
         E.escape(paper.subject || "") + ' · ' + E.escape(paper.file_name || "PDF paper") +
-        '</p><button type="button" class="open-student-paper" data-paper-index="' + index + '">Open paper</button> <button type="button" class="start-pdf-answer-sheet" data-paper-index="' + index + '">Start Exam</button></article>'
+        '</p><p class="muted">The paper will open automatically inside the examination page, above the answer sheet.</p>' +
+        '<button type="button" class="start-pdf-answer-sheet" data-paper-index="' + index + '">Start Exam</button></article>'
       ).join("");
-      $("studentPapersList").querySelectorAll(".open-student-paper").forEach(button => {
-        button.addEventListener("click", () => {
-          const paper = pdfPapers[Number(button.dataset.paperIndex)];
-          const viewer = $("studentPaperViewer");
-          // Keep the PDF inside CREST instead of navigating the student away.
-          viewer.src = paper.url + "#toolbar=1&navpanes=0&view=FitH";
-          viewer.style.display = "block";
-          viewer.scrollIntoView({ behavior: "smooth", block: "start" });
-        });
-      });
       $("studentPapersList").querySelectorAll(".start-pdf-answer-sheet").forEach(button => {
         button.addEventListener("click", () => {
           const paper = pdfPapers[Number(button.dataset.paperIndex)];
