@@ -693,7 +693,7 @@
       $("studentPapersList").innerHTML = papers.map((paper, index) =>
         '<article class="question-item"><h3>' + E.escape(paper.title || "Examination paper") + '</h3><p>' +
         E.escape(paper.subject || "") + ' · ' + E.escape(paper.file_name || "PDF paper") +
-        '</p><button type="button" class="open-student-paper" data-paper-index="' + index + '">Open paper</button> <button type="button" class="start-pdf-answer-sheet" data-paper-index="' + index + '">Start exam &amp; answer</button></article>'
+        '</p><button type="button" class="open-student-paper" data-paper-index="' + index + '">Open paper</button> <button type="button" class="start-pdf-answer-sheet" data-paper-index="' + index + '">Start Exam</button></article>'
       ).join("");
       $("studentPapersList").querySelectorAll(".open-student-paper").forEach(button => {
         button.addEventListener("click", () => {
