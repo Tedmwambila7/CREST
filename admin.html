@@ -2731,5 +2731,85 @@ window.crestVideoAdminList=async function(){
 document.addEventListener('DOMContentLoaded',()=>{if(sessionStorage.getItem('crestAdminOK')==='1'){window.crestVideoAdminList();window.crestVideoAdminComments();}});
 })();
 </script>
+
+<section class="panel-card" id="crestResourcesAdmin" style="margin:0 0 40px">
+  <h3><i class="fa-solid fa-book-open"></i> Upload Slides / Notes</h3>
+  <p style="color:var(--text-muted);font-size:13px">Upload PDFs, PowerPoint slides, Word documents or other study notes for Junior or Senior students.</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+    <div class="form-group"><label>Section</label><select id="crLevel"><option value="Junior">Junior</option><option value="Senior">Senior</option></select></div>
+    <div class="form-group"><label>Subject</label><input id="crSubject" placeholder="Biology"></div>
+    <div class="form-group"><label>Topic</label><input id="crTopic" placeholder="Respiration"></div>
+    <div class="form-group"><label>Resource title</label><input id="crTitle" placeholder="Notes on Respiration"></div>
+  </div>
+  <div style="margin:12px 0">
+    <label for="crFile" style="display:block;margin-bottom:7px;font-weight:700">Choose file</label>
+    <input id="crFile" type="file" accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.txt,.rtf,.jpg,.jpeg,.png,.webp" style="width:100%;padding:10px;border:1px solid var(--border-color);border-radius:10px">
+    <small id="crFileName" style="display:block;color:var(--text-muted);margin-top:6px">PDF, PowerPoint, Word, text or image files · Maximum 100 MB.</small>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0">
+    <button class="add-part-btn" type="button" onclick="crestResourceSave(false)">Save as draft</button>
+    <button class="add-part-btn" type="button" onclick="crestResourceSave(true)">Upload & publish</button>
+    <button class="add-part-btn" type="button" onclick="crestResourceAdminLoad()">Refresh resources</button>
+  </div>
+  <div id="crStatus" style="font-size:12px;color:var(--text-muted)"></div>
+  <div id="crAdminList" style="display:grid;gap:10px;margin-top:16px"></div>
+</section>
+<script>
+(function(){
+  const $=id=>document.getElementById(id);
+  const cloud='https://api.cloudinary.com/v1_1/dfrnpdnld/auto/upload', preset='taydayo';
+  let resources=[];
+  function status(s,ok){$('crStatus').textContent=s;$('crStatus').style.color=ok?'#10b981':'#fb7185';}
+  $('crFile').addEventListener('change',()=>{
+    const f=$('crFile').files[0];
+    $('crFileName').textContent=f?('Selected: '+f.name+' ('+(f.size/1048576).toFixed(2)+' MB)'):'PDF, PowerPoint, Word, text or image files · Maximum 100 MB.';
+    if(f&&!$('crTitle').value.trim()) $('crTitle').value=f.name.replace(/\.[^/.]+$/,'');
+  });
+  window.crestResourceSave=async function(published){
+    const file=$('crFile').files[0], level=$('crLevel').value, subject=$('crSubject').value.trim(), topic=$('crTopic').value.trim(), title=$('crTitle').value.trim();
+    if(!file)return status('Choose a file first.',false);
+    if(file.size>100*1024*1024)return status('The selected file is larger than 100 MB.',false);
+    if(!subject||!title)return status('Enter the subject and resource title.',false);
+    status('Uploading '+file.name+' to secure file storage… keep this page open.',true);
+    try{
+      const fd=new FormData();fd.append('file',file);fd.append('upload_preset',preset);
+      const response=await fetch(cloud,{method:'POST',body:fd});
+      const data=await response.json();
+      if(!response.ok||!data.secure_url)throw new Error(data.error?.message||'File upload failed');
+      const resource={id:'resource-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7),title,subject,topic,level,file_url:data.secure_url,file_name:file.name,file_type:file.type||'application/octet-stream',file_size:file.size,published};
+      await rpc('crest_resource_admin_save',{p_key:adminKey(),p_resource:resource});
+      $('crFile').value='';$('crFileName').textContent='PDF, PowerPoint, Word, text or image files · Maximum 100 MB.';
+      status(published?'Resource uploaded and published for '+level+' students.':'Resource uploaded as a draft.',true);
+      await window.crestResourceAdminLoad();
+    }catch(e){status('Could not save resource: '+e.message,false);}
+  };
+  window.crestResourcePublish=async function(id,published){
+    const row=resources.find(x=>String(x.id)===String(id));if(!row)return;
+    try{
+      await rpc('crest_resource_admin_save',{p_key:adminKey(),p_resource:Object.assign({},row,{published})});
+      status(published?'Resource published.':'Resource unpublished.',true);
+      await window.crestResourceAdminLoad();
+    }catch(e){status('Could not update resource: '+e.message,false);}
+  };
+  window.crestResourceDelete=async function(id){
+    if(!confirm('Permanently delete this resource? Students will no longer be able to access it.'))return;
+    try{await rpc('crest_resource_admin_delete',{p_key:adminKey(),p_id:id});status('Resource deleted.',true);await window.crestResourceAdminLoad();}
+    catch(e){status('Could not delete resource: '+e.message,false);}
+  };
+  window.crestResourceAdminLoad=async function(){
+    const box=$('crAdminList');if(!box)return;
+    try{
+      resources=await rpc('crest_resource_admin_list',{p_key:adminKey()})||[];
+      if(!resources.length){box.innerHTML='<p style="color:var(--text-muted)">No slides or notes uploaded yet.</p>';return;}
+      box.innerHTML=resources.map(x=>'<article style="padding:12px;border:1px solid rgba(148,163,184,.25);border-radius:12px"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><strong>'+esc(x.title)+'</strong><b style="font-size:11px;color:'+(x.published?'#10b981':'#f59e0b')+'">'+(x.published?'PUBLISHED':'DRAFT')+'</b></div><p style="color:var(--text-muted);font-size:12px;margin:6px 0">'+esc(x.level)+' · '+esc(x.subject)+(x.topic?' · '+esc(x.topic):'')+' · '+esc(x.file_name)+'</p><div style="display:flex;gap:8px;flex-wrap:wrap"><a href="'+esc(safeUrl(x.file_url))+'" target="_blank" rel="noopener" class="mini-btn" style="text-decoration:none">Open file</a><button type="button" class="add-part-btn" data-cr-publish="'+esc(x.id)+'">'+(x.published?'Unpublish':'Publish')+'</button><button type="button" class="mini-btn" data-cr-delete="'+esc(x.id)+'">Delete</button></div></article>').join('');
+      box.querySelectorAll('[data-cr-publish]').forEach(btn=>btn.addEventListener('click',()=>window.crestResourcePublish(btn.getAttribute('data-cr-publish'),!resources.find(x=>String(x.id)===btn.getAttribute('data-cr-publish'))?.published)));
+      box.querySelectorAll('[data-cr-delete]').forEach(btn=>btn.addEventListener('click',()=>window.crestResourceDelete(btn.getAttribute('data-cr-delete'))));
+    }catch(e){box.textContent='Could not load resources: '+e.message;}
+  };
+  document.addEventListener('DOMContentLoaded',()=>{if(sessionStorage.getItem('crestAdminOK')==='1')window.crestResourceAdminLoad();});
+  if(document.readyState!=='loading'&&sessionStorage.getItem('crestAdminOK')==='1')window.crestResourceAdminLoad();
+})();
+</script>
+
 </body>
 </html>
