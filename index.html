@@ -535,6 +535,7 @@
     </div>
     <nav style="display: flex; gap: 30px; align-items: center;">
       <a class="nav-link active" onclick="showMainView('home')">Home Directory</a>
+      <a class="nav-link" id="voiceLessonsNav" onclick="showMainView('voiceLessons')"><i class="fas fa-headphones" style="color:#38bdf8"></i> My Voice Lessons <span id="voiceLessonCountBadge" style="background:#ef4444;color:white;border-radius:99px;padding:2px 7px;font-size:11px">0</span></a>
       <a class="nav-link" onclick="showMainView('portal')"><i class="fas fa-file-signature" style="color:#a855f7;"></i> Assignments & Grades <span id="assignmentCountBadge" style="display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;margin-left:5px;border-radius:999px;background:#a855f7;color:#fff;font-size:11px;font-weight:800;line-height:1;vertical-align:middle;">0</span></a>
       <a href="about.html" class="nav-link">About Portal</a>
       <a href="contact.html" class="nav-link">Help Desk</a>
@@ -744,6 +745,12 @@
 
     </div>
 
+
+<section id="voiceLessonsView" style="display:none;background:linear-gradient(145deg,#0b112c,#070b1e);border:1px solid rgba(56,189,248,.2);border-radius:22px;padding:26px;margin-top:24px">
+<button onclick="showMainView('home')" style="padding:9px 14px;border-radius:10px;background:rgba(56,189,248,.1);color:#7dd3fc;border:1px solid rgba(56,189,248,.3)">Back to Home</button>
+<h2 style="color:white;margin:20px 0 6px"><i class="fas fa-headphones"></i> My Voice Lessons</h2><p style="color:#94a3b8;font-size:13px">Listen here and replay lessons whenever you need them.</p>
+<div id="voiceLessonsUnreadText" style="color:#fca5a5;font-weight:700;margin:12px 0"></div><div id="voiceLessonsList" style="display:grid;gap:14px">Loading lessons…</div>
+</section>
   </main>
 
   <script>
@@ -794,17 +801,10 @@
 
     /* VIEW SWITCHING LOGIC */
     function showMainView(viewName) {
-      const homeView = document.getElementById('homeMainView');
-      const portalView = document.getElementById('studentPortalView');
-      
-      if(viewName === 'portal') {
-        homeView.style.display = 'none';
-        portalView.style.display = 'block';
-        loadWork();
-      } else {
-        homeView.style.display = 'block';
-        portalView.style.display = 'none';
-      }
+      const homeView=document.getElementById('homeMainView'), portalView=document.getElementById('studentPortalView'), voiceView=document.getElementById('voiceLessonsView');
+      homeView.style.display=viewName==='home'?'block':'none'; portalView.style.display=viewName==='portal'?'block':'none';
+      if(voiceView)voiceView.style.display=viewName==='voiceLessons'?'block':'none';
+      if(viewName==='portal')loadWork(); if(viewName==='voiceLessons'&&window.crestVoiceStudentLoad)window.crestVoiceStudentLoad();
     }
 
     /* STUDENT PORTAL TAB SWITCHER */
