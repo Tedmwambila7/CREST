@@ -537,6 +537,7 @@
       <a class="nav-link active" onclick="showMainView('home')">Home Directory</a>
       <a class="nav-link" id="voiceLessonsNav" onclick="showMainView('voiceLessons')"><i class="fas fa-headphones" style="color:#38bdf8"></i> My Voice Lessons <span id="voiceLessonCountBadge" style="background:#ef4444;color:white;border-radius:99px;padding:2px 7px;font-size:11px">0</span></a>
       <a class="nav-link" id="videoLessonsNav" onclick="showMainView('videoLessons')"><i class="fas fa-circle-play" style="color:#a78bfa"></i> My Video Lessons <span id="videoLessonCountBadge" style="background:#ef4444;color:white;border-radius:99px;padding:2px 7px;font-size:11px;display:none">0</span></a>
+      <a class="nav-link" id="resourcesNav" onclick="showMainView('resources')"><i class="fas fa-book-open" style="color:#34d399"></i> My Slides / Notes</a>
       <a class="nav-link" onclick="showMainView('portal')"><i class="fas fa-file-signature" style="color:#a855f7;"></i> Assignments & Grades <span id="assignmentCountBadge" style="display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;margin-left:5px;border-radius:999px;background:#a855f7;color:#fff;font-size:11px;font-weight:800;line-height:1;vertical-align:middle;">0</span></a>
       <a href="about.html" class="nav-link">About Portal</a>
       <a href="contact.html" class="nav-link">Help Desk</a>
@@ -756,6 +757,17 @@
 <button onclick="showMainView('home')" style="padding:9px 14px;border-radius:10px;background:rgba(167,139,250,.1);color:#c4b5fd;border:1px solid rgba(167,139,250,.3)">Back to Home</button>
 <h2 style="color:white;margin:20px 0 6px"><i class="fas fa-circle-play"></i> My Video Lessons</h2><p style="color:#94a3b8;font-size:13px">Watch your lessons here and replay them whenever you need.</p>
 <div id="videoLessonsUnreadText" style="color:#fca5a5;font-weight:700;margin:12px 0"></div><div id="videoLessonsList" style="display:grid;gap:14px">Loading lessons…</div></section>
+<section id="resourcesView" style="display:none;background:linear-gradient(145deg,#0b112c,#070b1e);border:1px solid rgba(52,211,153,.25);border-radius:22px;padding:26px;margin-top:24px">
+  <button onclick="showMainView('home')" style="padding:9px 14px;border-radius:10px;background:rgba(52,211,153,.1);color:#6ee7b7;border:1px solid rgba(52,211,153,.3)">Back to Home</button>
+  <h2 style="color:white;margin:20px 0 6px"><i class="fas fa-book-open" style="color:#34d399"></i> My Slides / Notes</h2>
+  <p style="color:#94a3b8;font-size:13px">Choose your section to view the learning materials uploaded by your teachers.</p>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;margin:18px 0">
+    <button type="button" onclick="crestChooseResourceLevel('Junior')" style="padding:13px 22px;border-radius:12px;border:1px solid rgba(56,189,248,.35);background:rgba(56,189,248,.12);color:#7dd3fc;font-weight:800;cursor:pointer"><i class="fas fa-graduation-cap"></i> Junior</button>
+    <button type="button" onclick="crestChooseResourceLevel('Senior')" style="padding:13px 22px;border-radius:12px;border:1px solid rgba(167,139,250,.35);background:rgba(167,139,250,.12);color:#c4b5fd;font-weight:800;cursor:pointer"><i class="fas fa-user-graduate"></i> Senior</button>
+  </div>
+  <div id="studentResourceHeading" style="color:#7dd3fc;font-weight:800;margin:12px 0"></div>
+  <div id="studentResourceList" style="display:grid;gap:12px"><p style="color:#94a3b8">Choose Junior or Senior to view notes and slides.</p></div>
+</section>
   </main>
 
   <script>
@@ -2511,5 +2523,58 @@ async function loadComments(id){const host=el('vdComments-'+id);if(!host)return;
 document.addEventListener('DOMContentLoaded',()=>{const b=el('videoLessonCountBadge');if(b)b.style.display='none';if(studentSession)setTimeout(window.crestVideoStudentLoad,1100);});
 })();
 </script>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  let selectedLevel = '';
+  const originalShowMainView = window.showMainView;
+  window.showMainView = function(viewName){
+    if (typeof originalShowMainView === 'function') originalShowMainView(viewName);
+    const panel = $('resourcesView');
+    if (panel) panel.style.display = viewName === 'resources' ? 'block' : 'none';
+    if (viewName === 'resources' && !selectedLevel) {
+      const list = $('studentResourceList');
+      if (list) list.innerHTML = '<p style="color:#94a3b8">Choose Junior or Senior to view notes and slides.</p>';
+    }
+  };
+  window.crestChooseResourceLevel = async function(level){
+    if (!['Junior','Senior'].includes(level)) return;
+    selectedLevel = level;
+    const heading = $('studentResourceHeading'), list = $('studentResourceList');
+    if (heading) heading.textContent = level + ' learning materials';
+    if (!studentSession || !studentSession.token) {
+      if (list) list.innerHTML = '<p style="color:#fca5a5">Please sign in again to access learning materials.</p>';
+      return;
+    }
+    if (list) list.innerHTML = '<p style="color:#94a3b8">Loading ' + level + ' materials…</p>';
+    try {
+      const rows = await rpc('crest_resource_student_list',{p_token:studentSession.token,p_level:level}) || [];
+      if (!rows.length) {
+        list.innerHTML = '<p style="color:#94a3b8">No ' + level + ' notes or slides have been published yet.</p>';
+        return;
+      }
+      list.innerHTML = rows.map(x => {
+        const url = safeUrl(x.file_url);
+        const kind = (x.file_type || '').includes('pdf') ? 'fa-file-pdf' :
+          (x.file_type || '').includes('presentation') || /\.pptx?$/i.test(x.file_name || '') ? 'fa-file-powerpoint' :
+          (x.file_type || '').includes('word') || /\.docx?$/i.test(x.file_name || '') ? 'fa-file-word' :
+          (x.file_type || '').startsWith('image/') ? 'fa-file-image' : 'fa-file-lines';
+        return '<article style="padding:16px;border:1px solid rgba(52,211,153,.2);border-radius:14px;background:rgba(15,23,42,.5)">' +
+          '<div style="display:flex;gap:12px;align-items:flex-start"><i class="fas ' + kind + '" style="font-size:24px;color:#6ee7b7;margin-top:3px"></i>' +
+          '<div style="min-width:0;flex:1"><small style="color:#7dd3fc;font-weight:800">' + esc(x.subject) + '</small>' +
+          '<h3 style="color:#fff;margin:4px 0">' + esc(x.title) + '</h3>' +
+          (x.topic ? '<p style="color:#94a3b8;font-size:12px;margin:0 0 8px">' + esc(x.topic) + '</p>' : '') +
+          '<small style="color:#64748b">' + esc(x.file_name || 'Learning resource') + '</small></div></div>' +
+          (url ? '<a href="' + esc(url) + '" target="_blank" rel="noopener" style="display:inline-flex;margin-top:13px;padding:9px 14px;border-radius:9px;background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3);color:#6ee7b7;text-decoration:none;font-size:12px;font-weight:800"><i class="fas fa-arrow-up-right-from-square" style="margin-right:7px"></i> Open resource</a>' : '<small style="color:#fca5a5">This file link is unavailable.</small>') +
+          '</article>';
+      }).join('');
+    } catch (e) {
+      list.innerHTML = '<p style="color:#fca5a5">Could not load materials: ' + esc(e.message) + '</p>';
+    }
+  };
+})();
+</script>
+
 </body>
 </html>
