@@ -2621,10 +2621,24 @@ try{
 const rows=await rpc('crest_voice_admin_list',{p_key:adminKey()})||[];
 if(!rows.length){box.innerHTML='<p>No voice lessons yet.</p>';return;}
 box.innerHTML=rows.map(x=>{
-const call='crestVoicePublish('+JSON.stringify(x.id)+','+JSON.stringify(x.subject)+','+JSON.stringify(x.topic)+','+Number(x.lesson_number)+','+JSON.stringify(x.audio_url)+','+(!x.published)+')';
-const delCall='crestVoiceDelete('+JSON.stringify(x.id)+')';
-return '<article style="padding:12px;border:1px solid rgba(148,163,184,.25);border-radius:12px"><strong>'+esc(x.subject)+' — '+esc(x.topic)+' (Lesson '+Number(x.lesson_number)+')</strong><p>'+(x.published?'PUBLISHED':'DRAFT')+'</p><audio controls preload="none" src="'+safeUrl(x.audio_url)+'" style="width:100%;max-width:500px"></audio><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="add-part-btn" onclick="'+call+'">'+(x.published?'Unpublish':'Publish')+'</button><button type="button" class="mini-btn" style="padding:10px 14px;font-size:12px" onclick="'+delCall+'"><i class="fa-solid fa-trash"></i> Delete lesson</button></div></article>';
+return '<article style="padding:12px;border:1px solid rgba(148,163,184,.25);border-radius:12px"><strong>'+esc(x.subject)+' — '+esc(x.topic)+' (Lesson '+Number(x.lesson_number)+')</strong><p>'+(x.published?'PUBLISHED':'DRAFT')+'</p><audio controls preload="none" src="'+safeUrl(x.audio_url)+'" style="width:100%;max-width:500px"></audio><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" class="add-part-btn" data-vl-publish="'+esc(x.id)+'">'+(x.published?'Unpublish':'Publish')+'</button><button type="button" class="mini-btn" style="padding:10px 14px;font-size:12px" data-vl-delete="'+esc(x.id)+'"><i class="fa-solid fa-trash"></i> Delete lesson</button></div></article>';
 }).join('');
+box.querySelectorAll('[data-vl-publish]').forEach(button=>{
+button.addEventListener('click',async()=>{
+const row=rows.find(x=>String(x.id)===button.getAttribute('data-vl-publish'));
+if(!row)return;
+button.disabled=true;
+await window.crestVoicePublish(row.id,row.subject,row.topic,row.lesson_number,row.audio_url,!row.published);
+button.disabled=false;
+});
+});
+box.querySelectorAll('[data-vl-delete]').forEach(button=>{
+button.addEventListener('click',async()=>{
+button.disabled=true;
+await window.crestVoiceDelete(button.getAttribute('data-vl-delete'));
+button.disabled=false;
+});
+});
 }catch(e){box.textContent='Could not load lessons: '+e.message;}
 };
 document.addEventListener('DOMContentLoaded',()=>{if(sessionStorage.getItem('crestAdminOK')==='1')window.crestVoiceAdminList();});
