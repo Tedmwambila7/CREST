@@ -2458,5 +2458,27 @@
 
   <script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js"></script>
   <script src="crest-calls.js"></script>
+
+<script>
+(function(){
+let lessons=[],busy=false;const el=id=>document.getElementById(id);
+function badge(){const n=lessons.filter(x=>!x.played).length,b=el('voiceLessonCountBadge'),t=el('voiceLessonsUnreadText');if(b){b.textContent=n;b.style.display=n?'inline-flex':'none';}if(t)t.textContent=n?n+' lesson(s) not played yet':'You are all caught up.';}
+window.crestVoiceStudentLoad=async function(){
+ if(!studentSession||!studentSession.token||busy)return;busy=true;
+ try{lessons=await rpc('crest_voice_student_list',{p_token:studentSession.token})||[];badge();draw();}
+ catch(e){const b=el('voiceLessonsList');if(b)b.textContent='Could not load lessons: '+e.message;}
+ finally{busy=false;}
+};
+function draw(){
+ const box=el('voiceLessonsList');if(!box)return;
+ if(!lessons.length){box.innerHTML='<p style="color:#94a3b8">No voice lessons have been published yet.</p>';return;}
+ box.innerHTML=lessons.map(x=>'<article style="padding:16px;border:1px solid '+(x.played?'rgba(148,163,184,.2)':'rgba(56,189,248,.4)')+';border-radius:15px;background:rgba(15,23,42,.4)"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><small style="color:#7dd3fc;font-weight:800">'+esc(x.subject)+'</small><h3 style="color:white;margin:4px 0">'+esc(x.topic)+'</h3><small style="color:#94a3b8">Lesson '+Number(x.lesson_number)+'</small></div><b style="font-size:11px;color:'+(x.played?'#94a3b8':'#fca5a5')+'">'+(x.played?'PLAYED':'NEW LESSON')+'</b></div><audio controls preload="none" data-lesson="'+esc(x.id)+'" src="'+safeUrl(x.audio_url)+'" style="width:100%;margin-top:12px"></audio></article>').join('');
+ box.querySelectorAll('audio[data-lesson]').forEach(a=>{let marked=false;const mark=async()=>{if(marked)return;marked=true;try{await rpc('crest_voice_student_mark_played',{p_token:studentSession.token,p_lesson_id:a.dataset.lesson});const x=lessons.find(v=>v.id===a.dataset.lesson);if(x)x.played=true;badge();draw();}catch(e){marked=false;console.warn(e);}};a.addEventListener('ended',mark,{once:true});a.addEventListener('timeupdate',()=>{if(a.duration>0&&a.currentTime/a.duration>=.85)mark();});});
+}
+document.addEventListener('DOMContentLoaded',()=>{const b=el('voiceLessonCountBadge');if(b)b.style.display='none';if(studentSession)setTimeout(window.crestVoiceStudentLoad,800);});
+setInterval(()=>{if(studentSession&&!busy)window.crestVoiceStudentLoad();},90000);
+})();
+</script>
+
 </body>
 </html>
