@@ -2648,5 +2648,87 @@ document.addEventListener('DOMContentLoaded',()=>{if(sessionStorage.getItem('cre
 
   <script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js"></script>
   <script src="crest-calls.js"></script>
+<section class="panel-card" id="crestVideoLessonAdmin" style="margin:0 0 40px">
+<h3><i class="fa-solid fa-video"></i> Record a Video Lesson</h3>
+<p style="color:var(--text-muted);font-size:13px">Record with your camera or upload a video file, then publish it for students.</p>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+<div class="form-group"><label>Subject</label><input id="vdSubject" placeholder="Biology"></div>
+<div class="form-group"><label>Topic</label><input id="vdTopic" placeholder="Respiration"></div>
+<div class="form-group"><label>Lesson number</label><input id="vdNumber" type="number" min="1" value="1"></div></div>
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0">
+<button class="add-part-btn" type="button" id="vdRecordBtn"><i class="fa-solid fa-video"></i> Start camera recording</button>
+<button class="add-part-btn" type="button" id="vdStopBtn" disabled><i class="fa-solid fa-stop"></i> Stop recording</button>
+<button class="add-part-btn" type="button" id="vdChooseBtn">Choose video file</button>
+<input id="vdVideoFile" type="file" accept="video/*" style="display:none"></div>
+<div id="vdStatus" style="font-size:12px;color:var(--text-muted)">No video selected. Camera recording requires permission and HTTPS. Maximum upload size: 200 MB.</div>
+<video id="vdPreview" controls playsinline style="display:none;width:100%;max-width:720px;max-height:420px;background:#000;border-radius:12px;margin:10px 0"></video>
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0">
+<button class="add-part-btn" type="button" id="vdPublishBtn">Upload & publish</button>
+<button class="add-part-btn" type="button" id="vdDraftBtn">Upload as draft</button>
+<button class="add-part-btn" type="button" id="vdRefreshBtn">Refresh video lessons</button></div>
+<div id="vdAdminStatus" style="font-size:12px"></div><div id="vdAdminList" style="display:grid;gap:10px;margin-top:16px"></div>
+<div style="margin-top:24px;padding-top:18px;border-top:1px solid rgba(148,163,184,.2)"><h4 style="color:#c4b5fd;margin-bottom:10px"><i class="fa-solid fa-comments"></i> Student Video Comments & Questions</h4><div id="vdAdminComments" style="display:grid;gap:9px">Loading comments…</div></div>
+</section>
+<script>
+(function(){
+let blob=null,fileName='',rec=null,stream=null,chunks=[];
+const $=id=>document.getElementById(id),preset='taydayo',cloud='https://api.cloudinary.com/v1_1/dfrnpdnld/video/upload',MAX=200*1024*1024;
+function status(s,ok){$('vdAdminStatus').textContent=s;$('vdAdminStatus').style.color=ok?'#10b981':'#fb7185';}
+function stopStream(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}}
+function clearPreview(){const p=$('vdPreview');if(p.src&&p.src.startsWith('blob:'))URL.revokeObjectURL(p.src);p.pause();p.removeAttribute('src');p.srcObject=null;p.style.display='none';}
+function chooseFile(f){if(!f)return;if(!f.type.startsWith('video/')){status('Choose a video file.',false);return;}if(f.size>MAX){status('Video is larger than 200 MB. Choose a smaller or compressed file.',false);return;}blob=f;fileName=f.name;clearPreview();$('vdPreview').src=URL.createObjectURL(f);$('vdPreview').style.display='block';$('vdStatus').textContent='Selected '+f.name+' ('+(f.size/1048576).toFixed(1)+' MB).';}
+$('vdChooseBtn').addEventListener('click',()=>$('vdVideoFile').click());
+$('vdVideoFile').addEventListener('change',e=>chooseFile(e.target.files&&e.target.files[0]));
+$('vdRecordBtn').addEventListener('click',async()=>{
+ if(rec&&rec.state!=='inactive')return;
+ try{
+ if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder)throw new Error('Video recording is not supported in this browser.');
+ stream=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:1280},height:{ideal:720},facingMode:'user'},audio:true});
+ const preview=$('vdPreview');preview.srcObject=stream;preview.muted=true;preview.style.display='block';await preview.play().catch(()=>{});
+ const types=['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm','video/mp4'],mt=types.find(t=>MediaRecorder.isTypeSupported(t))||'';
+ rec=mt?new MediaRecorder(stream,{mimeType:mt}):new MediaRecorder(stream);chunks=[];blob=null;
+ rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};
+ rec.onstop=()=>{blob=new Blob(chunks,{type:rec.mimeType||'video/webm'});fileName='crest-video-'+Date.now()+'.'+(blob.type.includes('mp4')?'mp4':'webm');stopStream();preview.srcObject=null;clearPreview();preview.src=URL.createObjectURL(blob);preview.style.display='block';$('vdStatus').textContent='Recording ready ('+(blob.size/1048576).toFixed(1)+' MB). Preview it, then upload.';$('vdRecordBtn').disabled=false;$('vdStopBtn').disabled=true;if(blob.size>MAX)status('Recording exceeds 200 MB. Record a shorter lesson or compress the video.',false);};
+ rec.start(1000);$('vdRecordBtn').disabled=true;$('vdStopBtn').disabled=false;$('vdStatus').textContent='Recording video… Keep this page open.';
+ }catch(e){stopStream();status('Camera/microphone unavailable: '+e.message,false);}
+});
+$('vdStopBtn').addEventListener('click',()=>{if(rec&&rec.state!=='inactive')rec.stop();});
+async function save(published){
+ const subject=$('vdSubject').value.trim(),topic=$('vdTopic').value.trim(),num=Number($('vdNumber').value);
+ if(!subject||!topic||!Number.isInteger(num)||num<1){status('Enter subject, topic and lesson number.',false);return;}
+ if(!blob){status('Record a video or choose a video file first.',false);return;}
+ if(blob.size>MAX){status('Video must be 200 MB or smaller.',false);return;}
+ status('Uploading video… This may take a while. Keep this page open.',true);
+ try{
+ const fd=new FormData();fd.append('file',blob,fileName||'crest-video.webm');fd.append('upload_preset',preset);
+ const r=await fetch(cloud,{method:'POST',body:fd}),d=await r.json();if(!r.ok||!d.secure_url)throw new Error(d.error?.message||'Video upload failed');
+ const lesson={id:'video-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7),subject,topic,lesson_number:num,video_url:d.secure_url,video_public_id:d.public_id||null,published};
+ await rpc('crest_video_admin_save',{p_key:adminKey(),p_lesson:lesson});
+ blob=null;fileName='';$('vdVideoFile').value='';clearPreview();$('vdStatus').textContent='No video selected.';
+ status(published?'Video lesson uploaded and published.':'Video lesson uploaded as a draft.',true);await window.crestVideoAdminList();
+ }catch(e){status('Could not save video: '+e.message,false);}
+}
+$('vdPublishBtn').addEventListener('click',()=>save(true));$('vdDraftBtn').addEventListener('click',()=>save(false));$('vdRefreshBtn').addEventListener('click',()=>window.crestVideoAdminList());
+window.crestVideoPublish=async function(id,subject,topic,num,url,publicId,published){
+ try{await rpc('crest_video_admin_save',{p_key:adminKey(),p_lesson:{id,subject,topic,lesson_number:num,video_url:url,video_public_id:publicId||null,published}});await window.crestVideoAdminList();status(published?'Video lesson published.':'Video lesson unpublished.',true);}
+ catch(e){status(e.message,false);}
+};
+window.crestVideoDelete=async function(id){
+ if(!confirm('Permanently delete this video lesson from CREST Academy? Students will no longer see it.'))return;
+ try{await rpc('crest_video_admin_delete',{p_key:adminKey(),p_id:id});status('Video lesson deleted from CREST Academy.',true);await window.crestVideoAdminList();}
+ catch(e){status('Could not delete video lesson: '+e.message,false);}
+};
+window.crestVideoAdminComments=async function(){const host=$('vdAdminComments');if(!host)return;try{const rows=await rpc('crest_video_admin_comments',{p_key:adminKey()})||[];host.innerHTML=rows.length?rows.map(x=>'<article style="padding:11px;border:1px solid rgba(148,163,184,.2);border-radius:10px"><strong>'+esc(x.subject)+' — '+esc(x.topic)+' (Lesson '+Number(x.lesson_number)+')</strong><p style="margin:6px 0;color:#e2e8f0;white-space:pre-wrap">'+esc(x.comment)+'</p><small style="color:#94a3b8">Student: '+esc(x.student_phone)+' · '+new Date(x.created_at).toLocaleString()+'</small></article>').join(''):'<p style="color:var(--text-muted)">No video comments yet.</p>';}catch(e){host.textContent='Could not load comments: '+e.message;}};
+window.crestVideoAdminList=async function(){
+ const box=$('vdAdminList');try{const rows=await rpc('crest_video_admin_list',{p_key:adminKey()})||[];
+ if(!rows.length){box.innerHTML='<p>No video lessons yet.</p>';return;}
+ box.innerHTML=rows.map(x=>'<article style="padding:12px;border:1px solid rgba(148,163,184,.25);border-radius:12px"><strong>'+esc(x.subject)+' — '+esc(x.topic)+' (Lesson '+Number(x.lesson_number)+')</strong><p>'+(x.published?'PUBLISHED':'DRAFT')+'</p><video controls playsinline preload="metadata" src="'+safeUrl(x.video_url)+'" style="width:100%;max-width:560px;max-height:300px;background:#000;border-radius:9px"></video><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" class="add-part-btn" data-vd-publish="'+esc(x.id)+'">'+(x.published?'Unpublish':'Publish')+'</button><button type="button" class="mini-btn" style="padding:10px 14px;font-size:12px" data-vd-delete="'+esc(x.id)+'"><i class="fa-solid fa-trash"></i> Delete lesson</button></div></article>').join('');
+ box.querySelectorAll('[data-vd-publish]').forEach(btn=>btn.addEventListener('click',async()=>{const x=rows.find(v=>String(v.id)===btn.getAttribute('data-vd-publish'));if(!x)return;btn.disabled=true;await window.crestVideoPublish(x.id,x.subject,x.topic,x.lesson_number,x.video_url,x.video_public_id,!x.published);btn.disabled=false;}));
+ box.querySelectorAll('[data-vd-delete]').forEach(btn=>btn.addEventListener('click',async()=>{btn.disabled=true;await window.crestVideoDelete(btn.getAttribute('data-vd-delete'));btn.disabled=false;}));
+ }catch(e){box.textContent='Could not load video lessons: '+e.message;}
+};
+document.addEventListener('DOMContentLoaded',()=>{if(sessionStorage.getItem('crestAdminOK')==='1'){window.crestVideoAdminList();window.crestVideoAdminComments();}});
+})();
+</script>
 </body>
 </html>
