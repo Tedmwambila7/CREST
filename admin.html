@@ -2525,30 +2525,52 @@
 </div>
 <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0">
 <button class="add-part-btn" type="button" id="vlRecordBtn" onclick="crestVoiceRecord()"><i class="fa-solid fa-microphone"></i> Start recording</button>
+<button class="add-part-btn" type="button" id="vlPauseBtn" onclick="crestVoicePauseResume()" disabled><i class="fa-solid fa-pause"></i> Pause</button>
 <button class="add-part-btn" type="button" onclick="document.getElementById('vlAudioFile').click()">Choose audio file</button>
 <input id="vlAudioFile" type="file" accept="audio/*,.m4a,.mp3,.wav,.ogg,.webm" style="display:none" onchange="crestVoiceFile(this)">
 </div>
-<div id="vlStatus" style="font-size:12px;color:var(--text-muted)">No audio selected.</div>
+<div id="vlStatus" style="font-size:12px;color:var(--text-muted)">No audio selected. Maximum recording time: 60 minutes.</div>
 <audio id="vlPreview" controls style="display:none;width:100%;max-width:600px;margin:10px 0"></audio>
 <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0">
 <button class="add-part-btn" onclick="crestVoiceSave(true)">Publish lesson</button>
 <button class="add-part-btn" onclick="crestVoiceSave(false)">Save draft</button>
-<button class="add-part-btn" onclick="crestVoiceAdminList()">Refresh lessons</button>
-</div>
-<div id="vlAdminStatus" style="font-size:12px"></div><div id="vlAdminList" style="display:grid;gap:10px;margin-top:16px"></div>
-</section>
-<script>
-(function(){
-let blob=null,fileName='',rec=null,stream=null,chunks=[];
+<button class="add-part-btn" onclick="crestVoiceAdminL(function(){
+let blob=null,fileName='',rec=null,stream=null,chunks=[],recordTimer=null,startedAt=0,elapsedBeforePause=0,autoSaving=false;
+const MAX_MS=60*60*1000;
 const $=id=>document.getElementById(id);
 const cloud='https://api.cloudinary.com/v1_1/dfrnpdnld/auto/upload',preset='taydayo';
 function msg(s,ok){$('vlAdminStatus').textContent=s;$('vlAdminStatus').style.color=ok?'#10b981':'#fb7185';}
-window.crestVoiceFile=function(input){const f=input.files&&input.files[0];if(!f)return;if(!f.type.startsWith('audio/')){msg('Choose an audio file.',false);return;}blob=f;fileName=f.name;$('vlStatus').textContent='Selected '+f.name+' ('+(f.size/1048576).toFixed(2)+' MB)';$('vlPreview').src=URL.createObjectURL(f);$('vlPreview').style.display='block';};
+function elapsed(){return elapsedBeforePause+(rec&&rec.state==='recording'?Date.now()-startedAt:0);}
+function clock(ms){const n=Math.floor(ms/1000);return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');}
+function updateTimer(){const ms=elapsed();$('vlStatus').textContent=(rec&&rec.state==='paused'?'Paused · ':'Recording… ')+clock(ms)+' / 60:00';if(ms>=MAX_MS&&rec&&rec.state!=='inactive'){clearInterval(recordTimer);recordTimer=null;msg('60-minute limit reached. Finishing and saving this lesson as a draft…',true);rec.stop();}}
+function clearRecordingTimer(){if(recordTimer){clearInterval(recordTimer);recordTimer=null;}}
+function stopStream(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}}
+window.crestVoiceFile=function(input){const f=input.files&&input.files[0];if(!f)return;if(!f.type.startsWith('audio/')){msg('Choose an audio file.',false);return;}blob=f;fileName=f.name;$('vlPreview').src=URL.createObjectURL(f);$('vlPreview').style.display='block';$('vlStatus').textContent='Selected '+f.name+' ('+(f.size/1048576).toFixed(2)+' MB).';};
 window.crestVoiceRecord=async function(){
-const b=$('vlRecordBtn');if(rec&&rec.state==='recording'){rec.stop();b.innerHTML='Start recording';return;}
-try{stream=await navigator.mediaDevices.getUserMedia({audio:true});chunks=[];const mt=['audio/webm;codecs=opus','audio/ogg;codecs=opus','audio/mp4'].find(t=>MediaRecorder.isTypeSupported(t))||'';rec=mt?new MediaRecorder(stream,{mimeType:mt}):new MediaRecorder(stream);
-rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};rec.onstop=()=>{blob=new Blob(chunks,{type:rec.mimeType||'audio/webm'});fileName='voice-lesson-'+Date.now()+'.webm';$('vlPreview').src=URL.createObjectURL(blob);$('vlPreview').style.display='block';$('vlStatus').textContent='Recording ready. Preview, then publish.';stream.getTracks().forEach(t=>t.stop());stream=null;b.innerHTML='Start recording';};rec.start();b.innerHTML='Stop recording';$('vlStatus').textContent='Recording…';}
-catch(e){msg('Microphone unavailable: '+e.message,false);}
+const b=$('vlRecordBtn');
+if(rec&&rec.state!=='inactive'){rec.stop();return;}
+try{
+if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder)throw new Error('Audio recording is not supported in this browser. Open the site over HTTPS.');
+stream=await navigator.mediaDevices.getUserMedia({audio:true});chunks=[];blob=null;elapsedBeforePause=0;
+const mt=['audio/webm;codecs=opus','audio/ogg;codecs=opus','audio/mp4'].find(t=>MediaRecorder.isTypeSupported(t))||'';
+rec=mt?new MediaRecorder(stream,{mimeType:mt}):new MediaRecorder(stream);
+rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};
+rec.onstop=async()=>{
+clearRecordingTimer();const finished=rec;blob=new Blob(chunks,{type:finished.mimeType||'audio/webm'});fileName='voice-lesson-'+Date.now()+'.'+(blob.type.includes('mp4')?'m4a':blob.type.includes('ogg')?'ogg':'webm');
+stopStream();b.innerHTML='<i class="fa-solid fa-microphone"></i> Start recording';$('vlPauseBtn').disabled=true;$('vlPauseBtn').innerHTML='<i class="fa-solid fa-pause"></i> Pause';
+$('vlPreview').src=URL.createObjectURL(blob);$('vlPreview').style.display='block';
+$('vlStatus').textContent='Recording ready ('+clock(elapsedBeforePause)+'). Preview available.';
+if($('vlSubject').value.trim()&&$('vlTopic').value.trim()&&Number.isInteger(Number($('vlNumber').value))&&Number($('vlNumber').value)>0){msg('Recording finished. Automatically saving a draft…',true);if(!autoSaving){autoSaving=true;try{await window.crestVoiceSave(false);}finally{autoSaving=false;}}}
+else msg('Recording ready. Enter the subject, topic and lesson number, then save the draft.',false);
+};
+rec.start(1000);startedAt=Date.now();b.innerHTML='<i class="fa-solid fa-stop"></i> Stop & save';$('vlPauseBtn').disabled=false;
+$('vlStatus').textContent='Recording… 00:00 / 60:00';recordTimer=setInterval(updateTimer,250);
+}catch(e){stopStream();clearRecordingTimer();msg('Microphone unavailable: '+e.message,false);}
+};
+window.crestVoicePauseResume=function(){
+if(!rec)return;const p=$('vlPauseBtn');
+if(rec.state==='recording'){elapsedBeforePause+=Date.now()-startedAt;rec.pause();clearRecordingTimer();p.innerHTML='<i class="fa-solid fa-play"></i> Resume';$('vlStatus').textContent='Paused · '+clock(elapsedBeforePause)+' / 60:00';}
+else if(rec.state==='paused'){startedAt=Date.now();rec.resume();p.innerHTML='<i class="fa-solid fa-pause"></i> Pause';recordTimer=setInterval(updateTimer,250);}
 };
 window.crestVoiceSave=async function(published){
 const subject=$('vlSubject').value.trim(),topic=$('vlTopic').value.trim(),num=Number($('vlNumber').value);
@@ -2556,12 +2578,13 @@ if(!subject||!topic||!Number.isInteger(num)||num<1){msg('Enter subject, topic an
 msg('Uploading audio… keep this page open.',true);
 try{const fd=new FormData();fd.append('file',blob,fileName||'voice-lesson.webm');fd.append('upload_preset',preset);const r=await fetch(cloud,{method:'POST',body:fd}),d=await r.json();if(!r.ok||!d.secure_url)throw new Error(d.error?.message||'Upload failed');
 const lesson={id:'voice-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7),subject,topic,lesson_number:num,audio_url:d.secure_url,audio_public_id:d.public_id||null,published};
-await rpc('crest_voice_admin_save',{p_key:adminKey(),p_lesson:lesson});blob=null;fileName='';$('vlAudioFile').value='';$('vlPreview').removeAttribute('src');$('vlPreview').style.display='none';$('vlStatus').textContent='No audio selected.';msg(published?'Lesson published to students.':'Draft saved.',true);await window.crestVoiceAdminList();
+await rpc('crest_voice_admin_save',{p_key:adminKey(),p_lesson:lesson});blob=null;fileName='';$('vlAudioFile').value='';$('vlPreview').removeAttribute('src');$('vlPreview').style.display='none';$('vlStatus').textContent='No audio selected.';msg(published?'Lesson published to students.':'Draft automatically saved. You can publish it from the lesson list.',true);await window.crestVoiceAdminList();
 }catch(e){msg('Could not save: '+e.message,false);}
 };
 window.crestVoicePublish=async function(id,subject,topic,num,url,published){try{await rpc('crest_voice_admin_save',{p_key:adminKey(),p_lesson:{id,subject,topic,lesson_number:num,audio_url:url,published}});await window.crestVoiceAdminList();msg(published?'Lesson published.':'Lesson unpublished.',true);}catch(e){msg(e.message,false);}};
 window.crestVoiceAdminList=async function(){const box=$('vlAdminList');try{const rows=await rpc('crest_voice_admin_list',{p_key:adminKey()})||[];if(!rows.length){box.innerHTML='<p>No voice lessons yet.</p>';return;}box.innerHTML=rows.map(x=>{const call='crestVoicePublish('+JSON.stringify(x.id)+','+JSON.stringify(x.subject)+','+JSON.stringify(x.topic)+','+Number(x.lesson_number)+','+JSON.stringify(x.audio_url)+','+(!x.published)+')';return '<article style="padding:12px;border:1px solid rgba(148,163,184,.25);border-radius:12px"><strong>'+esc(x.subject)+' — '+esc(x.topic)+' (Lesson '+Number(x.lesson_number)+')</strong><p>'+(x.published?'PUBLISHED':'DRAFT')+'</p><audio controls preload="none" src="'+safeUrl(x.audio_url)+'" style="width:100%;max-width:500px"></audio><p><button class="add-part-btn" onclick="'+call+'">'+(x.published?'Unpublish':'Publish')+'</button></p></article>';}).join('');}catch(e){box.textContent='Could not load lessons: '+e.message;}};
 document.addEventListener('DOMContentLoaded',()=>{if(sessionStorage.getItem('crestAdminOK')==='1')window.crestVoiceAdminList();});
+})();
 })();
 </script>
 
