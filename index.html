@@ -536,6 +536,7 @@
     <nav style="display: flex; gap: 30px; align-items: center;">
       <a class="nav-link active" onclick="showMainView('home')">Home Directory</a>
       <a class="nav-link" id="voiceLessonsNav" onclick="showMainView('voiceLessons')"><i class="fas fa-headphones" style="color:#38bdf8"></i> My Voice Lessons <span id="voiceLessonCountBadge" style="background:#ef4444;color:white;border-radius:99px;padding:2px 7px;font-size:11px">0</span></a>
+      <a class="nav-link" id="videoLessonsNav" onclick="showMainView('videoLessons')"><i class="fas fa-circle-play" style="color:#a78bfa"></i> My Video Lessons <span id="videoLessonCountBadge" style="background:#ef4444;color:white;border-radius:99px;padding:2px 7px;font-size:11px;display:none">0</span></a>
       <a class="nav-link" onclick="showMainView('portal')"><i class="fas fa-file-signature" style="color:#a855f7;"></i> Assignments & Grades <span id="assignmentCountBadge" style="display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;margin-left:5px;border-radius:999px;background:#a855f7;color:#fff;font-size:11px;font-weight:800;line-height:1;vertical-align:middle;">0</span></a>
       <a href="about.html" class="nav-link">About Portal</a>
       <a href="contact.html" class="nav-link">Help Desk</a>
@@ -751,6 +752,10 @@
 <h2 style="color:white;margin:20px 0 6px"><i class="fas fa-headphones"></i> My Voice Lessons</h2><p style="color:#94a3b8;font-size:13px">Listen here and replay lessons whenever you need them.</p>
 <div id="voiceLessonsUnreadText" style="color:#fca5a5;font-weight:700;margin:12px 0"></div><div id="voiceLessonsList" style="display:grid;gap:14px">Loading lessons…</div>
 </section>
+<section id="videoLessonsView" style="display:none;background:linear-gradient(145deg,#0b112c,#070b1e);border:1px solid rgba(167,139,250,.25);border-radius:22px;padding:26px;margin-top:24px">
+<button onclick="showMainView('home')" style="padding:9px 14px;border-radius:10px;background:rgba(167,139,250,.1);color:#c4b5fd;border:1px solid rgba(167,139,250,.3)">Back to Home</button>
+<h2 style="color:white;margin:20px 0 6px"><i class="fas fa-circle-play"></i> My Video Lessons</h2><p style="color:#94a3b8;font-size:13px">Watch your lessons here and replay them whenever you need.</p>
+<div id="videoLessonsUnreadText" style="color:#fca5a5;font-weight:700;margin:12px 0"></div><div id="videoLessonsList" style="display:grid;gap:14px">Loading lessons…</div></section>
   </main>
 
   <script>
@@ -801,10 +806,10 @@
 
     /* VIEW SWITCHING LOGIC */
     function showMainView(viewName) {
-      const homeView=document.getElementById('homeMainView'), portalView=document.getElementById('studentPortalView'), voiceView=document.getElementById('voiceLessonsView');
+      const homeView=document.getElementById('homeMainView'), portalView=document.getElementById('studentPortalView'), voiceView=document.getElementById('voiceLessonsView'), videoView=document.getElementById('videoLessonsView');
       homeView.style.display=viewName==='home'?'block':'none'; portalView.style.display=viewName==='portal'?'block':'none';
-      if(voiceView)voiceView.style.display=viewName==='voiceLessons'?'block':'none';
-      if(viewName==='portal')loadWork(); if(viewName==='voiceLessons'&&window.crestVoiceStudentLoad)window.crestVoiceStudentLoad();
+      if(voiceView)voiceView.style.display=viewName==='voiceLessons'?'block':'none'; if(videoView)videoView.style.display=viewName==='videoLessons'?'block':'none';
+      if(viewName==='portal')loadWork(); if(viewName==='voiceLessons'&&window.crestVoiceStudentLoad)window.crestVoiceStudentLoad(); if(viewName==='videoLessons'&&window.crestVideoStudentLoad)window.crestVideoStudentLoad();
     }
 
     /* STUDENT PORTAL TAB SWITCHER */
@@ -2484,5 +2489,27 @@ setInterval(()=>{if(studentSession&&!busy)window.crestVoiceStudentLoad();},90000
 })();
 </script>
 
+<script>
+(function(){
+let lessons=[],busy=false;const el=id=>document.getElementById(id);
+function badge(){const n=lessons.filter(x=>!x.played).length,b=el('videoLessonCountBadge'),t=el('videoLessonsUnreadText');if(b){b.textContent=n;b.style.display=n?'inline-flex':'none';}if(t)t.textContent=n?n+' video lesson(s) not watched yet':'You are all caught up.';}
+window.crestVideoStudentLoad=async function(){
+ if(!studentSession||!studentSession.token||busy)return;busy=true;
+ try{lessons=await rpc('crest_video_student_list',{p_token:studentSession.token})||[];badge();draw();}
+ catch(e){const b=el('videoLessonsList');if(b)b.textContent='Could not load video lessons: '+e.message;}
+ finally{busy=false;}
+};
+function draw(){
+ const box=el('videoLessonsList');if(!box)return;
+ if(!lessons.length){box.innerHTML='<p style="color:#94a3b8">No video lessons have been published yet.</p>';return;}
+ box.innerHTML=lessons.map(x=>'<article style="padding:16px;border:1px solid '+(x.played?'rgba(148,163,184,.2)':'rgba(167,139,250,.45)')+';border-radius:15px;background:rgba(15,23,42,.4)"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><small style="color:#c4b5fd;font-weight:800">'+esc(x.subject)+'</small><h3 style="color:white;margin:4px 0">'+esc(x.topic)+'</h3><small style="color:#94a3b8">Lesson '+Number(x.lesson_number)+'</small></div><b style="font-size:11px;color:'+(x.played?'#94a3b8':'#fca5a5')+'">'+(x.played?'WATCHED':'NEW VIDEO')+'</b></div><video controls playsinline preload="metadata" data-video-lesson="'+esc(x.id)+'" src="'+safeUrl(x.video_url)+'" style="width:100%;max-height:520px;background:#000;border-radius:12px;margin-top:12px"></video><div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(148,163,184,.18)"><h4 style="color:#c4b5fd;margin:0 0 8px;font-size:14px"><i class="fas fa-comments"></i> Comments & Questions</h4><div id="vdComments-'+esc(x.id)+'" style="display:grid;gap:8px;margin-bottom:10px;color:#94a3b8;font-size:12px">Loading your comments…</div><textarea id="vdCommentInput-'+esc(x.id)+'" maxlength="2000" placeholder="Share feedback or ask a question about this video lesson…" style="width:100%;min-height:76px;resize:vertical;padding:12px;border-radius:10px;background:#0b1228;border:1px solid rgba(148,163,184,.25);color:#fff;font:inherit;font-size:13px;box-sizing:border-box"></textarea><div style="display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap"><button type="button" data-vd-comment-send="'+esc(x.id)+'" style="padding:9px 15px;border:0;border-radius:9px;background:#7c3aed;color:#fff;font-weight:700;cursor:pointer">Send comment</button><small id="vdCommentStatus-'+esc(x.id)+'" style="color:#94a3b8"></small></div></div></article>').join('');
+ box.querySelectorAll('video[data-video-lesson]').forEach(v=>{let marked=false;const mark=async()=>{if(marked)return;marked=true;try{await rpc('crest_video_student_mark_played',{p_token:studentSession.token,p_lesson_id:v.dataset.videoLesson});const x=lessons.find(z=>z.id===v.dataset.videoLesson);if(x)x.played=true;badge();const tag=v.closest('article').querySelector('b');if(tag){tag.textContent='WATCHED';tag.style.color='#94a3b8';}}catch(e){marked=false;console.warn(e);}};v.addEventListener('ended',mark,{once:true});v.addEventListener('timeupdate',()=>{if(v.duration>0&&v.currentTime/v.duration>=.85)mark();});});
+ box.querySelectorAll('[data-vd-comment-send]').forEach(btn=>btn.addEventListener('click',async()=>{const id=btn.getAttribute('data-vd-comment-send'),input=el('vdCommentInput-'+id),status=el('vdCommentStatus-'+id),comment=input.value.trim();if(!comment){status.textContent='Write a comment first.';return;}btn.disabled=true;status.textContent='Sending…';try{await rpc('crest_video_student_comment',{p_token:studentSession.token,p_lesson_id:id,p_comment:comment});input.value='';status.textContent='Comment sent. Thank you!';await loadComments(id);}catch(e){status.textContent='Could not send: '+e.message;}finally{btn.disabled=false;}}));
+ lessons.forEach(x=>loadComments(x.id));
+}
+async function loadComments(id){const host=el('vdComments-'+id);if(!host)return;try{const rows=await rpc('crest_video_student_comments',{p_token:studentSession.token,p_lesson_id:id})||[];host.innerHTML=rows.length?rows.map(r=>'<div style="padding:9px 11px;border-radius:9px;background:rgba(148,163,184,.08);color:#e2e8f0;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere">'+esc(r.comment)+'<small style="display:block;color:#64748b;margin-top:5px">'+new Date(r.created_at).toLocaleString()+'</small></div>').join(''):'<small style="color:#64748b">No comments yet. Be the first to share your thoughts.</small>';}catch(e){host.textContent='Could not load comments: '+e.message;}}
+document.addEventListener('DOMContentLoaded',()=>{const b=el('videoLessonCountBadge');if(b)b.style.display='none';if(studentSession)setTimeout(window.crestVideoStudentLoad,1100);});
+})();
+</script>
 </body>
 </html>
