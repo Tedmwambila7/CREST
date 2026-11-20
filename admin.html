@@ -2536,7 +2536,7 @@
 <button class="add-part-btn" onclick="crestVoiceSave(false)">Save draft</button>
 <button class="add-part-btn" onclick="crestVoiceAdminList()">Refresh lessons</button>
 </div>
-<div id="vlAdminStatus" style="font-size:12px"></div><div id="vlAdminList" style="display:grid;gap:10px;margin-top:16px"></div>
+<div id="vlAdminStatus" style="font-size:12px"></div><div id="vlAdminList" style="display:grid;gap:10px;margin-top:16px"></div><div style="margin-top:24px;padding-top:18px;border-top:1px solid rgba(148,163,184,.2)"><h4 style="color:#7dd3fc;margin-bottom:10px"><i class="fa-solid fa-comments"></i> Student Comments & Questions</h4><div id="vlAdminComments" style="display:grid;gap:9px">Loading comments…</div></div>
 </section>
 <script>
 (function(){
@@ -2615,6 +2615,7 @@ msg('Lesson deleted from CREST Academy.',true);
 await window.crestVoiceAdminList();
 }catch(e){msg('Could not delete lesson: '+e.message,false);}
 };
+window.crestVoiceAdminComments=async function(){const host=$('vlAdminComments');if(!host)return;try{const rows=await rpc('crest_voice_admin_comments',{p_key:adminKey()})||[];host.innerHTML=rows.length?rows.map(x=>'<article style="padding:11px;border:1px solid rgba(148,163,184,.2);border-radius:10px"><strong>'+esc(x.subject)+' — '+esc(x.topic)+' (Lesson '+Number(x.lesson_number)+')</strong><p style="margin:6px 0;color:#e2e8f0;white-space:pre-wrap">'+esc(x.comment)+'</p><small style="color:#94a3b8">Student: '+esc(x.student_phone)+' · '+new Date(x.created_at).toLocaleString()+'</small></article>').join(''):'<p style="color:var(--text-muted)">No student comments yet.</p>';}catch(e){host.textContent='Could not load comments: '+e.message;}};
 window.crestVoiceAdminList=async function(){
 const box=$('vlAdminList');
 try{
@@ -2641,7 +2642,7 @@ button.disabled=false;
 });
 }catch(e){box.textContent='Could not load lessons: '+e.message;}
 };
-document.addEventListener('DOMContentLoaded',()=>{if(sessionStorage.getItem('crestAdminOK')==='1')window.crestVoiceAdminList();});
+document.addEventListener('DOMContentLoaded',()=>{if(sessionStorage.getItem('crestAdminOK')==='1'){window.crestVoiceAdminList();window.crestVoiceAdminComments();}});
 })();
 </script>
 
