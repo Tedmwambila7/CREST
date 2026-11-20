@@ -2607,6 +2607,14 @@ window.crestVoicePublish=async function(id,subject,topic,num,url,published){
 try{await rpc('crest_voice_admin_save',{p_key:adminKey(),p_lesson:{id,subject,topic,lesson_number:num,audio_url:url,published}});await window.crestVoiceAdminList();msg(published?'Lesson published.':'Lesson unpublished.',true);}
 catch(e){msg(e.message,false);}
 };
+window.crestVoiceDelete=async function(id){
+if(!confirm('Permanently delete this voice lesson from CREST Academy? Students will no longer see it. This cannot be undone.'))return;
+try{
+await rpc('crest_voice_admin_delete',{p_key:adminKey(),p_id:id});
+msg('Lesson deleted from CREST Academy.',true);
+await window.crestVoiceAdminList();
+}catch(e){msg('Could not delete lesson: '+e.message,false);}
+};
 window.crestVoiceAdminList=async function(){
 const box=$('vlAdminList');
 try{
@@ -2614,7 +2622,8 @@ const rows=await rpc('crest_voice_admin_list',{p_key:adminKey()})||[];
 if(!rows.length){box.innerHTML='<p>No voice lessons yet.</p>';return;}
 box.innerHTML=rows.map(x=>{
 const call='crestVoicePublish('+JSON.stringify(x.id)+','+JSON.stringify(x.subject)+','+JSON.stringify(x.topic)+','+Number(x.lesson_number)+','+JSON.stringify(x.audio_url)+','+(!x.published)+')';
-return '<article style="padding:12px;border:1px solid rgba(148,163,184,.25);border-radius:12px"><strong>'+esc(x.subject)+' — '+esc(x.topic)+' (Lesson '+Number(x.lesson_number)+')</strong><p>'+(x.published?'PUBLISHED':'DRAFT')+'</p><audio controls preload="none" src="'+safeUrl(x.audio_url)+'" style="width:100%;max-width:500px"></audio><p><button class="add-part-btn" onclick="'+call+'">'+(x.published?'Unpublish':'Publish')+'</button></p></article>';
+const delCall='crestVoiceDelete('+JSON.stringify(x.id)+')';
+return '<article style="padding:12px;border:1px solid rgba(148,163,184,.25);border-radius:12px"><strong>'+esc(x.subject)+' — '+esc(x.topic)+' (Lesson '+Number(x.lesson_number)+')</strong><p>'+(x.published?'PUBLISHED':'DRAFT')+'</p><audio controls preload="none" src="'+safeUrl(x.audio_url)+'" style="width:100%;max-width:500px"></audio><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="add-part-btn" onclick="'+call+'">'+(x.published?'Unpublish':'Publish')+'</button><button type="button" class="mini-btn" style="padding:10px 14px;font-size:12px" onclick="'+delCall+'"><i class="fa-solid fa-trash"></i> Delete lesson</button></div></article>';
 }).join('');
 }catch(e){box.textContent='Could not load lessons: '+e.message;}
 };
