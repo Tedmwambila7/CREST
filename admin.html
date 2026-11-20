@@ -2551,7 +2551,7 @@ function clearRecordingTimer(){if(recordTimer){clearInterval(recordTimer);record
 function stopStream(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}}
 function updateTimer(){
 const ms=elapsed();$('vlStatus').textContent='Recording… '+clock(ms)+' / 60:00';
-if(ms>=MAX_MS&&rec&&rec.state!=='inactive'){clearRecordingTimer();msg('60-minute limit reached. Finishing and saving this lesson as a draft…',true);rec.stop();}
+if(ms>=MAX_MS&&rec&&rec.state!=='inactive'){if(rec.state==='recording')elapsedBeforePause+=Date.now()-startedAt;clearRecordingTimer();msg('60-minute limit reached. Finishing and saving this lesson as a draft…',true);rec.stop();}
 }
 window.crestVoiceFile=function(input){
 const f=input.files&&input.files[0];if(!f)return;
@@ -2561,7 +2561,7 @@ $('vlStatus').textContent='Selected '+f.name+' ('+(f.size/1048576).toFixed(2)+' 
 };
 window.crestVoiceRecord=async function(){
 const b=$('vlRecordBtn');
-if(rec&&rec.state!=='inactive'){rec.stop();return;}
+if(rec&&rec.state!=='inactive'){if(rec.state==='recording')elapsedBeforePause+=Date.now()-startedAt;clearRecordingTimer();rec.stop();return;}
 try{
 if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder)throw new Error('Audio recording is not supported here. Open the site over HTTPS.');
 stream=await navigator.mediaDevices.getUserMedia({audio:true});chunks=[];blob=null;elapsedBeforePause=0;
