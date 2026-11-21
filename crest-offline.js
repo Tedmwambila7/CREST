@@ -47,33 +47,44 @@
   }
   function extOf(url){try{return new URL(url,location.href).pathname.split('.').pop().toLowerCase();}catch(_){return '';}}
   const supported=['pdf','ppt','pptx','doc','docx','xls','xlsx','odp','odt'];
+  let viewerOpenId=0;
   document.addEventListener('click',async e=>{
     const a=e.target.closest&&e.target.closest('a[href]');if(!a||!a.href||a.origin!==location.origin&&a.protocol!=='https:')return;
     const ext=extOf(a.href);if(!supported.includes(ext)&&!a.hasAttribute('data-crest-offline'))return;
     if(a.dataset.crestOpening==='1')return;
     e.preventDefault();e.stopPropagation();
-    const v=ensureViewer();v.wrap.style.display='flex';v.name.textContent=(a.textContent||'Learning resource').trim();v.state.textContent='Opening…';
-    /* PDFs are opened from a local Blob URL so attachment headers cannot trigger a browser download prompt. */
+    const v=ensureViewer(),openId=++viewerOpenId;
+    const label=(a.textContent||'Learning resource').trim();
+    v.wrap.style.display='flex';v.name.textContent=label;v.state.textContent='Opening…';
     try{
       const cached=await getSaved(a.href);
-      if(cached){v.frame.src=localUrl(cached.blob);v.state.textContent='Opened saved copy · '+formatSize(cached.size);return;}
+      if(cached&&openId===viewerOpenId){
+        v.frame.src=localUrl(cached.blob);
+        v.state.textContent='Opened saved copy · '+formatSize(cached.size);
+        return;
+      }
     }catch(_){}
     if(ext==='pdf'){
-      v.state.textContent='Preparing PDF…';
-      try{
-        const row=await save(a.href);
-        if(v.wrap.style.display==='flex'){v.frame.src=localUrl(row.blob);v.state.textContent='PDF ready · saved for offline use · '+formatSize(row.size);}
-      }catch(err){
-        v.state.textContent='Could not prepare this PDF. Check your connection or file access.';
-        const note=document.createElement('div');note.style.cssText='margin:auto;max-width:520px;padding:24px;color:#111;background:white;border-radius:12px;font:14px Arial,sans-serif;text-align:center';
-        note.textContent='CREST could not access this PDF for in-page viewing. Please check your connection or ask your teacher to check the file link.';
-        v.frame.src='about:blank';v.frame.insertAdjacentElement('afterend',note);
-      }
+      /* Never make successful CORS access a condition for viewing.
+         Show the original PDF immediately; cache it only as a background enhancement. */
+      v.frame.src=a.href;
+      v.state.textContent='PDF opened · saving an offline copy in the background…';
+      save(a.href).then(row=>{
+        if(openId!==viewerOpenId||v.wrap.style.display!=='flex')return;
+        v.frame.src=localUrl(row.blob);
+        v.state.textContent='PDF ready · saved for offline use · '+formatSize(row.size);
+      }).catch(err=>{
+        if(openId!==viewerOpenId||v.wrap.style.display!=='flex')return;
+        /* Cross-origin hosts may block JavaScript downloads while still allowing
+           their PDF to display in an iframe. Keep the online document open. */
+        v.state.textContent='PDF opened online · offline copy unavailable';
+        console.warn('CREST PDF background save failed; online viewer remains active:',err);
+      });
       return;
     }
     v.frame.src=a.href;v.state.textContent='Opening now · saving in background…';
     const task=saveInBackground(a.href,null);
-    task.then(row=>{if(!row)return;if(v.wrap.style.display==='flex'&&v.name.textContent===(a.textContent||'Learning resource').trim()){v.frame.src=localUrl(row.blob);v.state.textContent='Saved for offline use · '+formatSize(row.size);}});
+    task.then(row=>{if(!row||openId!==viewerOpenId)return;if(v.wrap.style.display==='flex'){v.frame.src=localUrl(row.blob);v.state.textContent='Saved for offline use · '+formatSize(row.size);}});
   },true);
   window.CRESTOffline={
     save,getSaved,
