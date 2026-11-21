@@ -19,10 +19,10 @@
   async function prepareMedia(el){
     if(el.dataset.crestLocal==='1'||el.dataset.crestPreparing==='1')return;
     const remote=el.dataset.crestRemote||el.currentSrc||el.src;if(!remote)return;
-    el.dataset.crestRemote=remote;el.dataset.crestPreparing='1';
+    el.dataset.crestRemote=remote;el.dataset.crestPreparing='1';const wasPlaying=!el.paused;
     try{
       const cached=await getSaved(remote);
-      if(cached){el.dataset.crestLocal='1';el.src=localUrl(cached.blob);el.load();status(el,'Playing saved offline copy · '+formatSize(cached.size));}
+      if(cached){el.dataset.crestLocal='1';el.src=localUrl(cached.blob);el.load();status(el,'Playing saved offline copy · '+formatSize(cached.size));if(wasPlaying)try{await el.play();}catch(_){} }
       else {status(el,'Playing now · saving for offline use in the background…');saveInBackground(remote,el);}
     }catch(_){status(el,'Playing online. Offline saving is not available for this file.');}
     finally{el.dataset.crestPreparing='0';}
