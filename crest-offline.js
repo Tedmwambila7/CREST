@@ -69,7 +69,7 @@
   document.addEventListener('click',async e=>{
     const a=e.target.closest&&e.target.closest('a[href]');
     if(!a||!a.href||a.origin!==location.origin&&a.protocol!=='https:')return;
-    if(!/\.pdf(?:$|[?#])/i.test(a.href)&&!a.hasAttribute('data-crest-offline'))return;
+    if(!/\.(?:pdf|pptx?|docx?|xlsx?|odp|odt)(?:$|[?#])/i.test(a.href)&&!a.hasAttribute('data-crest-offline'))return;
     if(a.dataset.crestOpening==='1')return;
     e.preventDefault();a.dataset.crestOpening='1';
     const old=a.textContent; a.textContent='Preparing saved copy…';
