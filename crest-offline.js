@@ -53,14 +53,27 @@
     if(a.dataset.crestOpening==='1')return;
     e.preventDefault();e.stopPropagation();
     const v=ensureViewer();v.wrap.style.display='flex';v.name.textContent=(a.textContent||'Learning resource').trim();v.state.textContent='Opening…';
-    /* Show the resource immediately; never wait for the background save. */
+    /* PDFs are opened from a local Blob URL so attachment headers cannot trigger a browser download prompt. */
     try{
       const cached=await getSaved(a.href);
-      if(cached){v.frame.src=localUrl(cached.blob);v.state.textContent='Offline copy · '+formatSize(cached.size);return;}
+      if(cached){v.frame.src=localUrl(cached.blob);v.state.textContent='Opened saved copy · '+formatSize(cached.size);return;}
     }catch(_){}
+    if(ext==='pdf'){
+      v.state.textContent='Preparing PDF…';
+      try{
+        const row=await save(a.href);
+        if(v.wrap.style.display==='flex'){v.frame.src=localUrl(row.blob);v.state.textContent='PDF ready · saved for offline use · '+formatSize(row.size);}
+      }catch(err){
+        v.state.textContent='Could not prepare this PDF. Check your connection or file access.';
+        const note=document.createElement('div');note.style.cssText='margin:auto;max-width:520px;padding:24px;color:#111;background:white;border-radius:12px;font:14px Arial,sans-serif;text-align:center';
+        note.textContent='CREST could not access this PDF for in-page viewing. Please check your connection or ask your teacher to check the file link.';
+        v.frame.src='about:blank';v.frame.insertAdjacentElement('afterend',note);
+      }
+      return;
+    }
     v.frame.src=a.href;v.state.textContent='Opening now · saving in background…';
     const task=saveInBackground(a.href,null);
-    task.then(row=>{if(!row)return;/* Only swap to local copy once fully saved and only if this same resource remains open. */if(v.wrap.style.display==='flex'&&v.name.textContent===(a.textContent||'Learning resource').trim()){v.frame.src=localUrl(row.blob);v.state.textContent='Saved for offline use · '+formatSize(row.size);}});
+    task.then(row=>{if(!row)return;if(v.wrap.style.display==='flex'&&v.name.textContent===(a.textContent||'Learning resource').trim()){v.frame.src=localUrl(row.blob);v.state.textContent='Saved for offline use · '+formatSize(row.size);}});
   },true);
   window.CRESTOffline={
     save,getSaved,
