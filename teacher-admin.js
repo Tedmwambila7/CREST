@@ -67,7 +67,7 @@
 
     $("taCreateForm").addEventListener("submit", async event => {
       event.preventDefault();
-      const form = event.currentTarget, button = form.querySelector('button[type="submit"]);
+      const form = event.currentTarget, button = form.querySelector('button[type="submit"]');
       button.disabled = true;
       try {
         const values = new FormData(form);
