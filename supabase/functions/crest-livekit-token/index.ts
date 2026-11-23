@@ -94,7 +94,7 @@ Deno.serve(async (req: Request) => {
       verifiedName = String(data.name || "CREST Student");
     }
     const displayName = (verifiedName || String(body.displayName || "CREST user"))
-      .replace(/[<>\\u0000-\\u001f]/g, "").trim().slice(0, 60);
+      .replace(/[<>]/g, "").replace(/[\\x00-\\x1f]/g, "").trim().slice(0, 60);
 
     let roomName = "";
     let mode: "audio" | "video" = "audio";
@@ -135,9 +135,8 @@ Deno.serve(async (req: Request) => {
     } else if (action === "join") {
       if (typeof body.ticket !== "string") return json({ error: "A valid call invitation is required." }, 403);
       const invite = await readTicket(body.ticket, livekitApiSecret);
-      const isCaller = role === invite.callerRole &&
-        (role !== "student" || verifiedPhone === invite.callerPhone) &&
-        (role !== "admin" || identity === invite.sub);
+      const isCaller = role === invite.callerRole && identity === invite.sub &&
+        (role !== "student" || verifiedPhone === invite.callerPhone);
       const isRecipient = role === invite.targetRole &&
         (role !== "student" || verifiedPhone === invite.targetPhone);
       if (!isCaller && !isRecipient) return json({ error: "This call invitation was not issued to your CREST account." }, 403);
