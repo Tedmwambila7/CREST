@@ -137,7 +137,10 @@
       if(recordedBlob && (!file || !file.size)){file=new File([recordedBlob],"recorded-lesson-"+Date.now()+".webm",{type:recordedBlob.type || "audio/webm"});}
       if(file && file.size){url=await upload(file);name=file.name;type=file.type || "application/octet-stream";size=file.size;}
       if(!safeUrl(url))throw new Error("Choose a lesson file, record audio, or enter a secure HTTPS link.");
-      await rpc("teacher_submit_material",{p_token:token,p_item_type:"lesson",p_payload:{
+      const selectedType=String(fd.get("material_type")||"lesson");
+      const itemType=(recordedBlob && (!file || !file.size)) || (file && file.size && String(file.type||"").startsWith("audio/")) ? "voice_lesson" : (file && file.size && String(file.type||"").startsWith("video/")) ? "video_lesson" : selectedType;
+      if((itemType==="voice_lesson" || itemType==="video_lesson") && !String(fd.get("topic")||"").trim())throw new Error("Enter the topic for this audio or video lesson.");
+      await rpc("teacher_submit_material",{p_token:token,p_item_type:itemType,p_payload:{
         title:String(fd.get("title")||"").trim(),subject:String(fd.get("subject")||"").trim(),
         level:String(fd.get("level")||"Junior"),topic:String(fd.get("topic")||"").trim(),
         file_url:url,file_name:name || url.split("/").pop() || "Lesson material",
