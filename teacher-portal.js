@@ -81,11 +81,11 @@
       const title=document.createElement("h3"); title.textContent=item.title || (item.item_type==="question"?"Student question":"Student assignment"); card.appendChild(title);
       const meta=document.createElement("div"); meta.className="meta"; meta.textContent=(item.item_type==="question"?"QUESTION": "ASSIGNMENT SUBMISSION")+" · "+(item.subject || "General")+" · "+new Date(item.created_at).toLocaleString(); card.appendChild(meta);
       const body=document.createElement("div"); body.className="bodytext";
-      body.textContent=item.item_type==="question" ? (p.message || p.text || "Student sent a question or attachment.") : (p.note || p.answer || p.description || "Student submitted their work.");
+      body.textContent=item.item_type==="question" ? (p.message || p.text || "Student sent a question or attachment.") : ("Assignment: "+(p.assignmentTitle || item.title || "Student assignment")+"\nInstructions: "+(p.assignmentDescription || p.description || "See the assignment details.")+"\nStudent note: "+(p.note || p.answer || "No written note."));
       card.appendChild(body);
       const files=attachmentLinks(p);
       files.forEach(f=>{const a=document.createElement("a");a.className="filelink";a.href=f.url;a.target="_blank";a.rel="noopener";a.textContent="↗ "+f.name;card.appendChild(a);});
-      const phone=document.createElement("div");phone.className="meta";phone.style.marginTop="10px";phone.textContent="Student: "+(item.submitter_phone || "Not available");card.appendChild(phone);
+      const phone=document.createElement("div");phone.className="meta";phone.style.marginTop="10px";phone.textContent="Student: "+(p.name || "Student")+" · "+(item.submitter_phone || "Phone not available");card.appendChild(phone);
       const form=document.createElement("form");form.dataset.parentId=item.id;form.style.marginTop="12px";
       if(item.item_type==="question"){
         form.dataset.formType="response";
