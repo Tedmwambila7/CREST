@@ -19,7 +19,7 @@ create table if not exists public.crest_approval_items (
  submitter_role text not null check(submitter_role in ('student','teacher')),
  submitter_teacher_id uuid references public.crest_teacher_accounts(id) on delete set null,
  submitter_phone text, assigned_teacher_id uuid references public.crest_teacher_accounts(id) on delete set null,
- item_type text not null check(item_type in ('question','assignment_submission','lesson','assignment','teacher_response','assignment_mark')),
+ item_type text not null check(item_type in ('question','assignment_submission','lesson','assignment','teacher_response','assignment_mark','voice_lesson','video_lesson')),
  status text not null default 'pending_admin' check(status in ('pending_admin','forwarded','responded_pending_admin','approved','published','rejected','returned_for_correction')),
  title text not null default '', subject text not null default '', payload jsonb not null default '{}'::jsonb,
  review_note text, created_at timestamptz not null default now(), updated_at timestamptz not null default now()
@@ -90,6 +90,8 @@ declare
   v_phone text;
   v_sender text;
   v_id text;
+  v_topic text;
+  v_number integer;
   v_ts bigint := (extract(epoch from now())*1000)::bigint;
   v_data jsonb;
   v_score numeric;
@@ -153,6 +155,34 @@ begin
       title=excluded.title,subject=excluded.subject,topic=excluded.topic,
       level=excluded.level,file_url=excluded.file_url,file_name=excluded.file_name,
       file_type=excluded.file_type,file_size=excluded.file_size;
+    update public.crest_approval_items set status='published',updated_at=now() where id=v_item.id;
+
+  elsif v_item.item_type='voice_lesson' then
+    if coalesce(v_item.payload->>'file_url','') !~ '^https://' then raise exception 'Voice lesson link is missing or invalid.'; end if;
+    v_topic := coalesce(nullif(trim(v_item.payload->>'topic'),''),v_item.title);
+    select coalesce(max(lesson_number),0)+1 into v_number
+      from public.crest_voice_lessons where subject=v_item.subject and topic=v_topic;
+    v_id := 'teacher-voice-'||replace(v_item.id::text,'-','');
+    insert into public.crest_voice_lessons(id,subject,topic,lesson_number,audio_url,audio_public_id,published,updated_at)
+      values(v_id,v_item.subject,v_topic,v_number,v_item.payload->>'file_url',
+             v_item.payload->>'audio_public_id',true,now())
+    on conflict(id) do update set subject=excluded.subject,topic=excluded.topic,
+      lesson_number=excluded.lesson_number,audio_url=excluded.audio_url,
+      audio_public_id=excluded.audio_public_id,published=true,updated_at=now();
+    update public.crest_approval_items set status='published',updated_at=now() where id=v_item.id;
+
+  elsif v_item.item_type='video_lesson' then
+    if coalesce(v_item.payload->>'file_url','') !~ '^https://' then raise exception 'Video lesson link is missing or invalid.'; end if;
+    v_topic := coalesce(nullif(trim(v_item.payload->>'topic'),''),v_item.title);
+    select coalesce(max(lesson_number),0)+1 into v_number
+      from public.crest_video_lessons where subject=v_item.subject and topic=v_topic;
+    v_id := 'teacher-video-'||replace(v_item.id::text,'-','');
+    insert into public.crest_video_lessons(id,subject,topic,lesson_number,video_url,video_public_id,published,updated_at)
+      values(v_id,v_item.subject,v_topic,v_number,v_item.payload->>'file_url',
+             v_item.payload->>'video_public_id',true,now())
+    on conflict(id) do update set subject=excluded.subject,topic=excluded.topic,
+      lesson_number=excluded.lesson_number,video_url=excluded.video_url,
+      video_public_id=excluded.video_public_id,published=true,updated_at=now();
     update public.crest_approval_items set status='published',updated_at=now() where id=v_item.id;
 
   elsif v_item.item_type='assignment' then
@@ -506,14 +536,23 @@ begin
   join public.crest_teacher_accounts t on t.id=s.teacher_id
   where s.token=p_token and t.is_active=true;
   if v_teacher is null then raise exception 'Teacher session expired. Please sign in again.'; end if;
-  if p_item_type not in ('lesson','assignment') then raise exception 'Unsupported submission type.'; end if;
+  if p_item_type not in ('lesson','assignment','voice_lesson','video_lesson') then
+    raise exception 'Unsupported submission type.';
+  end if;
   if length(coalesce(p_payload::text,'')) > 50000 then raise exception 'Submission is too large.'; end if;
   v_title := trim(coalesce(p_payload->>'title',''));
   v_subject := trim(coalesce(p_payload->>'subject',''));
   if v_title='' or v_subject='' then raise exception 'Enter a title and subject.'; end if;
-  if p_item_type='lesson' then
-    if coalesce(p_payload->>'level','') not in ('Junior','Senior') then raise exception 'Choose Junior or Senior level.'; end if;
-    if coalesce(p_payload->>'file_url','') !~ '^https://' then raise exception 'Upload a lesson file or provide a secure HTTPS link.'; end if;
+  if p_item_type='lesson' and coalesce(p_payload->>'level','') not in ('Junior','Senior') then
+    raise exception 'Choose Junior or Senior level.';
+  end if;
+  if p_item_type in ('lesson','voice_lesson','video_lesson') then
+    if coalesce(p_payload->>'file_url','') !~ '^https://' then
+      raise exception 'Upload a lesson file or provide a secure HTTPS link.';
+    end if;
+  end if;
+  if p_item_type in ('voice_lesson','video_lesson') and trim(coalesce(p_payload->>'topic',''))='' then
+    raise exception 'Enter the lesson topic.';
   end if;
   insert into public.crest_approval_items(
     submitter_role,submitter_teacher_id,item_type,status,title,subject,payload
@@ -603,6 +642,87 @@ $function$;
 
 revoke all on function public.student_items(text,text) from public;
 grant execute on function public.student_items(text,text) to anon,authenticated;
+CREATE OR REPLACE FUNCTION public.crest_video_student_comment(p_token text, p_lesson_id text, p_comment text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'extensions'
+AS $function$
+declare
+  v_phone text := public.crest_me(p_token);
+  v_comment text := btrim(coalesce(p_comment,''));
+  v_topic text;
+  v_subject text;
+  v_name text;
+  v_id text;
+  v_approval_id uuid;
+begin
+  if v_phone is null then raise exception 'Session expired'; end if;
+  if char_length(v_comment)<1 or char_length(v_comment)>2000 then raise exception 'Comment must be between 1 and 2000 characters'; end if;
+  select subject,topic into v_subject,v_topic
+    from public.crest_video_lessons where id=p_lesson_id and published=true;
+  if not found then raise exception 'This lesson is not available'; end if;
+  select name into v_name from public.crest_students where phone=v_phone;
+  v_id := 'vdc-'||replace(gen_random_uuid()::text,'-','');
+  insert into public.crest_video_lesson_comments(id,lesson_id,student_phone,comment)
+    values(v_id,p_lesson_id,v_phone,v_comment);
+  insert into public.crest_approval_items(
+    source_item_id,submitter_role,submitter_phone,item_type,status,title,subject,payload
+  ) values(
+    v_id,'student',v_phone,'question','pending_admin','Question about '||v_topic,v_subject,
+    jsonb_build_object('message',v_comment,'source','video_lesson','lesson_id',p_lesson_id,'lesson_topic',v_topic)
+  ) on conflict(source_item_id) do nothing returning id into v_approval_id;
+  if v_approval_id is not null then
+    insert into public.crest_approval_events(item_id,actor_role,actor_label,action)
+    values(v_approval_id,'student',coalesce(v_name,'Student'),'submitted');
+  end if;
+  return jsonb_build_object('success',true);
+end
+$function$;
+
+CREATE OR REPLACE FUNCTION public.crest_voice_student_comment(p_token text, p_lesson_id text, p_comment text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'extensions'
+AS $function$
+declare
+  v_phone text := public.crest_me(p_token);
+  v_comment text := btrim(coalesce(p_comment,''));
+  v_topic text;
+  v_subject text;
+  v_name text;
+  v_id text;
+  v_approval_id uuid;
+begin
+  if v_phone is null then raise exception 'Session expired'; end if;
+  if char_length(v_comment)<1 or char_length(v_comment)>2000 then raise exception 'Comment must be between 1 and 2000 characters'; end if;
+  select subject,topic into v_subject,v_topic
+    from public.crest_voice_lessons where id=p_lesson_id and published=true;
+  if not found then raise exception 'This lesson is not available'; end if;
+  select name into v_name from public.crest_students where phone=v_phone;
+  v_id := 'vc-'||replace(gen_random_uuid()::text,'-','');
+  insert into public.crest_voice_lesson_comments(id,lesson_id,student_phone,comment)
+    values(v_id,p_lesson_id,v_phone,v_comment);
+  insert into public.crest_approval_items(
+    source_item_id,submitter_role,submitter_phone,item_type,status,title,subject,payload
+  ) values(
+    v_id,'student',v_phone,'question','pending_admin','Question about '||v_topic,v_subject,
+    jsonb_build_object('message',v_comment,'source','voice_lesson','lesson_id',p_lesson_id,'lesson_topic',v_topic)
+  ) on conflict(source_item_id) do nothing returning id into v_approval_id;
+  if v_approval_id is not null then
+    insert into public.crest_approval_events(item_id,actor_role,actor_label,action)
+    values(v_approval_id,'student',coalesce(v_name,'Student'),'submitted');
+  end if;
+  return jsonb_build_object('success',true);
+end
+$function$;
+
+
+revoke all on function public.crest_voice_student_comment(text,text,text) from public;
+revoke all on function public.crest_video_student_comment(text,text,text) from public;
+grant execute on function public.crest_voice_student_comment(text,text,text) to anon,authenticated;
+grant execute on function public.crest_video_student_comment(text,text,text) to anon,authenticated;
 revoke all on function public.admin_teachers(text) from public;
 revoke all on function public.admin_add_teacher(text,text,text,text,text) from public;
 revoke all on function public.admin_set_teacher_active(text,uuid,boolean) from public;
