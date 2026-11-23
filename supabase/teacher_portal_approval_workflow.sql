@@ -583,7 +583,7 @@ begin
       select jsonb_agg(
         case when ci.data->>'kind'='submission' then
           ci.data || jsonb_build_object(
-            'reviewStatus',coalesce(a.status,'approved'),
+            'reviewStatus',coalesce(a.status,'legacy'),
             'reviewNote',coalesce(a.review_note,'')
           )
         else ci.data end
