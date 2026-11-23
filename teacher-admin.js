@@ -171,6 +171,8 @@
     if(item.item_type==="question")return p.message||p.text||"Student sent a question or attachment.";
     if(item.item_type==="assignment_submission")return "Assignment: "+(p.assignmentTitle||item.title||"Student assignment")+"\nInstructions: "+(p.assignmentDescription||"See assignment details.")+"\nStudent note: "+(p.note||p.answer||"No written note.");
     if(item.item_type==="lesson")return "Level: "+(p.level||"")+"\nTopic: "+(p.topic||"")+"\nFile: "+(p.file_name||"");
+    if(item.item_type==="voice_lesson")return "Voice lesson\nTopic: "+(p.topic||"")+"\nAudio file: "+(p.file_name||"");
+    if(item.item_type==="video_lesson")return "Video lesson\nTopic: "+(p.topic||"")+"\nVideo file: "+(p.file_name||"");
     if(item.item_type==="assignment")return p.description||"Teacher has prepared an assignment.";
     if(item.item_type==="teacher_response")return "Teacher response:\n"+(p.response||"");
     if(item.item_type==="assignment_mark")return "Marks: "+(p.score||"")+" / "+(p.out_of||"")+"\nGrade: "+(p.grade||"")+"\nFeedback: "+(p.remarks||"");
@@ -202,7 +204,7 @@
       if(item.item_type==="assignment"){
         const target=document.createElement("input");target.id="taTarget-"+item.id;target.value="all";target.placeholder="all or student phone";target.style.maxWidth="190px";actions.appendChild(target);
       }
-      if(["lesson","assignment","teacher_response","assignment_mark"].includes(item.item_type)){
+      if(["lesson","voice_lesson","video_lesson","assignment","teacher_response","assignment_mark"].includes(item.item_type)){
         const approve=document.createElement("button");approve.textContent=item.item_type==="lesson"||item.item_type==="assignment"?"Approve & publish":"Approve";approve.dataset.itemAction="approve";approve.dataset.itemId=item.id;actions.appendChild(approve);
       }
       ["reject","return"].forEach(action=>{
