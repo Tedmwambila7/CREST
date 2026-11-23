@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#071326">
+  <title>Teacher Dashboard | CREST Academy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#071326;color:#eaf2ff;font-family:Poppins,Arial,sans-serif}
+    header{position:sticky;top:0;z-index:10;background:#0b1b31ed;backdrop-filter:blur(12px);border-bottom:1px solid #294664;padding:15px max(18px,calc((100% - 1180px)/2));display:flex;justify-content:space-between;align-items:center;gap:15px}
+    .brand{font-weight:800;color:#7dd3fc}.identity{font-size:12px;color:#9eb3cb}.logout{border:1px solid #36516f;background:#122944;color:#dbeafe;border-radius:10px;padding:9px 13px;font-weight:700}
+    main{max-width:1180px;margin:28px auto;padding:0 18px 60px}.welcome{margin-bottom:22px}.eyebrow{color:#34d399;font-size:11px;letter-spacing:2px;font-weight:800}.welcome h1{font-size:27px;margin:4px 0}.muted{color:#9eb3cb;font-size:13px;line-height:1.6}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.panel{background:#0b1b31;border:1px solid #294664;border-radius:18px;padding:20px;min-width:0}.panel h2{font-size:16px;margin:0 0 6px}.panel p{font-size:12px;color:#9eb3cb;line-height:1.6}
+    label{display:block;color:#b8cce2;font-size:11px;font-weight:700;margin:12px 0 6px}input,select,textarea{width:100%;padding:11px 12px;border:1px solid #294664;border-radius:10px;background:#071326;color:#fff;font:inherit;font-size:13px;outline:none}textarea{resize:vertical;min-height:76px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.btn{border:0;border-radius:10px;background:linear-gradient(135deg,#0284c7,#38bdf8);color:#041322;padding:11px 15px;font-size:12px;font-weight:800;cursor:pointer;margin-top:14px}.btn.secondary{background:#122944;color:#dbeafe;border:1px solid #36516f}.btn:disabled{opacity:.5;cursor:wait}
+    .notice{font-size:12px;color:#7dd3fc;min-height:18px;margin-top:10px}.record{display:flex;gap:8px;flex-wrap:wrap}.record button{flex:1}
+    .queue{display:grid;gap:12px}.queue-card{border:1px solid #294664;background:#0a172a;border-radius:14px;padding:15px}.queue-card h3{font-size:14px;margin:0 0 5px}.meta{font-size:11px;color:#7dd3fc;margin-bottom:9px}.bodytext{font-size:12px;color:#c7d6e8;white-space:pre-wrap;overflow-wrap:anywhere}.filelink{display:inline-block;color:#7dd3fc;font-size:11px;margin:7px 8px 0 0}.status{display:inline-block;padding:4px 8px;border-radius:20px;background:#153c36;color:#6ee7b7;font-size:10px;font-weight:800}
+    .empty{padding:20px;border:1px dashed #36516f;border-radius:12px;color:#9eb3cb;font-size:12px;text-align:center}.wide{grid-column:1/-1}
+    @media(max-width:760px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}header{padding:12px 16px}.welcome h1{font-size:23px}.row{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <header>
+    <div><div class="brand">CREST ACADEMY · TEACHER</div><div class="identity" id="teacherIdentity">Loading teacher profile…</div></div>
+    <button class="logout" id="teacherLogout">Sign out</button>
+  </header>
+  <main id="teacherDashboard">
+    <section class="welcome"><div class="eyebrow">TEACHING WORKSPACE</div><h1>Welcome, <span id="teacherName">Teacher</span></h1><p class="muted">Submit lessons and assignments for administrator approval. Review only the student work and questions assigned to you.</p></section>
+    <div class="grid">
+      <section class="panel">
+        <h2>Upload or record a lesson</h2><p>Every lesson is checked by the administrator before it appears in the student portal.</p>
+        <form id="lessonForm">
+          <label>Lesson title</label><input name="title" required maxlength="140" placeholder="e.g. Introduction to Algebra">
+          <div class="row"><div><label>Subject</label><input name="subject" required placeholder="Mathematics"></div><div><label>Student level</label><select name="level"><option>Junior</option><option>Senior</option></select></div></div>
+          <label>Topic (optional)</label><input name="topic" placeholder="Linear equations">
+          <label>Upload lesson file or paste a secure link</label><input name="file" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,audio/*,video/*">
+          <label>Or lesson URL</label><input name="file_url" type="url" placeholder="https://…">
+          <div class="record"><button class="btn secondary" type="button" id="recordLesson">Record audio lesson</button><button class="btn secondary" type="button" id="stopLesson" disabled>Stop recording</button></div>
+          <div class="notice" id="recordStatus" aria-live="polite"></div>
+          <button class="btn" type="submit">Send lesson for approval</button>
+        </form><div class="notice" id="lessonMessage"></div>
+      </section>
+      <section class="panel">
+        <h2>Create an assignment</h2><p>Prepare an assignment for students. The administrator approves it before it is published.</p>
+        <form id="assignmentForm">
+          <label>Assignment title</label><input name="title" required maxlength="140" placeholder="e.g. Form 3 Chemistry Exercise">
+          <label>Subject</label><input name="subject" required placeholder="Chemistry">
+          <label>Instructions / description</label><textarea name="description" required placeholder="Explain what students should complete…"></textarea>
+          <div class="row"><div><label>Due date (optional)</label><input name="due" type="date"></div><div><label>Attachment (optional)</label><input name="file" type="file"></div></div>
+          <button class="btn" type="submit">Send assignment for approval</button>
+        </form><div class="notice" id="assignmentMessage"></div>
+      </section>
+      <section class="panel wide">
+        <h2>My assigned student work and questions</h2><p>The administrator forwards student submissions and questions to you. Your marks and answers return to the administrator for approval before students receive them.</p>
+        <div id="teacherInbox" class="queue"><div class="empty">Loading your inbox…</div></div>
+      </section>
+      <section class="panel wide">
+        <h2>My submitted materials</h2><p>Track the approval status of lessons and assignments you have submitted.</p>
+        <div id="teacherSubmissions" class="queue"><div class="empty">Loading your submissions…</div></div>
+      </section>
+    </div>
+  </main>
+  <script src="teacher-portal.js"></script>
+</body>
+</html>
