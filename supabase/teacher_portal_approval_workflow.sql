@@ -74,8 +74,7 @@ begin
   returning id into v_id;
   return jsonb_build_object('id',v_id,'message','Teacher account created successfully.');
 end
-$function$
-
+$function$;
 
 CREATE OR REPLACE FUNCTION public.admin_approval_action(p_key text, p_item_id uuid, p_action text, p_teacher_id uuid DEFAULT NULL::uuid, p_note text DEFAULT NULL::text, p_target text DEFAULT 'all'::text)
  RETURNS boolean
@@ -211,8 +210,7 @@ begin
     values(v_item.id,'admin','CREST Admin','approved',p_note);
   return true;
 end
-$function$
-
+$function$;
 
 CREATE OR REPLACE FUNCTION public.admin_approval_list(p_key text)
  RETURNS jsonb
@@ -238,8 +236,7 @@ begin
     where a.status='pending_admin'
   ),'[]'::jsonb);
 end
-$function$
-
+$function$;
 
 CREATE OR REPLACE FUNCTION public.admin_reset_teacher_password(p_key text, p_teacher_id uuid, p_password text)
  RETURNS boolean
@@ -257,8 +254,7 @@ begin
   delete from public.crest_teacher_sessions where teacher_id=p_teacher_id;
   return true;
 end
-$function$
-
+$function$;
 
 CREATE OR REPLACE FUNCTION public.admin_set_teacher_active(p_key text, p_teacher_id uuid, p_active boolean)
  RETURNS boolean
@@ -277,8 +273,7 @@ begin
   end if;
   return true;
 end
-$function$
-
+$function$;
 
 CREATE OR REPLACE FUNCTION public.admin_teachers(p_key text)
  RETURNS jsonb
@@ -296,8 +291,7 @@ begin
     from public.crest_teacher_accounts
   ), '[]'::jsonb);
 end
-$function$
-
+$function$;
 
 CREATE OR REPLACE FUNCTION public.student_put_item(p_token text, p_coll text, p_item jsonb)
  RETURNS boolean
@@ -305,7 +299,15 @@ CREATE OR REPLACE FUNCTION public.student_put_item(p_token text, p_coll text, p_
  SECURITY DEFINER
  SET search_path TO 'public', 'extensions'
 AS $function$
-declare me text := public.crest_me(p_token); nm text; it jsonb; v_type text; v_approval_id uuid;
+declare
+  me text := public.crest_me(p_token);
+  nm text;
+  it jsonb;
+  v_type text;
+  v_approval_id uuid;
+  v_assignment jsonb;
+  v_title text;
+  v_subject text;
 begin
   if me is null then raise exception 'Session expired'; end if;
   if p_coll not in ('chat','work') then raise exception 'Not allowed'; end if;
@@ -315,10 +317,23 @@ begin
   if p_coll='chat' then
     it := it || jsonb_build_object('isTeacher',false);
     v_type := 'question';
+    v_title := left(coalesce(nullif(it->>'message',''),'Student question'),140);
+    v_subject := coalesce(it->>'subject','');
   else
     if coalesce(p_item->>'kind','')<>'submission' then raise exception 'Not allowed'; end if;
     it := it || jsonb_build_object('name',nm);
     v_type := 'assignment_submission';
+    select data into v_assignment
+      from public.crest_items
+      where coll='work' and id=it->>'assignmentId' and data->>'kind'='assignment'
+      limit 1;
+    v_title := coalesce(nullif(v_assignment->>'title',''),nullif(it->>'title',''),'Student assignment submission');
+    v_subject := coalesce(nullif(v_assignment->>'subject',''),nullif(it->>'subject',''),'');
+    it := it || jsonb_build_object(
+      'assignmentTitle',v_title,
+      'assignmentSubject',v_subject,
+      'assignmentDescription',coalesce(v_assignment->>'description','')
+    );
   end if;
   insert into public.crest_items(id,coll,phone,ts,data)
   values(it->>'id',p_coll,me,coalesce((it->>'ts')::bigint,(extract(epoch from now())*1000)::bigint),it)
@@ -327,8 +342,7 @@ begin
     source_item_id,submitter_role,submitter_phone,item_type,status,title,subject,payload
   ) values (
     it->>'id','student',me,v_type,'pending_admin',
-    left(coalesce(nullif(it->>'title',''),nullif(it->>'message',''),'Student submission'),140),
-    coalesce(it->>'subject',''),it
+    coalesce(v_title,'Student submission'),coalesce(v_subject,''),it
   )
   on conflict(source_item_id) do nothing
   returning id into v_approval_id;
@@ -339,8 +353,7 @@ begin
   if p_coll='chat' then perform public.crest_trim_chat(); end if;
   return true;
 end
-$function$
-
+$function$;
 
 CREATE OR REPLACE FUNCTION public.teacher_inbox(p_token text)
  RETURNS jsonb
@@ -365,8 +378,7 @@ begin
     where a.assigned_teacher_id=v_teacher and a.status='forwarded'
   ),'[]'::jsonb);
 end
-$function$
-
+$function$;
 
 CREATE OR REPLACE FUNCTION public.teacher_login(p_email text, p_password text)
  RETURNS jsonb
@@ -389,8 +401,7 @@ begin
     'email',v_teacher.email,'subject',v_teacher.subject
   );
 end
-$function$
-
+$function$;
 
 CREATE OR REPLACE FUNCTION public.teacher_logout(p_token text)
  RETURNS boolean
@@ -400,8 +411,7 @@ CREATE OR REPLACE FUNCTION public.teacher_logout(p_token text)
 AS $function$
   with deleted as (delete from public.crest_teacher_sessions where token=p_token returning 1)
   select true
-$function$
-
+$function$;
 
 CREATE OR REPLACE FUNCTION public.teacher_me(p_token text)
  RETURNS jsonb
@@ -415,8 +425,7 @@ AS $function$
   from public.crest_teacher_sessions s
   join public.crest_teacher_accounts t on t.id=s.teacher_id
   where s.token=p_token and t.is_active=true
-$function$
-
+$function$;
 
 CREATE OR REPLACE FUNCTION public.teacher_my_submissions(p_token text)
  RETURNS jsonb
@@ -445,8 +454,7 @@ begin
     ) a
   ),'[]'::jsonb);
 end
-$function$
-
+$function$;
 
 CREATE OR REPLACE FUNCTION public.teacher_submit_mark(p_token text, p_parent_id uuid, p_score numeric, p_out_of numeric, p_grade text, p_remarks text)
  RETURNS uuid
@@ -483,8 +491,7 @@ begin
   values(v_id,'teacher',v_name,'mark_submitted');
   return v_id;
 end
-$function$
-
+$function$;
 
 CREATE OR REPLACE FUNCTION public.teacher_submit_material(p_token text, p_item_type text, p_payload jsonb)
  RETURNS uuid
@@ -517,8 +524,7 @@ begin
   from public.crest_teacher_accounts t where t.id=v_teacher;
   return v_id;
 end
-$function$
-
+$function$;
 
 CREATE OR REPLACE FUNCTION public.teacher_submit_response(p_token text, p_parent_id uuid, p_response text)
  RETURNS uuid
@@ -551,9 +557,7 @@ begin
   values(v_id,'teacher',v_name,'response_submitted');
   return v_id;
 end
-$function$
-
-
+$function$;
 
 revoke all on function public.admin_teachers(text) from public;
 revoke all on function public.admin_add_teacher(text,text,text,text,text) from public;
