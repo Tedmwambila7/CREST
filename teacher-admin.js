@@ -152,7 +152,7 @@
   function detail(item) {
     const p=item.payload||{};
     if(item.item_type==="question")return p.message||p.text||"Student sent a question or attachment.";
-    if(item.item_type==="assignment_submission")return p.note||p.answer||"Student submitted work for this assignment.";
+    if(item.item_type==="assignment_submission")return "Assignment: "+(p.assignmentTitle||item.title||"Student assignment")+"\nInstructions: "+(p.assignmentDescription||"See assignment details.")+"\nStudent note: "+(p.note||p.answer||"No written note.");
     if(item.item_type==="lesson")return "Level: "+(p.level||"")+"\nTopic: "+(p.topic||"")+"\nFile: "+(p.file_name||"");
     if(item.item_type==="assignment")return p.description||"Teacher has prepared an assignment.";
     if(item.item_type==="teacher_response")return "Teacher response:\n"+(p.response||"");
