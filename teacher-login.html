@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#071326">
+  <title>Teacher Sign In | CREST Academy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 15% 10%,#12345b,#071326 55%,#050b17);color:#eaf2ff;font-family:Poppins,Arial,sans-serif;display:grid;place-items:center;padding:20px}
+    .card{width:min(100%,440px);padding:30px;border:1px solid #294664;border-radius:22px;background:#0b1b31;box-shadow:0 24px 70px #0008}
+    .brand{width:58px;height:58px;border-radius:18px;background:linear-gradient(135deg,#0ea5e9,#34d399);display:grid;place-items:center;color:#041322;font-size:25px;font-weight:900}
+    h1{font-size:24px;margin:20px 0 5px}p{color:#9eb3cb;font-size:13px;line-height:1.7;margin:0 0 22px}
+    label{display:block;font-size:12px;font-weight:700;color:#b8cce2;margin:14px 0 7px}
+    input{width:100%;padding:14px;border:1px solid #294664;border-radius:12px;background:#071326;color:#fff;font:inherit;outline:none}
+    input:focus{border-color:#38bdf8;box-shadow:0 0 0 3px #38bdf822}
+    button{width:100%;padding:14px;margin-top:20px;border:0;border-radius:12px;background:linear-gradient(135deg,#0284c7,#38bdf8);color:#041322;font-weight:800;font-size:14px;cursor:pointer}
+    button:disabled{opacity:.55;cursor:wait}.message{min-height:20px;margin-top:13px;color:#fca5a5;font-size:12px}
+    a{color:#7dd3fc;text-decoration:none;font-size:12px;font-weight:700}.back{display:block;text-align:center;margin-top:20px}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="brand">C</div>
+    <h1>Teacher Portal</h1>
+    <p>Sign in using the email address and temporary or personal password provided by the CREST Academy administrator.</p>
+    <form id="teacherLoginForm">
+      <label for="teacherEmail">Email address</label>
+      <input id="teacherEmail" type="email" autocomplete="username" required placeholder="teacher@example.com">
+      <label for="teacherPassword">Password</label>
+      <input id="teacherPassword" type="password" autocomplete="current-password" required placeholder="Your password">
+      <button id="teacherLoginButton" type="submit">Sign in to Teacher Dashboard</button>
+      <div id="teacherLoginMessage" class="message" role="alert"></div>
+    </form>
+    <a class="back" href="index.html">← Back to CREST Academy login</a>
+  </main>
+  <script src="teacher-portal.js"></script>
+</body>
+</html>
