@@ -86,6 +86,21 @@
     $("taRefreshQueue").addEventListener("click", () => loadQueue().catch(e => message("taQueueNotice",e.message,true)));
 
     $("taTeachers").addEventListener("click", async event => {
+      const reset = event.target.closest("button[data-teacher-reset]");
+      if (reset) {
+        const password = prompt("Enter a new temporary password (at least 8 characters):");
+        if (!password) return;
+        if (password.length < 8) { alert("Password must be at least 8 characters."); return; }
+        reset.disabled = true;
+        try {
+          await rpc("admin_reset_teacher_password", {
+            p_key:adminKey(), p_teacher_id:reset.dataset.teacherReset, p_password:password
+          });
+          alert("Password reset. The teacher must sign in again.");
+        } catch (error) { alert(error.message); }
+        finally { reset.disabled = false; }
+        return;
+      }
       const button = event.target.closest("button[data-teacher-id]");
       if (!button) return;
       button.disabled = true;
@@ -145,7 +160,9 @@
       const button=document.createElement("button");button.className="secondary";
       button.textContent=teacher.is_active?"Deactivate":"Activate";
       button.dataset.teacherId=teacher.id;button.dataset.active=String(teacher.is_active);
-      row.append(name,info,status,button);root.appendChild(row);
+      const reset=document.createElement("button");reset.className="secondary";reset.textContent="Reset password";reset.dataset.teacherReset=teacher.id;
+      const actions=document.createElement("div");actions.className="ta-actions";actions.append(button,reset);
+      row.append(name,info,status,actions);root.appendChild(row);
     });
   }
 
