@@ -1626,12 +1626,15 @@
       const mine = workItems.filter(w => w.kind === 'assignment' && (w.to === 'all' || w.to === me.phone)).sort((a, b) => b.ts - a.ts);
       const countBadge = document.getElementById('assignmentCountBadge');
       if (countBadge) countBadge.textContent = String(mine.length);
-      const subs = workItems.filter(w => w.kind === 'submission' && w.phone === me.phone);
+      const subs = workItems.filter(w => w.kind === 'submission' && w.phone === me.phone).sort((a, b) => b.ts - a.ts);
       if (!mine.length) grid.innerHTML = '<div class="repo-empty" style="grid-column:1/-1;"><i class="fas fa-clipboard-check"></i>No assignments have been posted for you yet.</div>';
       mine.forEach(a => {
-        const sub = subs.find(x => x.assignmentId === a.id);
+        const previous = subs.find(x => x.assignmentId === a.id) || null;
+        const needsResubmission = !!previous && ['rejected', 'returned_for_correction'].includes(previous.reviewStatus);
+        const sub = previous && !needsResubmission ? previous : null;
         const card = document.createElement('div'); card.className = 'portal-card';
         const badge = sub ? '<span class="status-badge status-submitted"><i class="fas fa-check-circle"></i> Submitted</span>'
+                          : needsResubmission ? '<span class="status-badge status-pending"><i class="fas fa-rotate"></i> Resubmission required</span>'
                           : '<span class="status-badge status-pending"><i class="fas fa-clock"></i> ' + (a.due ? 'Due ' + esc(a.due) : 'Open') + '</span>';
         let html = '<div style="display:flex;justify-content:space-between;align-items:center;">' + badge +
           '<span style="font-size:11px;color:#38bdf8;font-weight:700;text-transform:uppercase;">' + esc(a.subject || '') + '</span></div>' +
@@ -1642,9 +1645,12 @@
           const submittedFiles = Array.isArray(sub.attachments) && sub.attachments.length
             ? sub.attachments
             : (safeUrl(sub.fileUrl) ? [{ fileUrl: sub.fileUrl, fileName: sub.fileName || 'Attachment' }] : []);
-          html += '<div style="background:rgba(16,185,129,0.05);padding:12px;border-radius:10px;border:1px solid rgba(16,185,129,0.2);margin-top:auto;"><div style="font-size:12px;color:#10b981;font-weight:700;"><i class="fas fa-circle-check"></i> Work submitted</div><div style="font-size:11px;color:#94a3b8;margin-top:4px;">Sent on ' + esc(fmtDate(sub.ts)) + '. Awaiting grading.</div>' +
+          const reviewStatus = sub.reviewStatus || 'approved';
+          const reviewMessage = reviewStatus === 'pending_admin' ? 'Awaiting Admin review.' : reviewStatus === 'forwarded' ? 'Forwarded to your teacher; awaiting marking.' : reviewStatus === 'responded_pending_admin' ? 'Your teacher has marked this work. Admin is reviewing the result.' : reviewStatus === 'approved' ? 'Submission approved. Check your results below.' : 'Awaiting review.';
+          html += '<div style="background:rgba(16,185,129,0.05);padding:12px;border-radius:10px;border:1px solid rgba(16,185,129,0.2);margin-top:auto;"><div style="font-size:12px;color:#10b981;font-weight:700;"><i class="fas fa-circle-check"></i> Work submitted</div><div style="font-size:11px;color:#94a3b8;margin-top:4px;">Sent on ' + esc(fmtDate(sub.ts)) + '. ' + esc(reviewMessage) + '</div>' +
             (submittedFiles.length ? '<div style="margin-top:8px;">' + submittedFiles.map((f, i) => safeUrl(f.fileUrl) ? '<div style="font-size:11px;margin-top:5px;"><a href="' + esc(f.fileUrl) + '" target="_blank" rel="noopener" style="color:#38bdf8;text-decoration:none;"><i class="fas fa-paperclip"></i> ' + esc(f.fileName || ('Attachment ' + (i + 1))) + '</a></div>' : '').join('') + '</div>' : '') + '</div>';
         } else {
+          if (needsResubmission) html += '<div style="background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.2);padding:10px;border-radius:9px;color:#fca5a5;font-size:11px;margin-top:8px;">Admin returned this work. ' + esc(previous.reviewNote || 'Please review and submit your work again.') + '</div>';
           html += '<div style="margin-top:10px;border-top:1px solid rgba(255,255,255,0.05);padding-top:15px;">' +
             '<label style="font-size:11px;font-weight:700;color:#a855f7;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:8px;">Submit your work</label>' +
             '<div class="file-input-wrapper" onclick="document.getElementById(\'af-' + a.id + '\').click()"><i class="fas fa-cloud-arrow-up" style="font-size:20px;color:#38bdf8;margin-bottom:6px;"></i><div style="font-size:12px;color:#fff;font-weight:600;" id="afn-' + a.id + '">Choose files (up to 5 photos + voice recording)</div><div style="font-size:10px;color:#94a3b8;margin-top:5px;">PDF, DOCX, images and other common file types · photos are compressed before upload</div></div>' +
