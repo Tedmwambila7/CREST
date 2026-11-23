@@ -33,7 +33,8 @@
         <form id="lessonForm">
           <label>Lesson title</label><input name="title" required maxlength="140" placeholder="e.g. Introduction to Algebra">
           <div class="row"><div><label>Subject</label><input name="subject" required placeholder="Mathematics"></div><div><label>Student level</label><select name="level"><option>Junior</option><option>Senior</option></select></div></div>
-          <label>Topic (optional)</label><input name="topic" placeholder="Linear equations">
+          <label>Topic (required for audio/video lessons)</label><input name="topic" placeholder="Linear equations / Lesson 1">
+          <label>Lesson format</label><select name="material_type"><option value="lesson">Study material (PDF, slides, notes)</option><option value="voice_lesson">Voice lesson (audio)</option><option value="video_lesson">Video lesson</option></select>
           <label>Upload lesson file or paste a secure link</label><input name="file" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,audio/*,video/*">
           <label>Or lesson URL</label><input name="file_url" type="url" placeholder="https://…">
           <div class="record"><button class="btn secondary" type="button" id="recordLesson">Record audio lesson</button><button class="btn secondary" type="button" id="stopLesson" disabled>Stop recording</button></div>
