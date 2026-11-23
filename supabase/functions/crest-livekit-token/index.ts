@@ -94,7 +94,7 @@ Deno.serve(async (req: Request) => {
       verifiedName = String(data.name || "CREST Student");
     }
     const displayName = (verifiedName || String(body.displayName || "CREST user"))
-      .replace(/[<>]/g, "").replace(/[\\x00-\\x1f]/g, "").trim().slice(0, 60);
+      .replace(/[<>]/g, "").trim().slice(0, 60);
 
     let roomName = "";
     let mode: "audio" | "video" = "audio";
