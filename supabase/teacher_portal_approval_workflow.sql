@@ -24,6 +24,11 @@ create table if not exists public.crest_approval_items (
  title text not null default '', subject text not null default '', payload jsonb not null default '{}'::jsonb,
  review_note text, created_at timestamptz not null default now(), updated_at timestamptz not null default now()
 );
+alter table public.crest_approval_items
+  drop constraint if exists crest_approval_items_item_type_check;
+alter table public.crest_approval_items
+  add constraint crest_approval_items_item_type_check
+  check(item_type in ('question','assignment_submission','lesson','assignment','teacher_response','assignment_mark','voice_lesson','video_lesson'));
 create index if not exists crest_approval_items_status_created_idx on public.crest_approval_items(status,created_at desc);
 create index if not exists crest_approval_items_teacher_status_idx on public.crest_approval_items(assigned_teacher_id,status,created_at desc);
 create index if not exists crest_approval_items_submitter_phone_idx on public.crest_approval_items(submitter_phone,created_at desc);
