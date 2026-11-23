@@ -2501,7 +2501,6 @@ function draw(){
  lessons.forEach(x=>loadLessonComments(x.id));
 }
 async function loadLessonComments(id){const host=el('vlComments-'+id);if(!host)return;try{const rows=await rpc('crest_voice_student_comments',{p_token:studentSession.token,p_lesson_id:id})||[];host.innerHTML=rows.length?rows.map(r=>'<div style="padding:9px 11px;border-radius:9px;background:rgba(148,163,184,.08);color:#e2e8f0;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere">'+esc(r.comment)+'<small style="display:block;color:#64748b;margin-top:5px">'+new Date(r.created_at).toLocaleString()+'</small></div>').join(''):'<small style="color:#64748b">No comments yet. Be the first to share your thoughts.</small>';}catch(e){host.textContent='Could not load comments: '+e.message;}}
-}
 document.addEventListener('DOMContentLoaded',()=>{const b=el('voiceLessonCountBadge');if(b)b.style.display='none';if(studentSession)setTimeout(window.crestVoiceStudentLoad,800);});
 setInterval(()=>{if(studentSession&&!busy)window.crestVoiceStudentLoad();},90000);
 })();
