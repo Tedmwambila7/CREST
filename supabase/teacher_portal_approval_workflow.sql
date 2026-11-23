@@ -559,6 +559,50 @@ begin
 end
 $function$;
 
+CREATE OR REPLACE FUNCTION public.student_items(p_token text, p_coll text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'extensions'
+AS $function$
+declare me text := public.crest_me(p_token);
+begin
+  if me is null then raise exception 'Session expired'; end if;
+  if p_coll='chat' then
+    return coalesce((
+      select jsonb_agg(data order by ts) from public.crest_items
+      where coll='chat' and (
+        phone=me or (
+          (data->>'isTeacher')='true' and
+          (coalesce(data->>'to','') in ('','all') or data->>'to'=me)
+        )
+      )
+    ),'[]'::jsonb);
+  elsif p_coll='work' then
+    return coalesce((
+      select jsonb_agg(
+        case when ci.data->>'kind'='submission' then
+          ci.data || jsonb_build_object(
+            'reviewStatus',coalesce(a.status,'approved'),
+            'reviewNote',coalesce(a.review_note,'')
+          )
+        else ci.data end
+        order by ci.ts
+      )
+      from public.crest_items ci
+      left join public.crest_approval_items a on a.source_item_id=ci.id
+      where ci.coll='work' and (
+        ((ci.data->>'kind') in ('assignment','grade') and (ci.data->>'to' in ('all',me)))
+        or ((ci.data->>'kind')='submission' and ci.phone=me)
+      )
+    ),'[]'::jsonb);
+  end if;
+  return '[]'::jsonb;
+end
+$function$;
+
+revoke all on function public.student_items(text,text) from public;
+grant execute on function public.student_items(text,text) to anon,authenticated;
 revoke all on function public.admin_teachers(text) from public;
 revoke all on function public.admin_add_teacher(text,text,text,text,text) from public;
 revoke all on function public.admin_set_teacher_active(text,uuid,boolean) from public;
