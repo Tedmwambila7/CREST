@@ -280,7 +280,11 @@
       inviteTimer = null;
       activePeerIdentity = participant.identity;
       joinCall(activeTicket, activeCallId, activeMode, activePeerIdentity).catch(error => {
+        sendLobby({ type: 'call-end', callId: activeCallId }).catch(() => {});
+        resetOutgoing();
+        activePeerIdentity = '';
         setStatus('Could not connect the call: ' + error.message);
+        refreshToolbar();
       });
       return;
     }
@@ -317,8 +321,10 @@
       await sendLobby({ type: 'call-accept', callId: invite.callId });
       await joinCall(invite.ticket, invite.callId, invite.mode, invite.callerIdentity);
     } catch (error) {
+      sendLobby({ type: 'call-end', callId: invite.callId }).catch(() => {});
       setStatus('Could not join the call: ' + error.message);
       resetOutgoing();
+      refreshToolbar();
     }
   }
 
