@@ -290,3 +290,176 @@ nav a:hover, nav a.active { color: var(--accent); }
   text-decoration: none;
   font-weight: 600;
 }
+
+/* =========================================================
+   CREST ACADEMY — STUDENT EXPERIENCE REFRESH
+   Scoped to authenticated student view; admin and public pages
+   retain their existing appearance and behaviour.
+========================================================= */
+body.student-view {
+  --student-ink:#122748;
+  --student-muted:#64748b;
+  --student-blue:#1769e8;
+  --student-line:#e5ebf4;
+  background:#f3f6fc !important;
+  color:var(--student-ink) !important;
+  background-image:radial-gradient(ellipse at 72% 0%,rgba(96,165,250,.13),transparent 35%) !important;
+}
+body.student-view > header {
+  position:fixed !important; inset:0 auto 0 0 !important;
+  width:252px !important; height:100vh !important; min-height:100vh !important;
+  padding:25px 16px !important; box-sizing:border-box !important;
+  display:flex !important; flex-direction:column !important;
+  align-items:stretch !important; justify-content:flex-start !important;
+  gap:30px !important; overflow-y:auto !important;
+  background:linear-gradient(180deg,#102b50 0%,#0b1d38 100%) !important;
+  border:0 !important; border-right:1px solid rgba(255,255,255,.08) !important;
+  box-shadow:8px 0 30px rgba(15,35,65,.08) !important;
+  z-index:1200 !important;
+}
+body.student-view > header > div:first-child {
+  padding:8px 8px 22px !important;
+  border-bottom:1px solid rgba(255,255,255,.13) !important;
+}
+body.student-view > header > div:first-child > span { font-size:32px !important; }
+body.student-view > header > div:first-child > div {
+  color:#fff !important; font-size:18px !important; line-height:1.35 !important;
+}
+body.student-view > header > div:first-child > div span { color:#fbbf24 !important; }
+body.student-view > header nav {
+  width:100% !important; display:flex !important; flex-direction:column !important;
+  align-items:stretch !important; gap:7px !important; flex-wrap:nowrap !important;
+}
+body.student-view > header nav .nav-link {
+  display:flex !important; align-items:center !important; gap:12px !important;
+  width:100% !important; box-sizing:border-box !important;
+  padding:12px 13px !important; border:1px solid transparent !important;
+  border-radius:12px !important; background:transparent !important;
+  color:#d6e3f4 !important; font-size:13px !important; font-weight:600 !important;
+  white-space:normal !important; text-decoration:none !important;
+}
+body.student-view > header nav .nav-link:hover,
+body.student-view > header nav .nav-link.active {
+  color:#fff !important; background:linear-gradient(90deg,#1769e8,#2879ef) !important;
+  border-color:rgba(255,255,255,.12) !important;
+  box-shadow:0 8px 20px rgba(23,105,232,.22) !important;
+}
+body.student-view > header nav a[href="admin.html"] { display:none !important; }
+body.student-view > header nav button {
+  margin-top:18px !important; padding:12px 14px !important;
+  border-radius:12px !important; text-align:left !important;
+}
+body.student-view > main {
+  width:auto !important; max-width:none !important;
+  margin:0 0 0 252px !important; padding:28px clamp(18px,3vw,48px) 50px !important;
+}
+body.student-view main > div:first-child {
+  min-height:250px !important; padding:38px clamp(22px,4vw,48px) !important;
+  border-radius:24px !important; text-align:left !important;
+  background:linear-gradient(112deg,#12345c 0%,#1769c9 58%,#6656c7 100%) !important;
+  border:0 !important; box-shadow:0 18px 42px rgba(25,74,145,.18) !important;
+}
+body.student-view main > div:first-child h1 { font-size:clamp(28px,3.3vw,43px) !important; }
+body.student-view main > div:first-child p { margin-left:0 !important; }
+body.student-view main > div:first-child p:nth-of-type(2) { color:#e5efff !important; }
+body.student-view main > div:first-child #searchBox {
+  background:#fff !important; color:#17345a !important;
+  border:1px solid rgba(255,255,255,.75) !important;
+  box-shadow:0 8px 22px rgba(5,25,55,.13) !important;
+}
+body.student-view .crest-welcome-kicker {
+  color:#fff !important; background:rgba(255,255,255,.14) !important;
+  border-color:rgba(255,255,255,.22) !important;
+}
+body.student-view .crest-quick-actions { grid-template-columns:repeat(4,minmax(0,1fr)) !important; gap:14px !important; }
+body.student-view .crest-action-card {
+  min-height:112px !important; padding:17px !important;
+  background:#fff !important; color:#17345a !important;
+  border:1px solid #e4ebf5 !important; border-radius:18px !important;
+  box-shadow:0 8px 22px rgba(20,48,88,.06) !important;
+}
+body.student-view .crest-action-copy strong { color:#17345a !important; }
+body.student-view .crest-action-copy small { color:#718096 !important; }
+body.student-view .fliers-container {
+  background:#fff !important; border:1px solid #e5ebf4 !important;
+  box-shadow:0 6px 18px rgba(20,48,88,.05) !important;
+}
+body.student-view .flier-text-scroll { color:#1769e8 !important; }
+body.student-view .flier-text-scroll span { color:#344b68 !important; }
+body.student-view .sidebar-block,
+body.student-view .repo-panel,
+body.student-view .portal-card,
+body.student-view #studentPortalView > div > div,
+body.student-view #voiceLessonsView,
+body.student-view #videoLessonsView,
+body.student-view #resourcesView {
+  background:#fff !important; color:#17345a !important;
+  border:1px solid #e5ebf4 !important; border-radius:18px !important;
+  box-shadow:0 8px 24px rgba(20,48,88,.055) !important;
+}
+body.student-view .sidebar-block h3,
+body.student-view .repo-title,
+body.student-view .portal-section-header h2,
+body.student-view #studentPortalView h3,
+body.student-view #voiceLessonsView h2,
+body.student-view #videoLessonsView h2,
+body.student-view #resourcesView h2 { color:#17345a !important; }
+body.student-view .sidebar-block p,
+body.student-view .repo-sub { color:#64748b !important; }
+body.student-view .folder-item-btn {
+  background:#f7f9fd !important; color:#294361 !important;
+  border:1px solid #e7edf6 !important;
+}
+body.student-view .folder-item-btn:hover,
+body.student-view .folder-item-btn.active {
+  background:#edf4ff !important; color:#1769e8 !important;
+  border-color:#b9d2fb !important;
+}
+body.student-view .portal-section-header {
+  background:linear-gradient(110deg,#edf4ff,#f4f1ff) !important;
+  border:1px solid #dce7f8 !important; box-shadow:none !important;
+}
+body.student-view .portal-section-header p { color:#64748b !important; }
+body.student-view .portal-card { background:#fff !important; }
+body.student-view #hubView { grid-template-columns:280px minmax(0,1fr) !important; gap:22px !important; }
+body.student-view .repo-panel { min-width:0 !important; }
+body.student-view .repo-title { font-size:20px !important; }
+body.student-view .file-row { background:#f8faff !important; color:#294361 !important; border-color:#e5ebf4 !important; }
+body.student-view #studentPortalView table { color:#294361 !important; }
+body.student-view #studentPortalView thead { color:#1769e8 !important; }
+@media(max-width:1100px) {
+  body.student-view .crest-quick-actions { grid-template-columns:repeat(2,minmax(0,1fr)) !important; }
+  body.student-view #hubView { grid-template-columns:1fr !important; }
+}
+@media(max-width:760px) {
+  body.student-view > header {
+    position:sticky !important; inset:auto !important; width:100% !important;
+    height:auto !important; min-height:0 !important; padding:12px 16px !important;
+    flex-direction:row !important; align-items:center !important; gap:10px !important;
+    overflow:visible !important;
+  }
+  body.student-view > header > div:first-child {
+    padding:0 !important; border:0 !important;
+  }
+  body.student-view > header > div:first-child > span { font-size:25px !important; }
+  body.student-view > header > div:first-child > div { font-size:15px !important; }
+  body.student-view > header nav {
+    flex-direction:row !important; flex-wrap:nowrap !important; overflow-x:auto !important;
+    gap:6px !important; padding:4px 0 !important;
+  }
+  body.student-view > header nav .nav-link {
+    width:auto !important; flex:0 0 auto !important; padding:9px 11px !important;
+    font-size:11px !important; white-space:nowrap !important;
+  }
+  body.student-view > header nav button { flex:0 0 auto !important; margin:0 !important; }
+  body.student-view > main { margin:0 !important; padding:18px 14px 36px !important; }
+  body.student-view main > div:first-child { min-height:0 !important; padding:28px 20px !important; }
+  body.student-view .crest-quick-actions { grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:10px !important; }
+  body.student-view .crest-action-card { min-height:100px !important; padding:13px !important; gap:10px !important; }
+  body.student-view .crest-action-icon { flex-basis:42px !important; width:42px !important; height:42px !important; }
+  body.student-view .fliers-container { padding:13px !important; gap:10px !important; }
+}
+@media(max-width:420px) {
+  body.student-view .crest-quick-actions { grid-template-columns:1fr !important; }
+  body.student-view .crest-action-card { min-height:78px !important; }
+}
