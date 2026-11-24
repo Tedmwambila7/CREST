@@ -49,5 +49,5 @@
       });
     } catch(e){root.innerHTML='<p style="color:#f87171">Could not load students: '+String(e.message).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))+'</p>';}
   }
-  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",load);else load();
+  function boot(){if(sessionStorage.getItem("crestAdminOK")==="1")load();}\n  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot();\n  const observer=new MutationObserver(boot);observer.observe(document.body,{attributes:true,attributeFilter:["class"]});
 })();
