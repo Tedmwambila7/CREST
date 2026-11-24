@@ -230,7 +230,8 @@
   <div class="modal-bg" id="partModal" onclick="if(event.target===this)closeAddParticipant()">
     <div class="modal-box">
       <h3><i class="fa-solid fa-user-plus" style="color:var(--accent-primary);"></i> Add Participant</h3>
-      <div class="form-group"><label>Participant name</label><input type="text" id="partName" placeholder="e.g. John Banda" /></div>
+      <div class="form-group"><label>Student full name</label><input type="text" id="partName" placeholder="e.g. John Banda" /></div>
+      <div class="form-group"><label>Assign class</label><select id="partForm"><option value="Form 1">Form 1</option><option value="Form 2">Form 2</option><option value="Form 3">Form 3</option><option value="Form 4">Form 4</option></select></div>
       <div class="form-group"><label>Phone number</label><input type="text" id="partPhone" placeholder="e.g. 0888123456" /></div>
       <div class="form-group"><label>Password (you choose it)</label>
         <div style="display:flex;gap:8px;"><input type="text" id="partPass" placeholder="at least 6 characters" /><button type="button" class="mini-btn blue" onclick="genPartPass()" style="padding:0 14px;">Generate</button></div>
@@ -250,6 +251,7 @@
       Each day has six one-hour classes.
     </p>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;">
+      <div class="form-group"><label>Class / Form</label><select id="ttForm"><option value="All">All forms</option><option value="Form 1">Form 1</option><option value="Form 2">Form 2</option><option value="Form 3">Form 3</option><option value="Form 4">Form 4</option></select></div>
       <div class="form-group"><label>Day</label>
         <select id="ttDay">
           <option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option>
@@ -288,7 +290,7 @@
     <div style="overflow-x:auto;margin-top:18px;">
       <table style="width:100%;border-collapse:collapse;min-width:620px;font-size:12px;">
         <thead><tr style="color:var(--accent-primary);text-align:left;">
-          <th style="padding:10px;">Day / Period</th><th>Time</th><th>Subject</th><th>Teacher / Room</th><th>Status</th><th>Actions</th>
+          <th style="padding:10px;">Form · Day / Period</th><th>Time</th><th>Subject</th><th>Teacher / Room</th><th>Status</th><th>Actions</th>
         </tr></thead>
         <tbody id="crestTtRows"><tr><td colspan="6" style="padding:14px;color:var(--text-muted);">No entries loaded yet.</td></tr></tbody>
       </table>
@@ -1728,7 +1730,7 @@
 
     /* ===================== ADD / REMOVE PARTICIPANTS ===================== */
     function openAddParticipant() {
-      ['partName', 'partPhone', 'partPass'].forEach(id => document.getElementById(id).value = '');
+      ['partName', 'partPhone', 'partPass'].forEach(id => document.getElementById(id).value = ''); document.getElementById('partForm').value = 'Form 1';
       const st = document.getElementById('partStatus'); st.style.display = 'none';
       document.getElementById('partModal').classList.add('open');
       setTimeout(() => document.getElementById('partName').focus(), 50);
@@ -1745,6 +1747,7 @@
       const name = document.getElementById('partName').value.trim().replace(/\s+/g, ' ');
       const phone = normPhone(document.getElementById('partPhone').value);
       const pw = document.getElementById('partPass').value;
+      const form = document.getElementById('partForm').value;
       if (name.length < 3) return partStatus('⚠️ Enter the participant name.', 'danger');
       if (phone.replace('+', '').length < 7) return partStatus('⚠️ Enter a valid phone number.', 'danger');
       if (pw.length < 6) return partStatus('⚠️ Password must be at least 6 characters.', 'danger');
@@ -1755,7 +1758,7 @@
       }
       const btn = document.getElementById('partBtn'); btn.disabled = true;
       try {
-        const res = await rpc('admin_add_student', { p_key: adminKey(), p_name: name, p_phone: phone, p_password: pw });
+        const res = await rpc('admin_add_student', { p_key: adminKey(), p_name: name, p_phone: phone, p_password: pw, p_form: form });
         const exists = res === 'exists';
         if (exists) partStatus('⚠️ That phone number already has an account. Use Reset password in the list.', 'danger');
         else {
@@ -2414,13 +2417,13 @@
   }
   window.crestTtClearForm = function () {
     el('ttEntryId').value = '';
-    el('ttDay').value = 'Tuesday'; el('ttPeriod').value = '1';
+    el('ttForm').value = 'All'; el('ttDay').value = 'Tuesday'; el('ttPeriod').value = '1';
     el('ttStart').value = '08:00'; el('ttEnd').value = '09:00';
     el('ttSubject').value = ''; el('ttTeacher').value = ''; el('ttRoom').value = '';
     el('ttPublishOnSave').checked = false;
   };
   function ttFillForm(row) {
-    el('ttEntryId').value = row.id || '';
+    el('ttEntryId').value = row.id || ''; el('ttForm').value = row.form || 'All';
     el('ttDay').value = row.day; el('ttPeriod').value = String(row.period);
     el('ttStart').value = String(row.start_time || '').slice(0,5);
     el('ttEnd').value = String(row.end_time || '').slice(0,5);
@@ -2436,7 +2439,7 @@
     }
     body.innerHTML = ttRows.map(row => `
       <tr style="border-top:1px solid rgba(255,255,255,.07);">
-        <td style="padding:10px;">${ttEscape(row.day)} · ${row.period}</td>
+        <td style="padding:10px;">${ttEscape(row.form || "All")} · ${ttEscape(row.day)} · ${row.period}</td>
         <td>${ttEscape(String(row.start_time||'').slice(0,5))}–${ttEscape(String(row.end_time||'').slice(0,5))}</td>
         <td>${ttEscape(row.subject)}</td>
         <td>${ttEscape([row.teacher,row.room].filter(Boolean).join(' / ') || '—')}</td>
@@ -2466,7 +2469,7 @@
   };
   window.crestTtSave = async function () {
     const entry = {
-      id: el('ttEntryId').value || null, day: el('ttDay').value,
+      id: el('ttEntryId').value || null, form: el('ttForm').value, day: el('ttDay').value,
       period: Number(el('ttPeriod').value), start_time: el('ttStart').value,
       end_time: el('ttEnd').value, subject: el('ttSubject').value.trim(),
       teacher: el('ttTeacher').value.trim(), room: el('ttRoom').value.trim(),
