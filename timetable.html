@@ -35,7 +35,7 @@ function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 async function loadTimetable(){
  const status=document.getElementById('ttStatus'),body=document.getElementById('ttBody');status.textContent='Loading published timetable…';
  try{
-  const res=await fetch(SUPABASE_URL+'/rest/v1/rpc/crest_timetable_public',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY},body:'{}'});
+  let session=null;try{session=JSON.parse(localStorage.getItem('crestStudentSession')||'null')}catch(_){}\n  const rpcName=session&&session.token?'crest_timetable_student_list':'crest_timetable_public';\n  const args=session&&session.token?{p_token:session.token}:{};\n  const res=await fetch(SUPABASE_URL+'/rest/v1/rpc/'+rpcName,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY},body:JSON.stringify(args)});
   const raw=await res.text();let rows;try{rows=JSON.parse(raw)}catch{throw new Error(raw||'Unexpected response')}
   if(!res.ok)throw new Error(rows.message||'Could not load timetable');
   const lookup={};(rows||[]).forEach(r=>{if(days.includes(r.day)&&Number(r.period)>=1&&Number(r.period)<=6)lookup[r.day+'|'+r.period]=r;});
@@ -45,7 +45,7 @@ async function loadTimetable(){
     const r=lookup[day+'|'+slot.p];return '<td>'+(r?'<span class="lesson">'+esc(r.subject)+'</span>'+(r.teacher?'<span class="teacher">'+esc(r.teacher)+'</span>':'')+(r.room?'<span class="room">'+esc(r.room)+'</span>':''):'<span class="empty">—</span>')+'</td>';
    }).join('')+'</tr>';
   });
-  body.innerHTML=html;status.textContent=rows&&rows.some(r=>days.includes(r.day)&&Number(r.period)<=6)?'Showing the published Tuesday–Friday timetable.':'No timetable has been published yet.';
+  body.innerHTML=html;status.textContent=(session&&session.form?'Your assigned class: '+session.form+'. ':'')+(rows&&rows.some(r=>days.includes(r.day)&&Number(r.period)<=6)?'Showing the published Tuesday–Friday timetable.':'No timetable has been published yet.');
  }catch(e){status.textContent='Unable to load timetable: '+e.message;body.innerHTML='<tr><td colspan="6" class="empty">Please refresh later or contact the administrator.</td></tr>';}
 }
 loadTimetable();
