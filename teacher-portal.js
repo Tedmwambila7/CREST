@@ -161,7 +161,7 @@
         file_url:url,file_name:name || url.split("/").pop() || "Lesson material",
         file_type:type || "application/octet-stream",file_size:size
       }});
-      form.reset();recordedBlob=null;setMessage("recordStatus","");setMessage("lessonMessage","Lesson submitted. It will appear to students after Admin approval.",false);await refreshDashboard();
+      form.reset();recordedBlob=null;setMessage("recordStatus","");setMessage("lessonMessage","Lesson published for "+String(fd.get("form")||"your class")+".",false);await refreshDashboard();
     }catch(error){setMessage("lessonMessage",error.message,true);}
     finally{button.disabled=false;}
   });
@@ -177,7 +177,7 @@
         description:String(fd.get("description")||"").trim(),form:String(fd.get("form")||""),due:String(fd.get("due")||""),
         fileUrl:fileUrl,fileName:fileName,fileType:fileType,fileSize:fileSize,to:"all"
       }});
-      form.reset();setMessage("assignmentMessage","Assignment sent to Admin. Students will see it after approval.",false);await refreshDashboard();
+      form.reset();setMessage("assignmentMessage","Assignment published for "+String(fd.get("form")||"your class")+".",false);await refreshDashboard();
     }catch(error){setMessage("assignmentMessage",error.message,true);}
     finally{button.disabled=false;}
   });
