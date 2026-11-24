@@ -145,6 +145,7 @@
     loadTeachers().catch(e => message("taCreateNotice",e.message,true));
     loadQueue().catch(e => message("taQueueNotice",e.message,true));
     loadActivity().catch(e => message("taQueueNotice",e.message,true));
+    loadActivity().catch(e => message("taQueueNotice",e.message,true));
   }
 
   async function loadTeachers() {
