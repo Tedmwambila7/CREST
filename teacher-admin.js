@@ -76,6 +76,7 @@
           p_email:values.get("email"), p_subject:values.get("subject"),
           p_password:values.get("password")
         });
+        await rpc("admin_assign_teacher", {p_key:adminKey(),p_teacher_id:result.id,p_subjects:values.getAll("subjects"),p_forms:values.getAll("forms")});
         form.reset();
         message("taCreateNotice", result && result.message ? result.message : "Teacher account created.", false);
         await loadTeachers();
