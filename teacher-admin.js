@@ -52,7 +52,7 @@
       '<section class="ta-card"><h2>Add a Teacher</h2><p>Create a teacher account. Give the teacher their email and temporary password.</p>' +
       '<form id="taCreateForm"><label>Teacher full name</label><input name="full_name" required minlength="3" placeholder="Full name">' +
       '<label>Email address</label><input name="email" type="email" required placeholder="teacher@example.com">' +
-      '<label>Subject / department</label><input name="subject" placeholder="Mathematics">' +
+      '<label>Assigned subjects (select one or more)</label><select name="subjects" multiple required size="5"><option>Biology</option><option>Chemistry</option><option>Physics</option><option>Mathematics</option><option>English</option><option>Chichewa</option><option>Agriculture</option><option>Geography</option><option>History</option><option>Computer Studies</option><option>Business Studies</option><option>Life Skills</option></select><label>Assigned forms (select one or more)</label><select name="forms" multiple required size="4"><option>Form 1</option><option>Form 2</option><option>Form 3</option><option>Form 4</option></select>' +
       '<label>Temporary password</label><input name="password" type="password" minlength="8" required placeholder="At least 8 characters">' +
       '<button type="submit" style="width:100%;margin-top:14px">Create teacher account</button></form><div id="taCreateNotice" style="font-size:11px;margin-top:10px"></div></section>' +
       '<section class="ta-card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2>Teacher Accounts</h2><button type="button" class="secondary" id="taRefreshTeachers">Refresh</button></div>' +
@@ -155,13 +155,13 @@
     teachers.forEach(teacher => {
       const row=document.createElement("div");row.className="ta-item";
       const name=document.createElement("strong");name.textContent=teacher.full_name;name.style.color="#fff";
-      const info=document.createElement("div");info.className="ta-meta";info.textContent=teacher.email+" · "+(teacher.subject||"No subject");
+      const info=document.createElement("div");info.className="ta-meta";info.textContent=teacher.email+" · "+((teacher.subjects||[]).join(", ")||teacher.subject||"No subject")+" · "+((teacher.forms||[]).join(", ")||"No forms assigned");
       const status=document.createElement("div");status.className="ta-meta";status.textContent=teacher.is_active?"ACTIVE":"INACTIVE";
       const button=document.createElement("button");button.className="secondary";
       button.textContent=teacher.is_active?"Deactivate":"Activate";
       button.dataset.teacherId=teacher.id;button.dataset.active=String(teacher.is_active);
       const reset=document.createElement("button");reset.className="secondary";reset.textContent="Reset password";reset.dataset.teacherReset=teacher.id;
-      const actions=document.createElement("div");actions.className="ta-actions";actions.append(button,reset);
+      const actions=document.createElement("div");actions.className="ta-actions";\n      const subjectSelect=document.createElement("select");subjectSelect.multiple=true;subjectSelect.size=4;subjectSelect.style.minWidth="180px";\n      ["Biology","Chemistry","Physics","Mathematics","English","Chichewa","Agriculture","Geography","History","Computer Studies","Business Studies","Life Skills"].forEach(v=>{const o=document.createElement("option");o.value=v;o.textContent=v;o.selected=(teacher.subjects||[]).includes(v);subjectSelect.appendChild(o);});\n      const formSelect=document.createElement("select");formSelect.multiple=true;formSelect.size=4;formSelect.style.minWidth="130px";\n      ["Form 1","Form 2","Form 3","Form 4"].forEach(v=>{const o=document.createElement("option");o.value=v;o.textContent=v;o.selected=(teacher.forms||[]).includes(v);formSelect.appendChild(o);});\n      const saveAssignment=document.createElement("button");saveAssignment.textContent="Save subjects & forms";saveAssignment.addEventListener("click",async()=>{saveAssignment.disabled=true;try{const subjects=Array.from(subjectSelect.selectedOptions).map(o=>o.value);const forms=Array.from(formSelect.selectedOptions).map(o=>o.value);await rpc("admin_assign_teacher",{p_key:adminKey(),p_teacher_id:teacher.id,p_subjects:subjects,p_forms:forms});await loadTeachers();}catch(e){alert(e.message);}finally{saveAssignment.disabled=false;}});\n      actions.append(subjectSelect,formSelect,saveAssignment,button,reset);
       row.append(name,info,status,actions);root.appendChild(row);
     });
   }
