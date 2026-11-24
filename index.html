@@ -1569,7 +1569,7 @@
       try {
         if (idv) {
           const me = await rpc('student_login', { p_name: nameRaw, p_phone: normPhone(idv), p_password: pw });
-          if (me) return startSession({ name: me.name, phone: me.phone, token: me.token });
+          if (me) return startSession({ name: me.name, phone: me.phone, form: me.form || null, token: me.token });
         }
         // not a student: is this the admin?
         const key = normName(nameRaw) + '|' + pw;
