@@ -29,7 +29,7 @@
     <section class="welcome"><div class="eyebrow">TEACHING WORKSPACE</div><h1>Welcome, <span id="teacherName">Teacher</span></h1><p class="muted">Publish lessons and assignments for your assigned subjects and forms. The administrator can monitor your teaching activity.</p></section>
     <div class="grid">
       <section class="panel">
-        <h2>Upload or record a lesson</h2><p>Every lesson is checked by the administrator before it appears in the student portal.</p>
+        <h2>Upload or record a lesson</h2><p>Publish directly to the class you select. The administrator can review your activity at any time.</p>
         <form id="lessonForm">
           <label>Lesson title</label><input name="title" required maxlength="140" placeholder="e.g. Introduction to Algebra">
           <div class="row"><div><label>Subject</label><select name="subject" id="lessonSubject" required></select></div><div><label>Class / Form</label><select name="form" id="lessonFormClass" required></select></div></div>
@@ -43,7 +43,7 @@
         </form><div class="notice" id="lessonMessage"></div>
       </section>
       <section class="panel">
-        <h2>Create an assignment</h2><p>Prepare an assignment for students. The administrator approves it before it is published.</p>
+        <h2>Create an assignment</h2><p>Publish an assignment directly to the selected form.</p>
         <form id="assignmentForm">
           <label>Assignment title</label><input name="title" required maxlength="140" placeholder="e.g. Form 3 Chemistry Exercise">
           <div class="row"><div><label>Subject</label><select name="subject" id="assignmentSubject" required></select></div><div><label>Class / Form</label><select name="form" id="assignmentFormClass" required></select></div></div>
@@ -52,6 +52,7 @@
           <button class="btn" type="submit">Publish assignment</button>
         </form><div class="notice" id="assignmentMessage"></div>
       </section>
+      <section class="panel wide"><h2>My assigned timetable</h2><p>The Super Admin manages the official timetable. Here are the periods for your assigned forms.</p><div id="teacherTimetable" class="queue"><div class="empty">Loading timetable…</div></div></section>
       <section class="panel wide">
         <h2>My assigned student work and questions</h2><p>The administrator forwards student submissions and questions to you. Mark assigned submissions and respond to student questions. Your activity is recorded for administrator supervision.</p>
         <div id="teacherInbox" class="queue"><div class="empty">Loading your inbox…</div></div>
