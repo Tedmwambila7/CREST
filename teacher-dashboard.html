@@ -26,34 +26,34 @@
     <button class="logout" id="teacherLogout">Sign out</button>
   </header>
   <main id="teacherDashboard">
-    <section class="welcome"><div class="eyebrow">TEACHING WORKSPACE</div><h1>Welcome, <span id="teacherName">Teacher</span></h1><p class="muted">Submit lessons and assignments for administrator approval. Review only the student work and questions assigned to you.</p></section>
+    <section class="welcome"><div class="eyebrow">TEACHING WORKSPACE</div><h1>Welcome, <span id="teacherName">Teacher</span></h1><p class="muted">Publish lessons and assignments for your assigned subjects and forms. The administrator can monitor your teaching activity.</p></section>
     <div class="grid">
       <section class="panel">
         <h2>Upload or record a lesson</h2><p>Every lesson is checked by the administrator before it appears in the student portal.</p>
         <form id="lessonForm">
           <label>Lesson title</label><input name="title" required maxlength="140" placeholder="e.g. Introduction to Algebra">
-          <div class="row"><div><label>Subject</label><input name="subject" required placeholder="Mathematics"></div><div><label>Student level</label><select name="level"><option>Junior</option><option>Senior</option></select></div></div>
+          <div class="row"><div><label>Subject</label><select name="subject" id="lessonSubject" required></select></div><div><label>Class / Form</label><select name="form" id="lessonFormClass" required></select></div></div>
           <label>Topic (required for audio/video lessons)</label><input name="topic" placeholder="Linear equations / Lesson 1">
           <label>Lesson format</label><select name="material_type"><option value="lesson">Study material (PDF, slides, notes)</option><option value="voice_lesson">Voice lesson (audio)</option><option value="video_lesson">Video lesson</option></select>
           <label>Upload lesson file or paste a secure link</label><input name="file" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,audio/*,video/*">
           <label>Or lesson URL</label><input name="file_url" type="url" placeholder="https://…">
           <div class="record"><button class="btn secondary" type="button" id="recordLesson">Record audio lesson</button><button class="btn secondary" type="button" id="stopLesson" disabled>Stop recording</button></div>
           <div class="notice" id="recordStatus" aria-live="polite"></div>
-          <button class="btn" type="submit">Send lesson for approval</button>
+          <button class="btn" type="submit">Publish lesson</button>
         </form><div class="notice" id="lessonMessage"></div>
       </section>
       <section class="panel">
         <h2>Create an assignment</h2><p>Prepare an assignment for students. The administrator approves it before it is published.</p>
         <form id="assignmentForm">
           <label>Assignment title</label><input name="title" required maxlength="140" placeholder="e.g. Form 3 Chemistry Exercise">
-          <label>Subject</label><input name="subject" required placeholder="Chemistry">
+          <div class="row"><div><label>Subject</label><select name="subject" id="assignmentSubject" required></select></div><div><label>Class / Form</label><select name="form" id="assignmentFormClass" required></select></div></div>
           <label>Instructions / description</label><textarea name="description" required placeholder="Explain what students should complete…"></textarea>
           <div class="row"><div><label>Due date (optional)</label><input name="due" type="date"></div><div><label>Attachment (optional)</label><input name="file" type="file"></div></div>
-          <button class="btn" type="submit">Send assignment for approval</button>
+          <button class="btn" type="submit">Publish assignment</button>
         </form><div class="notice" id="assignmentMessage"></div>
       </section>
       <section class="panel wide">
-        <h2>My assigned student work and questions</h2><p>The administrator forwards student submissions and questions to you. Your marks and answers return to the administrator for approval before students receive them.</p>
+        <h2>My assigned student work and questions</h2><p>The administrator forwards student submissions and questions to you. Mark assigned submissions and respond to student questions. Your activity is recorded for administrator supervision.</p>
         <div id="teacherInbox" class="queue"><div class="empty">Loading your inbox…</div></div>
       </section>
       <section class="panel wide">
