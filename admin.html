@@ -1762,8 +1762,8 @@
         const exists = res === 'exists';
         if (exists) partStatus('⚠️ That phone number already has an account. Use Reset password in the list.', 'danger');
         else {
-          partStatus('✅ Added. Give the student:<br><strong>Name:</strong> ' + esc(name) + '<br><strong>Phone:</strong> ' + esc(phone) + '<br><strong>Password:</strong> ' + esc(pw), 'success');
-          ['partName', 'partPhone', 'partPass'].forEach(id => document.getElementById(id).value = '');
+          partStatus('✅ Added. Give the student:<br><strong>Name:</strong> ' + esc(name) + '<br><strong>Class:</strong> ' + esc(form) + '<br><strong>Phone:</strong> ' + esc(phone) + '<br><strong>Password:</strong> ' + esc(pw), 'success');
+          ['partName', 'partPhone', 'partPass'].forEach(id => document.getElementById(id).value = ''); document.getElementById('partForm').value = 'Form 1';
           await refreshStudents(); await refreshWork();
         }
       } catch (err) { partStatus('❌ ' + esc(err.message), 'danger'); }
@@ -2813,6 +2813,15 @@ document.addEventListener('DOMContentLoaded',()=>{if(sessionStorage.getItem('cre
   if(document.readyState!=='loading'&&sessionStorage.getItem('crestAdminOK')==='1')window.crestResourceAdminLoad();
 })();
 </script>
+
+  
+  <section class="panel-card" id="crestClassManagement" style="margin:0 0 36px;">
+    <h3><i class="fa-solid fa-users" style="color:var(--accent-primary);"></i> Class Management · Student Registration</h3>
+    <p style="color:var(--text-muted);font-size:13px;">Assign or change each student's official form. Students cannot change this themselves.</p>
+    <div id="crestClassRoster" style="display:grid;gap:10px;"><p style="color:var(--text-muted);">Loading student register…</p></div>
+    <div id="crestClassNotice" class="status-msg" style="display:none;margin-top:12px;"></div>
+  </section>
+  <script src="class-management.js"></script>
 
   <script src="teacher-admin.js"></script>
 </body>
