@@ -463,3 +463,54 @@ body.student-view #studentPortalView thead { color:#1769e8 !important; }
   body.student-view .crest-quick-actions { grid-template-columns:1fr !important; }
   body.student-view .crest-action-card { min-height:78px !important; }
 }
+
+
+/* CREST Academy identity and student-with-books hero artwork */
+body.student-view > header > div:first-child {
+  display:flex !important; align-items:center !important; gap:11px !important;
+}
+body.student-view .crest-brand-logo {
+  width:52px !important; height:52px !important; flex:0 0 52px !important;
+  object-fit:contain !important; filter:drop-shadow(0 4px 10px rgba(0,0,0,.22));
+}
+body.student-view .crest-brand-name {
+  color:#fff !important; font-size:17px !important; font-weight:900 !important;
+  letter-spacing:.02em !important; line-height:1.15 !important;
+}
+body.student-view .crest-brand-name span { color:#f5c542 !important; }
+body.student-view .crest-brand-name small {
+  display:block !important; margin-top:5px !important;
+  color:#d9e7f8 !important; font-size:9px !important; letter-spacing:.15em !important;
+}
+body.student-view main > div:first-child {
+  isolation:isolate !important; padding-right:clamp(240px,30%,390px) !important;
+}
+body.student-view main > div:first-child > :not(.crest-hero-student):not(:first-child) {
+  position:relative; z-index:2;
+}
+body.student-view .crest-hero-student {
+  position:absolute !important; z-index:1 !important;
+  right:0 !important; bottom:0 !important; height:100% !important;
+  width:36% !important; max-width:390px !important;
+  object-fit:cover !important; object-position:center top !important;
+  border-radius:0 24px 24px 0 !important;
+  mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.35) 12%,#000 34%) !important;
+}
+body.student-view main > div:first-child h1,
+body.student-view main > div:first-child p,
+body.student-view main > div:first-child .crest-welcome-kicker,
+body.student-view main > div:first-child #searchBox {
+  position:relative !important; z-index:3 !important;
+}
+@media(max-width:760px) {
+  body.student-view .crest-brand-logo { width:40px !important; height:40px !important; flex-basis:40px !important; }
+  body.student-view .crest-brand-name { font-size:14px !important; }
+  body.student-view .crest-brand-name small { font-size:8px !important; }
+  body.student-view main > div:first-child { padding-right:20px !important; padding-bottom:175px !important; }
+  body.student-view .crest-hero-student {
+    width:100% !important; max-width:none !important; height:185px !important;
+    object-position:center 28% !important; border-radius:0 0 24px 24px !important;
+    mask-image:linear-gradient(180deg,transparent 0%,rgba(0,0,0,.35) 10%,#000 38%) !important;
+    opacity:.78 !important;
+  }
+}
