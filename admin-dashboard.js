@@ -58,7 +58,6 @@
   overview.insertAdjacentElement('afterend',quick);
   document.querySelectorAll('[data-go]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();go(a.dataset.go)}));
   $('crestAdminLogout').addEventListener('click',()=>{if(window.adminSignOut)window.adminSignOut();else{sessionStorage.removeItem('crestAdminOK');sessionStorage.removeItem('crestAdminKey');location.reload();}});
-  const participant=$('partModal'); if(participant){const form=participant.querySelector('#partForm');if(form&&!Array.from(form.options).some(o=>o.value==='Standard 1')){const opts=['Standard 1','Standard 2','Standard 3','Standard 4','Standard 5','Standard 6','Standard 7','Standard 8'];opts.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;form.insertBefore(o,form.firstChild);});}}
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
