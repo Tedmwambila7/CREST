@@ -61,6 +61,7 @@
       '<section class="ta-card"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div><h2>Approval Centre</h2><p>Student questions, student assignment submissions, teacher lessons, assignments and teacher responses come here first.</p></div><button type="button" class="secondary" id="taRefreshQueue">Refresh queue</button></div>' +
       '<div id="taQueue" class="ta-list"><div class="ta-empty">Loading approval queue…</div></div><div id="taQueueNotice" style="font-size:11px;margin-top:10px"></div></section>';
 
+    section.insertAdjacentHTML("beforeend", "<section class='ta-card'><h2>Teacher Activity Monitor</h2><p>Published teacher lessons, assignments and resources.</p><button type='button' class='secondary' id='taRefreshActivity'>Refresh activity</button><div id='taActivity' class='ta-list'></div></section>");
     const header = document.querySelector("body > header");
     if (header) header.insertAdjacentElement("afterend", section);
     else document.body.prepend(section);
@@ -85,6 +86,7 @@
     });
     $("taRefreshTeachers").addEventListener("click", () => loadTeachers().catch(e => message("taCreateNotice",e.message,true)));
     $("taRefreshQueue").addEventListener("click", () => loadQueue().catch(e => message("taQueueNotice",e.message,true)));
+    $("taRefreshActivity").addEventListener("click", () => loadActivity().catch(e => message("taQueueNotice",e.message,true)));
 
     $("taTeachers").addEventListener("click", async event => {
       const reset = event.target.closest("button[data-teacher-reset]");
@@ -142,6 +144,7 @@
 
     loadTeachers().catch(e => message("taCreateNotice",e.message,true));
     loadQueue().catch(e => message("taQueueNotice",e.message,true));
+    loadActivity().catch(e => message("taQueueNotice",e.message,true));
   }
 
   async function loadTeachers() {
@@ -224,6 +227,12 @@
   async function loadQueue() {
     const items=await rpc("admin_approval_list",{p_key:adminKey()})||[];
     renderQueue(Array.isArray(items)?items:[]);
+  }
+  async function loadActivity() {
+    const items=await rpc("admin_teacher_activity",{p_key:adminKey()})||[];
+    const root=$("taActivity");if(!root)return;root.textContent="";
+    if(!items.length){root.textContent="No teacher publications recorded yet.";return;}
+    items.forEach(x=>{const card=document.createElement("article");card.className="ta-item";const title=document.createElement("strong");title.textContent=x.title||"Untitled";title.style.color="#fff";const meta=document.createElement("div");meta.className="ta-meta";meta.textContent=(x.teacher_name||"Teacher")+" · "+(x.item_type||"").replaceAll("_"," ")+" · "+(x.subject||"")+" · "+(x.form||"");const date=document.createElement("div");date.className="ta-body";date.textContent=new Date(x.created_at).toLocaleString();card.append(title,meta,date);root.appendChild(card);});
   }
   async function boot() {
     if(started || document.body.classList.contains("locked") || !adminKey())return;
