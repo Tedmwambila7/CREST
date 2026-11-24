@@ -63,6 +63,8 @@
     const submissions=await rpc("teacher_my_submissions",{p_token:token});
     renderInbox(Array.isArray(inbox)?inbox:[]);
     renderSubmissions(Array.isArray(submissions)?submissions:[]);
+    const timetable=await rpc("crest_timetable_teacher_list",{p_token:token});
+    renderTimetable(Array.isArray(timetable)?timetable:[]);
   }
   function attachmentLinks(payload) {
     let links=[];
@@ -72,6 +74,18 @@
     if(safeUrl(payload.video)) links.push({url:payload.video,name:"Video"});
     if(Array.isArray(payload.attachments)) payload.attachments.forEach((f,i)=>{if(safeUrl(f.fileUrl))links.push({url:f.fileUrl,name:f.fileName || ("Attachment "+(i+1))});});
     return links;
+  }
+  function fillAssignedOptions() {
+    const subjects=Array.isArray(teacher?.subjects)?teacher.subjects:[];
+    const forms=Array.isArray(teacher?.forms)?teacher.forms:[];
+    [["lessonSubject",subjects],["assignmentSubject",subjects]].forEach(([id,values])=>{const el=$(id);if(!el)return;el.innerHTML=values.map(v=>"<option value=\""+esc(v)+"\">"+esc(v)+"</option>").join("");});
+    [["lessonFormClass",forms],["assignmentFormClass",forms]].forEach(([id,values])=>{const el=$(id);if(!el)return;el.innerHTML=values.map(v=>"<option value=\""+esc(v)+"\">"+esc(v)+"</option>").join("");});
+    if(!subjects.length||!forms.length)setMessage("lessonMessage","Your account has no subject or form assignments yet. Contact the Super Admin.",true);
+  }
+  function renderTimetable(items){
+    const root=$("teacherTimetable");if(!root)return;root.innerHTML="";
+    if(!items.length){root.innerHTML="<div class=\"empty\">No published timetable periods match your assigned forms yet.</div>";return;}
+    items.forEach(x=>{const card=document.createElement("article");card.className="queue-card";const h=document.createElement("h3");h.textContent=(x.form||"All forms")+" · "+x.day+" · Period "+x.period;const m=document.createElement("div");m.className="meta";m.textContent=String(x.start_time||"").slice(0,5)+"–"+String(x.end_time||"").slice(0,5)+" · "+(x.subject||"");const d=document.createElement("div");d.className="bodytext";d.textContent=(x.teacher||"Teacher not specified")+(x.room?" · "+x.room:"");card.append(h,m,d);root.appendChild(card);});
   }
   function renderInbox(items) {
     const root=$("teacherInbox"); root.innerHTML="";
@@ -114,7 +128,8 @@
       teacher=await rpc("teacher_me",{p_token:token});
       if(!teacher || !teacher.id) throw new Error("Your teacher session has expired.");
       $("teacherName").textContent=teacher.name || "Teacher";
-      $("teacherIdentity").textContent=(teacher.email || "")+(teacher.subject ? " · "+teacher.subject : "");
+      $("teacherIdentity").textContent=(teacher.email || "")+" · "+((teacher.subjects||[]).join(", ")||teacher.subject||"No subjects")+" · "+((teacher.forms||[]).join(", ")||"No forms");
+      fillAssignedOptions();
       await refreshDashboard();
       setInterval(()=>{if(document.visibilityState==="visible")refreshDashboard().catch(console.warn);},30000);
     } catch(error) {
@@ -142,7 +157,7 @@
       if((itemType==="voice_lesson" || itemType==="video_lesson") && !String(fd.get("topic")||"").trim())throw new Error("Enter the topic for this audio or video lesson.");
       await rpc("teacher_submit_material",{p_token:token,p_item_type:itemType,p_payload:{
         title:String(fd.get("title")||"").trim(),subject:String(fd.get("subject")||"").trim(),
-        level:String(fd.get("level")||"Junior"),topic:String(fd.get("topic")||"").trim(),
+        form:String(fd.get("form")||""),level:["Form 1","Form 2"].includes(String(fd.get("form")||""))?"Junior":"Senior",topic:String(fd.get("topic")||"").trim(),
         file_url:url,file_name:name || url.split("/").pop() || "Lesson material",
         file_type:type || "application/octet-stream",file_size:size
       }});
@@ -159,7 +174,7 @@
       if(file && file.size){fileUrl=await upload(file);fileName=file.name;fileType=file.type || "application/octet-stream";fileSize=file.size;}
       await rpc("teacher_submit_material",{p_token:token,p_item_type:"assignment",p_payload:{
         title:String(fd.get("title")||"").trim(),subject:String(fd.get("subject")||"").trim(),
-        description:String(fd.get("description")||"").trim(),due:String(fd.get("due")||""),
+        description:String(fd.get("description")||"").trim(),form:String(fd.get("form")||""),due:String(fd.get("due")||""),
         fileUrl:fileUrl,fileName:fileName,fileType:fileType,fileSize:fileSize,to:"all"
       }});
       form.reset();setMessage("assignmentMessage","Assignment sent to Admin. Students will see it after approval.",false);await refreshDashboard();
