@@ -514,3 +514,210 @@ body.student-view main > div:first-child #searchBox {
     opacity:.78 !important;
   }
 }
+
+
+/* =========================================================
+   CREST STUDENT DASHBOARD — REFINED ALIGNMENT PASS
+   Consistent icon geometry, calm surfaces and controlled hero photo.
+   ========================================================= */
+body.student-view,
+body.student-view * {
+  transition-property: color, background-color, border-color, box-shadow, opacity !important;
+  transition-duration: .18s !important;
+  transition-timing-function: ease !important;
+}
+body.student-view > main {
+  max-width: 1500px !important;
+  padding-top: 30px !important;
+}
+body.student-view main > div:first-child {
+  min-height: 270px !important;
+  padding: 42px 38% 38px 42px !important;
+  text-align: left !important;
+  border-radius: 20px !important;
+  background: linear-gradient(110deg,#102d52 0%,#174879 68%,#203e70 100%) !important;
+  box-shadow: 0 12px 30px rgba(15,42,78,.12) !important;
+}
+body.student-view main > div:first-child:after { display:none !important; }
+body.student-view main > div:first-child h1 {
+  max-width: 680px !important;
+  font-size: clamp(28px,3vw,40px) !important;
+  line-height: 1.18 !important;
+  letter-spacing: -.035em !important;
+}
+body.student-view main > div:first-child p:nth-of-type(2) {
+  max-width: 620px !important;
+  font-size: 14px !important;
+  line-height: 1.7 !important;
+}
+body.student-view .crest-hero-student {
+  position: absolute !important;
+  right: 22px !important;
+  top: 22px !important;
+  bottom: 22px !important;
+  width: 30% !important;
+  height: calc(100% - 44px) !important;
+  max-width: 360px !important;
+  object-fit: cover !important;
+  object-position: center 34% !important;
+  border-radius: 16px !important;
+  border: 3px solid rgba(255,255,255,.18) !important;
+  box-shadow: 0 10px 28px rgba(4,18,38,.24) !important;
+  mask-image: none !important;
+  opacity: 1 !important;
+}
+body.student-view main > div:first-child > :not(.crest-hero-student) {
+  position: relative !important;
+  z-index: 2 !important;
+}
+body.student-view .crest-quick-actions {
+  display: grid !important;
+  grid-template-columns: repeat(4,minmax(0,1fr)) !important;
+  gap: 16px !important;
+  align-items: stretch !important;
+  margin: 0 0 26px !important;
+}
+body.student-view .crest-action-card {
+  min-width: 0 !important;
+  min-height: 104px !important;
+  height: 104px !important;
+  padding: 16px !important;
+  display: grid !important;
+  grid-template-columns: 48px minmax(0,1fr) 16px !important;
+  align-items: center !important;
+  gap: 13px !important;
+  border: 1px solid #e3eaf3 !important;
+  border-radius: 14px !important;
+  background: #fff !important;
+  box-shadow: 0 4px 14px rgba(20,48,88,.045) !important;
+  color: #183454 !important;
+  transform: none !important;
+}
+body.student-view .crest-action-card:hover {
+  transform: translateY(-2px) !important;
+  border-color: #b9d1f2 !important;
+  box-shadow: 0 9px 20px rgba(20,48,88,.09) !important;
+  background: #fff !important;
+}
+body.student-view .crest-action-icon {
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px !important;
+  flex: 0 0 48px !important;
+  display: grid !important;
+  place-items: center !important;
+  border-radius: 13px !important;
+  font-size: 20px !important;
+  line-height: 1 !important;
+}
+body.student-view .crest-action-icon i {
+  width: 22px !important;
+  text-align: center !important;
+  font-size: 20px !important;
+  line-height: 1 !important;
+}
+body.student-view .crest-action-copy {
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 5px !important;
+}
+body.student-view .crest-action-copy strong {
+  display: block !important;
+  color: #173452 !important;
+  font-size: 13px !important;
+  line-height: 1.3 !important;
+  font-weight: 750 !important;
+  overflow-wrap: anywhere !important;
+}
+body.student-view .crest-action-copy small {
+  display: block !important;
+  color: #64748b !important;
+  font-size: 10px !important;
+  line-height: 1.4 !important;
+}
+body.student-view .crest-action-arrow {
+  position: static !important;
+  margin: 0 !important;
+  color: #8a9bb0 !important;
+  font-size: 12px !important;
+  align-self: center !important;
+}
+body.student-view .crest-action-card.library .crest-action-icon { color:#1769c9 !important; background:#eaf2ff !important; }
+body.student-view .crest-action-card.assignments .crest-action-icon { color:#7255c7 !important; background:#f0edff !important; }
+body.student-view .crest-action-card.exams .crest-action-icon { color:#16845b !important; background:#e8f7ef !important; }
+body.student-view .crest-action-card.timetable .crest-action-icon { color:#a66a0a !important; background:#fff5df !important; }
+body.student-view .fliers-container {
+  min-height: 54px !important;
+  padding: 12px 16px !important;
+  margin-bottom: 24px !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+}
+body.student-view .flier-badge {
+  animation: none !important;
+  border-radius: 8px !important;
+}
+body.student-view .sidebar-block,
+body.student-view .repo-panel {
+  border-radius: 14px !important;
+  box-shadow: 0 4px 16px rgba(20,48,88,.045) !important;
+}
+body.student-view .folder-item-btn {
+  min-height: 46px !important;
+  border-radius: 10px !important;
+}
+body.student-view .folder-item-btn:hover,
+body.student-view #hubView .folder-item-btn:hover {
+  transform: none !important;
+}
+body.student-view .folder-item-btn i.left-icon {
+  display: inline-grid !important;
+  place-items: center !important;
+  width: 22px !important;
+  height: 22px !important;
+  font-size: 15px !important;
+  flex: 0 0 22px !important;
+}
+@media(max-width:1100px) {
+  body.student-view .crest-quick-actions { grid-template-columns:repeat(2,minmax(0,1fr)) !important; }
+}
+@media(max-width:760px) {
+  body.student-view main > div:first-child {
+    padding: 28px 22px 190px !important;
+    min-height: 0 !important;
+  }
+  body.student-view .crest-hero-student {
+    top: auto !important;
+    right: 16px !important;
+    bottom: 16px !important;
+    left: 16px !important;
+    width: calc(100% - 32px) !important;
+    max-width: none !important;
+    height: 150px !important;
+    object-position: center 35% !important;
+    border-radius: 12px !important;
+  }
+  body.student-view .crest-quick-actions {
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap: 10px !important;
+  }
+  body.student-view .crest-action-card {
+    height: 94px !important;
+    min-height: 94px !important;
+    padding: 11px !important;
+    grid-template-columns: 40px minmax(0,1fr) 12px !important;
+    gap: 9px !important;
+  }
+  body.student-view .crest-action-icon {
+    width: 40px !important; height: 40px !important; min-width: 40px !important;
+    flex-basis: 40px !important; border-radius: 11px !important;
+  }
+  body.student-view .crest-action-icon i { font-size:17px !important; }
+  body.student-view .crest-action-copy strong { font-size:11px !important; }
+  body.student-view .crest-action-copy small { font-size:9px !important; }
+}
+@media(max-width:380px) {
+  body.student-view .crest-quick-actions { grid-template-columns:1fr !important; }
+  body.student-view .crest-action-card { height:82px !important; min-height:82px !important; }
+}
