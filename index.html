@@ -1553,6 +1553,8 @@
         document.getElementById('studentDisplayName').textContent = studentSession.name;
         const n = document.getElementById('panelStudentName'); if (n && !n.value) n.value = studentSession.name;
       }
+      // Keep the floating My Uploads shortcut in step with login/logout immediately.
+      if (typeof window.crestSyncMyUploads === 'function') window.crestSyncMyUploads();
     }
     function startSession(sess) {
       // always saved on this device, so the student stays signed in
@@ -2419,8 +2421,8 @@
   function build() {
     btn = document.createElement('button');
     btn.id = 'myUploadsBtn'; btn.type = 'button'; btn.title = 'My uploads';
-    btn.style.cssText = 'position:fixed;left:16px;bottom:16px;z-index:9998;width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,#a855f7,#6366f1);color:#fff;font-size:22px;box-shadow:0 8px 28px rgba(99,102,241,.5);display:none;align-items:center;justify-content:center;';
-    btn.innerHTML = '<i class="fas fa-folder-open"></i><span id="muDot" style="display:none;position:absolute;top:2px;right:2px;min-width:18px;height:18px;border-radius:9px;background:#10b981;color:#fff;font-size:11px;font-weight:800;line-height:18px;text-align:center;padding:0 4px;"></span>';
+    btn.style.cssText = 'position:fixed;left:18px;bottom:22px;z-index:2147483000;min-width:148px;height:54px;padding:0 16px;border-radius:16px;border:1px solid rgba(255,255,255,.22);cursor:pointer;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;font-size:14px;font-weight:800;letter-spacing:.1px;box-shadow:0 10px 30px rgba(79,70,229,.38);display:none;align-items:center;justify-content:center;gap:10px;';
+    btn.innerHTML = '<i class="fas fa-folder-open" style="font-size:19px"></i><span>My Uploads</span><span id="muDot" style="display:none;position:absolute;top:2px;right:2px;min-width:18px;height:18px;border-radius:9px;background:#10b981;color:#fff;font-size:11px;font-weight:800;line-height:18px;text-align:center;padding:0 4px;"></span>';
     btn.onclick = openPanel;
     document.body.appendChild(btn);
 
@@ -2473,8 +2475,9 @@
     var fresh = Math.max(0, markedList().length - seen);
     d.style.display = fresh ? 'block' : 'none'; d.textContent = fresh;
   }
-  function sync() { if (btn) { btn.style.display = studentSession ? 'flex' : 'none'; updateDot(); } }
-  function start() { if (btn) return; build(); sync(); setInterval(sync, 1500); }
+  function sync() { if (btn) { btn.style.display = studentSession && studentSession.phone ? 'flex' : 'none'; updateDot(); } }
+  window.crestSyncMyUploads = sync;
+  function start() { if (btn) return; build(); sync(); setInterval(sync, 1000); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
 
