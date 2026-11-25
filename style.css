@@ -746,3 +746,68 @@ body.student-view .crest-hero-student {
   body.student-view main > div:first-child { min-height:320px !important; padding-right:118px !important; }
   body.student-view .crest-hero-student { width:92px !important; height:120px !important; max-width:92px !important; }
 }
+
+
+/* CREST typography and fixed student-page background photo */
+body.student-view {
+  font-family: 'Inter', 'Segoe UI', sans-serif !important;
+  font-size: 14px;
+  letter-spacing: -0.012em;
+  background: #eef3fa !important;
+}
+body.student-view .crest-hero-student {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  object-fit: cover !important;
+  object-position: center 32% !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  opacity: .13 !important;
+  z-index: -1 !important;
+  pointer-events: none !important;
+  mask-image: none !important;
+}
+body.student-view > main,
+body.student-view > header { position: relative; z-index: 1; }
+body.student-view > header { z-index: 1200; }
+body.student-view main > div:first-child {
+  background: linear-gradient(112deg,rgba(13,43,78,.96),rgba(23,91,157,.92) 65%,rgba(53,65,126,.92)) !important;
+}
+body.student-view h1,
+body.student-view h2,
+body.student-view h3,
+body.student-view h4,
+body.student-view .repo-title,
+body.student-view .portal-section-header {
+  font-family: 'Manrope', 'Inter', sans-serif !important;
+  letter-spacing: -.025em !important;
+}
+body.student-view h1 { font-weight: 800 !important; }
+body.student-view h2 { font-weight: 750 !important; }
+body.student-view h3, body.student-view h4 { font-weight: 700 !important; }
+body.student-view p,
+body.student-view label,
+body.student-view button,
+body.student-view input,
+body.student-view select,
+body.student-view textarea,
+body.student-view a,
+body.student-view table {
+  font-family: 'Inter', 'Segoe UI', sans-serif !important;
+}
+body.student-view p { line-height: 1.65 !important; }
+body.student-view .crest-action-copy strong { font-size: 13px !important; letter-spacing: -.01em !important; }
+body.student-view .crest-action-copy small { font-size: 11px !important; }
+body.student-view .nav-link { letter-spacing: -.01em !important; }
+@media (max-width:760px) {
+  body.student-view .crest-hero-student {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    opacity: .10 !important;
+  }
+}
