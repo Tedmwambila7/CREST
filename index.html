@@ -1782,7 +1782,8 @@
       try {
         workItems = await sbItems('work');
         for(const item of workItems){
-          if(item.storageBucket&&item.storagePath&&!safeUrl(item.fileUrl)){try{item.fileUrl=await studentPrivateUrl(item.storageBucket,item.storagePath);}catch(e){console.warn('Could not open assignment file',e);}}
+          const itemBucket=item.storageBucket||item.storage_bucket,itemPath=item.storagePath||item.storage_path;
+          if(itemBucket&&itemPath&&!safeUrl(item.fileUrl)){try{item.fileUrl=await studentPrivateUrl(itemBucket,itemPath);}catch(e){console.warn('Could not open assignment file',e);}}
           if(Array.isArray(item.attachments))for(const file of item.attachments){if(file&&file.storageBucket&&file.storagePath&&!safeUrl(file.fileUrl)){try{file.fileUrl=await studentPrivateUrl(file.storageBucket,file.storagePath);}catch(e){console.warn('Could not open submitted attachment',e);}}}
         }
       } catch (e) { /* keep what we have */ }
