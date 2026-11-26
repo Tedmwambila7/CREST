@@ -1626,6 +1626,11 @@
       if (!r.ok) throw new Error("Upload failed (" + r.status + ")");
       return (await r.json()).secure_url;
     }
+    async function secureStudentSubmissionUpload(file) {
+      const fd=new FormData();fd.append('role','student');fd.append('session_token',studentSession.token);fd.append('action','upload');fd.append('bucket','crest-student-submissions');fd.append('file',file,file.name||'student-submission');
+      const r=await fetch(SUPABASE_URL.replace(/\/+$/,'')+'/functions/v1/crest-file-storage',{method:'POST',headers:{apikey:SUPABASE_KEY},body:fd});
+      const d=await r.json().catch(()=>({}));if(!r.ok||!d.path)throw new Error(d.error||'Secure submission upload failed ('+r.status+').');return {bucket:d.bucket,path:d.path};
+    }
 
     function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
     function safeUrl(u) { return /^https:\/\//i.test(u || "") ? u : ""; }
@@ -2021,16 +2026,16 @@
           const optimised = window.crestShrink ? await window.crestShrink(files[i], files[i].name) : { blob: files[i], name: files[i].name };
           if (optimised.blob.size > 25 * 1024 * 1024) throw new Error('\"' + files[i].name + '\" is still larger than 25 MB after optimisation. Please choose a smaller file.');
           btn.textContent = 'Uploading file ' + (i + 1) + ' of ' + files.length + '...';
-          const url = await cloudUpload(optimised.blob, optimised.name, true);
-          attachments.push({ fileUrl: url, fileName: optimised.name });
+          const stored = await secureStudentSubmissionUpload(new File([optimised.blob],optimised.name,{type:optimised.blob.type||files[i].type}));
+          attachments.push({ fileUrl:'',fileName:optimised.name,storageBucket:stored.bucket,storagePath:stored.path });
         }
-        const first = attachments[0] || { fileUrl: '', fileName: '' };
+        const first = attachments[0] || { fileUrl: '', fileName: '', storageBucket:null, storagePath:null };
         const node = {
           id: newId('s'), kind: 'submission', assignmentId: id,
           phone: studentSession.phone, name: studentSession.name,
           attachments: attachments,
           // Keep the first-file fields so older admin pages remain compatible.
-          fileUrl: first.fileUrl, fileName: first.fileName,
+          fileUrl: first.fileUrl, fileName: first.fileName, storageBucket:first.storageBucket||null, storagePath:first.storagePath||null,
           note: note, ts: Date.now()
         };
         await sbPut('work', node);
