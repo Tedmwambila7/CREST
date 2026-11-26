@@ -424,6 +424,79 @@
     .crest-admin-quick-access i{display:grid;place-items:center;width:28px;height:28px;border-radius:9px;background:rgba(56,189,248,.15);color:#7dd3fc;font-size:15px}
     .crest-admin-quick-access:hover{transform:translateY(-2px);border-color:#7dd3fc;background:linear-gradient(135deg,#16365f,#0b2040);color:#fff}
     @media(max-width:760px){.crest-admin-quick-access{top:auto;right:14px;bottom:100px;padding:10px 13px;border-radius:13px}.crest-admin-quick-access span{display:inline}.crest-admin-quick-access i{width:26px;height:26px}}
+
+    /* Dashboard first-screen layout: welcome, image and main navigation together */
+    body.student-view .crest-dashboard-layout{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) minmax(285px,330px);
+      align-items:stretch;
+      gap:22px;
+      margin:0 0 30px;
+    }
+    body.student-view .crest-dashboard-layout .crest-student-hero{
+      min-width:0;
+      min-height:100%;
+      height:100%;
+      box-sizing:border-box;
+      margin:0;
+      padding:clamp(22px,2.5vw,36px);
+      grid-template-columns:minmax(0,1.08fr) minmax(210px,.82fr);
+      gap:clamp(16px,2vw,28px);
+    }
+    body.student-view .crest-dashboard-layout .crest-hero-image-frame{height:190px}
+    body.student-view .crest-dashboard-layout .crest-hero-art-caption{padding-top:10px}
+    body.student-view .crest-dashboard-layout .crest-student-shortcuts{
+      min-width:0;
+      margin:0;
+      padding:20px 17px;
+      border:1px solid rgba(125,211,252,.18);
+      border-radius:25px;
+      background:linear-gradient(155deg,rgba(13,29,55,.98),rgba(7,15,32,.98));
+      box-shadow:0 18px 42px rgba(0,0,0,.22);
+    }
+    body.student-view .crest-dashboard-layout .crest-section-heading{margin:0 0 14px}
+    body.student-view .crest-dashboard-layout .crest-section-heading h2{font-size:19px}
+    body.student-view .crest-dashboard-layout .crest-section-heading p{font-size:11px;line-height:1.5}
+    body.student-view .crest-dashboard-layout .crest-heading-emblem{width:38px;height:38px;flex:0 0 38px}
+    body.student-view .crest-dashboard-layout .crest-shortcut-grid{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    body.student-view .crest-dashboard-layout .crest-shortcut-card{
+      min-height:55px;
+      padding:9px 11px;
+      gap:10px;
+      border-radius:13px;
+      box-shadow:none;
+    }
+    body.student-view .crest-dashboard-layout .crest-shortcut-icon{
+      width:37px;height:37px;flex:0 0 37px;border-radius:11px;font-size:16px;
+    }
+    body.student-view .crest-dashboard-layout .crest-shortcut-text{gap:2px}
+    body.student-view .crest-dashboard-layout .crest-shortcut-text strong{font-size:12px}
+    body.student-view .crest-dashboard-layout .crest-shortcut-text small{font-size:10px}
+    body.student-view .crest-dashboard-layout .crest-shortcut-arrow{font-size:11px}
+    @media(max-width:1100px){
+      body.student-view .crest-dashboard-layout{grid-template-columns:minmax(0,1fr) 285px;gap:14px}
+      body.student-view .crest-dashboard-layout .crest-student-hero{grid-template-columns:minmax(0,1fr);align-content:center}
+      body.student-view .crest-dashboard-layout .crest-student-hero-art{display:none}
+    }
+    @media(max-width:760px){
+      body.student-view .crest-dashboard-layout{grid-template-columns:minmax(0,1fr);gap:14px}
+      body.student-view .crest-dashboard-layout .crest-student-hero{min-height:0;height:auto;grid-template-columns:minmax(0,1fr);padding:28px 20px}
+      body.student-view .crest-dashboard-layout .crest-student-hero-art{display:block;justify-self:stretch;width:auto;max-width:100%}
+      body.student-view .crest-dashboard-layout .crest-hero-image-frame{height:175px}
+      body.student-view .crest-dashboard-layout .crest-student-shortcuts{padding:17px}
+      body.student-view .crest-dashboard-layout .crest-shortcut-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+      body.student-view .crest-dashboard-layout .crest-shortcut-card{min-height:76px;align-items:flex-start;padding:10px}
+      body.student-view .crest-dashboard-layout .crest-shortcut-text small{display:none}
+      body.student-view .crest-dashboard-layout .crest-shortcut-icon{width:34px;height:34px;flex-basis:34px}
+    }
+    @media(max-width:390px){
+      body.student-view .crest-dashboard-layout .crest-shortcut-grid{grid-template-columns:1fr}
+      body.student-view .crest-dashboard-layout .crest-shortcut-card{min-height:58px;align-items:center}
+    }
 </style>
 </head>
 <body class="student-view">
@@ -600,6 +673,7 @@
   <main style="padding: 40px 5%; max-width: 1450px; margin: 0 auto;">
     
     <!-- CREST STUDENT HOME: CAMPUS WELCOME + QUICK ACCESS -->
+    <div class="crest-dashboard-layout">
     <section class="crest-student-hero" aria-label="Student welcome">
       <div class="crest-student-hero-copy">
         <div class="crest-welcome-kicker"><i class="fas fa-graduation-cap"></i> CREST ACADEMY • STUDENT PORTAL</div>
@@ -627,6 +701,8 @@
         <button type="button" class="crest-shortcut-card shortcut-video" onclick="showMainView('videoLessons')"><span class="crest-shortcut-icon"><i class="fas fa-circle-play"></i></span><span class="crest-shortcut-text"><strong>Video Lessons</strong><small>Watch lessons and strengthen concepts</small></span><i class="fas fa-arrow-up-right-from-square crest-shortcut-arrow"></i></button>
       </div>
     </section>
+
+    </div>
 
     <section class="crest-noticeboard" aria-label="Student noticeboard"><span class="crest-notice-icon"><i class="fas fa-bullhorn"></i></span><div><span class="crest-notice-label">STUDENT NOTICEBOARD</span><p>Stay organised: check your timetable, review new learning materials and submit assignments before their deadlines.</p></div><span class="crest-notice-tag">STAY READY</span></section>
 
