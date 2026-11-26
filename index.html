@@ -1626,6 +1626,11 @@
       if (!r.ok) throw new Error("Upload failed (" + r.status + ")");
       return (await r.json()).secure_url;
     }
+    async function studentPrivateUrl(bucket,path){
+      const r=await fetch(SUPABASE_URL.replace(/\/+$/,'')+'/functions/v1/crest-file-storage',{method:'POST',headers:{apikey:SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify({role:'student',session_token:studentSession.token,action:'signed-url',bucket,path})});
+      const d=await r.json().catch(()=>({}));if(!r.ok||!d.signedUrl)throw new Error(d.error||'Could not open this file.');return d.signedUrl;
+    }
+
     async function secureStudentSubmissionUpload(file) {
       const fd=new FormData();fd.append('role','student');fd.append('session_token',studentSession.token);fd.append('action','upload');fd.append('bucket','crest-student-submissions');fd.append('file',file,file.name||'student-submission');
       const r=await fetch(SUPABASE_URL.replace(/\/+$/,'')+'/functions/v1/crest-file-storage',{method:'POST',headers:{apikey:SUPABASE_KEY},body:fd});
@@ -1776,6 +1781,10 @@
       if (!studentSession) return;
       try {
         workItems = await sbItems('work');
+        for(const item of workItems){
+          if(item.storageBucket&&item.storagePath&&!safeUrl(item.fileUrl)){try{item.fileUrl=await studentPrivateUrl(item.storageBucket,item.storagePath);}catch(e){console.warn('Could not open assignment file',e);}}
+          if(Array.isArray(item.attachments))for(const file of item.attachments){if(file&&file.storageBucket&&file.storagePath&&!safeUrl(file.fileUrl)){try{file.fileUrl=await studentPrivateUrl(file.storageBucket,file.storagePath);}catch(e){console.warn('Could not open submitted attachment',e);}}}
+        }
       } catch (e) { /* keep what we have */ }
       renderWork();
     }
