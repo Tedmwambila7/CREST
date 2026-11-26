@@ -418,6 +418,12 @@
     @media(max-width:1000px){.crest-student-hero{grid-template-columns:minmax(0,1fr) minmax(230px,.75fr)!important;gap:22px!important}.crest-shortcut-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media(max-width:760px){body.student-view main{padding:22px 16px!important}.crest-student-hero{grid-template-columns:1fr!important;padding:27px 22px!important;gap:24px!important}.crest-student-hero-art{justify-self:start;width:min(100%,480px)}.crest-hero-image-frame{height:205px}.crest-hero-description{font-size:14px!important}.crest-section-heading{align-items:flex-start}.crest-heading-emblem{display:none}body.student-view #hubView{grid-template-columns:1fr!important}.crest-noticeboard{align-items:flex-start}.crest-notice-tag{display:none}}
     @media(max-width:480px){.crest-shortcut-grid{grid-template-columns:1fr;gap:10px}.crest-shortcut-card{min-height:84px;padding:13px}.crest-shortcut-icon{width:44px;height:44px;flex-basis:44px}.crest-student-hero h1{font-size:32px!important}.crest-hero-values{gap:12px}.crest-hero-search{min-height:54px}.crest-search-hint{display:none}.crest-noticeboard{padding:14px}.crest-hero-image-frame{height:180px}}
+
+    /* Persistent admin sign-in shortcut — available from student portal */
+    .crest-admin-quick-access{position:fixed;right:22px;top:108px;z-index:1200;display:flex;align-items:center;gap:10px;padding:11px 15px;border:1px solid rgba(125,211,252,.38);border-radius:14px;background:linear-gradient(135deg,#10284a,#07162e);color:#e0f2fe;text-decoration:none;font-size:12px;font-weight:800;letter-spacing:.02em;box-shadow:0 10px 28px rgba(0,0,0,.34),inset 0 1px rgba(255,255,255,.08);transition:transform .2s,border-color .2s,background .2s}
+    .crest-admin-quick-access i{display:grid;place-items:center;width:28px;height:28px;border-radius:9px;background:rgba(56,189,248,.15);color:#7dd3fc;font-size:15px}
+    .crest-admin-quick-access:hover{transform:translateY(-2px);border-color:#7dd3fc;background:linear-gradient(135deg,#16365f,#0b2040);color:#fff}
+    @media(max-width:760px){.crest-admin-quick-access{top:auto;right:14px;bottom:100px;padding:10px 13px;border-radius:13px}.crest-admin-quick-access span{display:inline}.crest-admin-quick-access i{width:26px;height:26px}}
 </style>
 </head>
 <body class="student-view">
@@ -583,6 +589,12 @@
       <button onclick="handleStudentLogout()" style="background: rgba(239,68,68,0.12); color: #f43f5e; border: 1px solid rgba(239,68,68,0.25); padding: 8px 16px; border-radius: 10px; cursor: pointer; font-weight: 700;"><i class="fas fa-right-from-bracket"></i> Leave Hub</button>
     </nav>
   </header>
+
+  <!-- ALWAYS-AVAILABLE ADMIN LOGIN SHORTCUT -->
+  <a id="crestAdminQuickAccess" class="crest-admin-quick-access" href="admin.html" aria-label="Open CREST Academy admin login" title="Admin Login">
+    <i class="fas fa-user-shield" aria-hidden="true"></i>
+    <span>Admin Login</span>
+  </a>
 
   <!-- CONTENT VIEWPORTS -->
   <main style="padding: 40px 5%; max-width: 1450px; margin: 0 auto;">
