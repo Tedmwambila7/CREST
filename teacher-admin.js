@@ -216,6 +216,10 @@
       ["file_url","fileUrl","audio","video","document"].forEach(k=>{if(/^https:\/\//i.test(payload[k]||""))links.push(payload[k]);});
       if(Array.isArray(payload.attachments))payload.attachments.forEach(f=>{if(/^https:\/\//i.test(f.fileUrl||""))links.push(f.fileUrl);});
       links.forEach(url=>{const a=document.createElement("a");a.href=url;a.target="_blank";a.rel="noopener";a.textContent="Open attachment";a.style.cssText="display:inline-block;color:#7dd3fc;font-size:11px;margin:8px 10px 0 0";card.appendChild(a);});
+      const storageBucket=payload.storage_bucket||payload.audio_storage_bucket||payload.video_storage_bucket;
+      const storagePath=payload.storage_path||payload.audio_storage_path||payload.video_storage_path;
+      if(storageBucket&&storagePath){adminStorageAction("signed-url",{bucket:storageBucket,path:storagePath}).then(result=>{const a=document.createElement("a");a.href=result.signedUrl;a.target="_blank";a.rel="noopener";a.textContent="Open private attachment";a.style.cssText="display:inline-block;color:#7dd3fc;font-size:11px;margin:8px 10px 0 0";card.appendChild(a);}).catch(e=>console.warn("Could not sign teacher attachment",e));}
+
       const actions=document.createElement("div");actions.className="ta-actions";
       if(item.item_type==="question"||item.item_type==="assignment_submission"){
         const select=document.createElement("select");select.id="taTeacher-"+item.id;
@@ -239,7 +243,7 @@
   }
   async function loadQueue() {
     const items=await rpc("admin_approval_list",{p_key:adminKey()})||[];
-    renderQueue(Array.isArray(items)?items:[]);
+    queueItems=Array.isArray(items)?items:[];renderQueue(queueItems);
   }
   async function loadActivity() {
     const items=await rpc("admin_teacher_activity",{p_key:adminKey()})||[];
