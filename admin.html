@@ -1654,7 +1654,7 @@
           node.description = document.getElementById('workDesc').value.trim();
           node.due = document.getElementById('workDue').value;
           const f = document.getElementById('workFile').files[0];
-          if (f) { workStatus('🚀 Uploading ' + f.name + '...', 'success'); node.fileUrl = await cloudUpload(f, f.name); node.fileName = f.name; }
+          if (f) { workStatus('🚀 Uploading ' + f.name + ' to secure storage...', 'success'); const stored=await window.crestAdminStorageUpload(f,'crest-learning-materials'); node.fileUrl=''; node.fileName=f.name; node.storageBucket=stored.bucket; node.storagePath=stored.path; }
         } else {
           const score = parseFloat(document.getElementById('workScore').value), outOf = parseFloat(document.getElementById('workOutOf').value) || 100;
           if (isNaN(score)) { btn.disabled = false; return workStatus('⚠️ Please enter the score.', 'danger'); }
