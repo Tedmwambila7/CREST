@@ -2762,7 +2762,7 @@ document.addEventListener('DOMContentLoaded',()=>{if(sessionStorage.getItem('cre
 <script>
 (function(){
   const $=id=>document.getElementById(id);
-  const STORAGE_ENDPOINT=SUPABASE_URL.replace(/\\/+$/,'')+'/functions/v1/crest-file-storage';
+  const STORAGE_ENDPOINT=SUPABASE_URL.replace(/\/+$/,'')+'/functions/v1/crest-file-storage';
   let resources=[];
   async function storageAction(action,extra){
     const body=Object.assign({role:'admin',admin_key:adminKey(),action},extra||{});
