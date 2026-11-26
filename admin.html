@@ -2762,8 +2762,22 @@ document.addEventListener('DOMContentLoaded',()=>{if(sessionStorage.getItem('cre
 <script>
 (function(){
   const $=id=>document.getElementById(id);
-  const cloud='https://api.cloudinary.com/v1_1/dfrnpdnld/auto/upload', preset='taydayo';
+  const STORAGE_ENDPOINT=SUPABASE_URL.replace(/\\/+$/,'')+'/functions/v1/crest-file-storage';
   let resources=[];
+  async function storageAction(action,extra){
+    const body=Object.assign({role:'admin',admin_key:adminKey(),action},extra||{});
+    const response=await fetch(STORAGE_ENDPOINT,{method:'POST',headers:{apikey:SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok||data.error)throw new Error(data.error||'Secure storage request failed ('+response.status+').');
+    return data;
+  }
+  async function storageUpload(file){
+    const fd=new FormData();fd.append('role','admin');fd.append('admin_key',adminKey());fd.append('action','upload');fd.append('bucket','crest-learning-materials');fd.append('file',file,file.name);
+    const response=await fetch(STORAGE_ENDPOINT,{method:'POST',headers:{apikey:SUPABASE_KEY},body:fd});
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok||data.error)throw new Error(data.error||'Secure file upload failed ('+response.status+').');
+    return data;
+  }
   function status(s,ok){$('crStatus').textContent=s;$('crStatus').style.color=ok?'#10b981':'#fb7185';}
   $('crFile').addEventListener('change',()=>{
     const f=$('crFile').files[0];
@@ -2777,11 +2791,8 @@ document.addEventListener('DOMContentLoaded',()=>{if(sessionStorage.getItem('cre
     if(!subject||!title)return status('Enter the subject and resource title.',false);
     status('Uploading '+file.name+' to secure file storage… keep this page open.',true);
     try{
-      const fd=new FormData();fd.append('file',file);fd.append('upload_preset',preset);
-      const response=await fetch(cloud,{method:'POST',body:fd});
-      const data=await response.json();
-      if(!response.ok||!data.secure_url)throw new Error(data.error?.message||'File upload failed');
-      const resource={id:'resource-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7),title,subject,topic,level,file_url:data.secure_url,file_name:file.name,file_type:file.type||'application/octet-stream',file_size:file.size,published};
+      const stored=await storageUpload(file);
+      const resource={id:'resource-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7),title,subject,topic,level,file_url:'',storage_bucket:stored.bucket,storage_path:stored.path,file_name:file.name,file_type:file.type||'application/octet-stream',file_size:file.size,published};
       await rpc('crest_resource_admin_save',{p_key:adminKey(),p_resource:resource});
       $('crFile').value='';$('crFileName').textContent='PDF, PowerPoint, Word, text or image files · Maximum 100 MB.';
       status(published?'Resource uploaded and published for '+level+' students.':'Resource uploaded as a draft.',true);
@@ -2806,7 +2817,8 @@ document.addEventListener('DOMContentLoaded',()=>{if(sessionStorage.getItem('cre
     try{
       resources=await rpc('crest_resource_admin_list',{p_key:adminKey()})||[];
       if(!resources.length){box.innerHTML='<p style="color:var(--text-muted)">No slides or notes uploaded yet.</p>';return;}
-      box.innerHTML=resources.map(x=>'<article style="padding:12px;border:1px solid rgba(148,163,184,.25);border-radius:12px"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><strong>'+esc(x.title)+'</strong><b style="font-size:11px;color:'+(x.published?'#10b981':'#f59e0b')+'">'+(x.published?'PUBLISHED':'DRAFT')+'</b></div><p style="color:var(--text-muted);font-size:12px;margin:6px 0">'+esc(x.level)+' · '+esc(x.subject)+(x.topic?' · '+esc(x.topic):'')+' · '+esc(x.file_name)+'</p><div style="display:flex;gap:8px;flex-wrap:wrap"><a href="'+esc(safeUrl(x.file_url))+'" target="_blank" rel="noopener" class="mini-btn" style="text-decoration:none">Open file</a><button type="button" class="add-part-btn" data-cr-publish="'+esc(x.id)+'">'+(x.published?'Unpublish':'Publish')+'</button><button type="button" class="mini-btn" data-cr-delete="'+esc(x.id)+'">Delete</button></div></article>').join('');
+      box.innerHTML=resources.map(x=>'<article style="padding:12px;border:1px solid rgba(148,163,184,.25);border-radius:12px"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><strong>'+esc(x.title)+'</strong><b style="font-size:11px;color:'+(x.published?'#10b981':'#f59e0b')+'">'+(x.published?'PUBLISHED':'DRAFT')+'</b></div><p style="color:var(--text-muted);font-size:12px;margin:6px 0">'+esc(x.level)+' · '+esc(x.subject)+(x.topic?' · '+esc(x.topic):'')+' · '+esc(x.file_name)+'</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="mini-btn" data-cr-open="'+esc(x.id)+'">Open file</button><button type="button" class="add-part-btn" data-cr-publish="'+esc(x.id)+'">'+(x.published?'Unpublish':'Publish')+'</button><button type="button" class="mini-btn" data-cr-delete="'+esc(x.id)+'">Delete</button></div></article>').join('');
+      box.querySelectorAll('[data-cr-open]').forEach(btn=>btn.addEventListener('click',async()=>{const row=resources.find(x=>String(x.id)===btn.getAttribute('data-cr-open'));if(!row)return;try{const url=row.storage_bucket&&row.storage_path?(await storageAction('signed-url',{bucket:row.storage_bucket,path:row.storage_path})).signedUrl:row.file_url;if(url)window.open(url,'_blank','noopener');else status('File link is unavailable.',false);}catch(e){status('Could not open file: '+e.message,false);}}));
       box.querySelectorAll('[data-cr-publish]').forEach(btn=>btn.addEventListener('click',()=>window.crestResourcePublish(btn.getAttribute('data-cr-publish'),!resources.find(x=>String(x.id)===btn.getAttribute('data-cr-publish'))?.published)));
       box.querySelectorAll('[data-cr-delete]').forEach(btn=>btn.addEventListener('click',()=>window.crestResourceDelete(btn.getAttribute('data-cr-delete'))));
     }catch(e){box.textContent='Could not load resources: '+e.message;}
