@@ -15,12 +15,16 @@
     if (!response.ok) throw new Error((data && (data.message || data.details)) || "Request failed (" + response.status + ").");
     return data;
   }
+  async function adminStorageAction(action,extra){
+    const response=await fetch(URL+"/functions/v1/crest-file-storage",{method:"POST",headers:{apikey:KEY,"Content-Type":"application/json"},body:JSON.stringify(Object.assign({role:"admin",admin_key:adminKey(),action},extra||{}))});
+    const data=await response.json().catch(()=>({}));if(!response.ok||data.error)throw new Error(data.error||"Secure storage action failed.");return data;
+  }
   function message(id, value, isError) {
     const node = $(id); if (!node) return;
     node.textContent = value || "";
     node.style.color = isError ? "#fca5a5" : "#6ee7b7";
   }
-  let started = false, teachers = [];
+  let started = false, teachers = [], queueItems = [];
 
   function install() {
     if (started || document.body.classList.contains("locked") || !adminKey()) return;
@@ -131,6 +135,15 @@
           const input = $("taTarget-" + id); if (input) target = input.value.trim() || "all";
         } else if (action === "reject" || action === "return") {
           note = prompt(action === "reject" ? "Reason for rejection (optional):" : "What should be corrected?") || "";
+        }
+        if(action==="approve"){
+          const item=queueItems.find(x=>String(x.id)===String(id)),payload=item?.payload||{};
+          const bucket=payload.storage_bucket||payload.audio_storage_bucket||payload.video_storage_bucket;
+          const path=payload.storage_path||payload.audio_storage_path||payload.video_storage_path;
+          if(bucket&&path&&path.startsWith("pending/teachers/")){
+            const published=await adminStorageAction("publish",{bucket,path});
+            await rpc("admin_approval_set_storage_path",{p_key:adminKey(),p_item_id:id,p_bucket:bucket,p_path:published.path});
+          }
         }
         await rpc("admin_approval_action", {
           p_key:adminKey(), p_item_id:id, p_action:action,
