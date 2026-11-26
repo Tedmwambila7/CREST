@@ -2550,6 +2550,16 @@ let blob=null,fileName='',rec=null,stream=null,chunks=[],recordTimer=null,starte
 const MAX_MS=60*60*1000;
 const $=id=>document.getElementById(id);
 const cloud='https://api.cloudinary.com/v1_1/dfrnpdnld/auto/upload',preset='taydayo';
+window.crestAdminStorageUpload=async function(file,bucket){
+ const fd=new FormData();fd.append('role','admin');fd.append('admin_key',adminKey());fd.append('action','upload');fd.append('bucket',bucket);fd.append('file',file,file.name||'upload');
+ const r=await fetch(SUPABASE_URL.replace(/\/+$/,'')+'/functions/v1/crest-file-storage',{method:'POST',headers:{apikey:SUPABASE_KEY},body:fd});
+ const d=await r.json().catch(()=>({}));if(!r.ok||!d.path)throw new Error(d.error||'Secure upload failed ('+r.status+').');return d;
+};
+window.crestAdminStorageUrl=async function(bucket,path){
+ const r=await fetch(SUPABASE_URL.replace(/\/+$/,'')+'/functions/v1/crest-file-storage',{method:'POST',headers:{apikey:SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify({role:'admin',admin_key:adminKey(),action:'signed-url',bucket,path})});
+ const d=await r.json().catch(()=>({}));if(!r.ok||!d.signedUrl)throw new Error(d.error||'Could not open stored file.');return d.signedUrl;
+};
+
 function msg(s,ok){$('vlAdminStatus').textContent=s;$('vlAdminStatus').style.color=ok?'#10b981':'#fb7185';}
 function elapsed(){return elapsedBeforePause+(rec&&rec.state==='recording'?Date.now()-startedAt:0);}
 function clock(ms){const n=Math.floor(ms/1000);return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');}
@@ -2601,16 +2611,15 @@ if(!blob){msg('Record or choose an audio file first.',false);return;}
 if(blob.size>100*1024*1024){msg('Audio must be smaller than 100 MB.',false);return;}
 msg('Uploading audio… keep this page open.',true);
 try{
-const fd=new FormData();fd.append('file',blob,fileName||'voice-lesson.webm');fd.append('upload_preset',preset);
-const r=await fetch(cloud,{method:'POST',body:fd}),d=await r.json();if(!r.ok||!d.secure_url)throw new Error(d.error?.message||'Upload failed');
-const lesson={id:'voice-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7),subject,topic,lesson_number:num,audio_url:d.secure_url,audio_public_id:d.public_id||null,published};
+const stored=await window.crestAdminStorageUpload(new File([blob],fileName||'voice-lesson.webm',{type:blob.type||'audio/webm'}),'crest-lesson-media');
+const lesson={id:'voice-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7),subject,topic,lesson_number:num,audio_url:'',audio_storage_bucket:stored.bucket,audio_storage_path:stored.path,audio_file_name:fileName||'voice-lesson.webm',published};
 await rpc('crest_voice_admin_save',{p_key:adminKey(),p_lesson:lesson});
 blob=null;fileName='';$('vlAudioFile').value='';$('vlPreview').removeAttribute('src');$('vlPreview').style.display='none';$('vlStatus').textContent='No audio selected.';
 msg(published?'Lesson published to students.':'Draft automatically saved. You can publish it from the lesson list.',true);await window.crestVoiceAdminList();
 }catch(e){msg('Could not save: '+e.message,false);}
 };
-window.crestVoicePublish=async function(id,subject,topic,num,url,published){
-try{await rpc('crest_voice_admin_save',{p_key:adminKey(),p_lesson:{id,subject,topic,lesson_number:num,audio_url:url,published}});await window.crestVoiceAdminList();msg(published?'Lesson published.':'Lesson unpublished.',true);}
+window.crestVoicePublish=async function(id,subject,topic,num,url,published,storageBucket,storagePath,fileName){
+try{await rpc('crest_voice_admin_save',{p_key:adminKey(),p_lesson:{id,subject,topic,lesson_number:num,audio_url:url,audio_storage_bucket:storageBucket||null,audio_storage_path:storagePath||null,audio_file_name:fileName||null,published}});await window.crestVoiceAdminList();msg(published?'Lesson published.':'Lesson unpublished.',true);}
 catch(e){msg(e.message,false);}
 };
 window.crestVoiceDelete=async function(id){
@@ -2635,7 +2644,7 @@ button.addEventListener('click',async()=>{
 const row=rows.find(x=>String(x.id)===button.getAttribute('data-vl-publish'));
 if(!row)return;
 button.disabled=true;
-await window.crestVoicePublish(row.id,row.subject,row.topic,row.lesson_number,row.audio_url,!row.published);
+await window.crestVoicePublish(row.id,row.subject,row.topic,row.lesson_number,row.audio_url,!row.published,row.audio_storage_bucket,row.audio_storage_path,row.audio_file_name);
 button.disabled=false;
 });
 });
@@ -2678,7 +2687,7 @@ document.addEventListener('DOMContentLoaded',()=>{if(sessionStorage.getItem('cre
 <script>
 (function(){
 let blob=null,fileName='',rec=null,stream=null,chunks=[];
-const $=id=>document.getElementById(id),preset='taydayo',cloud='https://api.cloudinary.com/v1_1/dfrnpdnld/video/upload',MAX=200*1024*1024;
+const $=id=>document.getElementById(id),preset='taydayo',cloud='https://api.cloudinary.com/v1_1/dfrnpdnld/video/upload',MAX=95*1024*1024;
 function status(s,ok){$('vdAdminStatus').textContent=s;$('vdAdminStatus').style.color=ok?'#10b981':'#fb7185';}
 function stopStream(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}}
 function clearPreview(){const p=$('vdPreview');if(p.src&&p.src.startsWith('blob:'))URL.revokeObjectURL(p.src);p.pause();p.removeAttribute('src');p.srcObject=null;p.style.display='none';}
@@ -2703,20 +2712,19 @@ async function save(published){
  const subject=$('vdSubject').value.trim(),topic=$('vdTopic').value.trim(),num=Number($('vdNumber').value);
  if(!subject||!topic||!Number.isInteger(num)||num<1){status('Enter subject, topic and lesson number.',false);return;}
  if(!blob){status('Record a video or choose a video file first.',false);return;}
- if(blob.size>MAX){status('Video must be 200 MB or smaller.',false);return;}
+ if(blob.size>95*1024*1024){status('Video must be 95 MB or smaller for secure storage.',false);return;}
  status('Uploading video… This may take a while. Keep this page open.',true);
  try{
- const fd=new FormData();fd.append('file',blob,fileName||'crest-video.webm');fd.append('upload_preset',preset);
- const r=await fetch(cloud,{method:'POST',body:fd}),d=await r.json();if(!r.ok||!d.secure_url)throw new Error(d.error?.message||'Video upload failed');
- const lesson={id:'video-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7),subject,topic,lesson_number:num,video_url:d.secure_url,video_public_id:d.public_id||null,published};
+ const stored=await window.crestAdminStorageUpload(new File([blob],fileName||'crest-video.webm',{type:blob.type||'video/webm'}),'crest-lesson-media');
+  const lesson={id:'video-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7),subject,topic,lesson_number:num,video_url:'',video_storage_bucket:stored.bucket,video_storage_path:stored.path,video_file_name:fileName||'crest-video.webm',published};
  await rpc('crest_video_admin_save',{p_key:adminKey(),p_lesson:lesson});
  blob=null;fileName='';$('vdVideoFile').value='';clearPreview();$('vdStatus').textContent='No video selected.';
  status(published?'Video lesson uploaded and published.':'Video lesson uploaded as a draft.',true);await window.crestVideoAdminList();
  }catch(e){status('Could not save video: '+e.message,false);}
 }
 $('vdPublishBtn').addEventListener('click',()=>save(true));$('vdDraftBtn').addEventListener('click',()=>save(false));$('vdRefreshBtn').addEventListener('click',()=>window.crestVideoAdminList());
-window.crestVideoPublish=async function(id,subject,topic,num,url,publicId,published){
- try{await rpc('crest_video_admin_save',{p_key:adminKey(),p_lesson:{id,subject,topic,lesson_number:num,video_url:url,video_public_id:publicId||null,published}});await window.crestVideoAdminList();status(published?'Video lesson published.':'Video lesson unpublished.',true);}
+window.crestVideoPublish=async function(id,subject,topic,num,url,publicId,published,storageBucket,storagePath,fileName){
+ try{await rpc('crest_video_admin_save',{p_key:adminKey(),p_lesson:{id,subject,topic,lesson_number:num,video_url:url,video_public_id:publicId||null,video_storage_bucket:storageBucket||null,video_storage_path:storagePath||null,video_file_name:fileName||null,published}});await window.crestVideoAdminList();status(published?'Video lesson published.':'Video lesson unpublished.',true);}
  catch(e){status(e.message,false);}
 };
 window.crestVideoDelete=async function(id){
@@ -2729,7 +2737,7 @@ window.crestVideoAdminList=async function(){
  const box=$('vdAdminList');try{const rows=await rpc('crest_video_admin_list',{p_key:adminKey()})||[];
  if(!rows.length){box.innerHTML='<p>No video lessons yet.</p>';return;}
  box.innerHTML=rows.map(x=>'<article style="padding:12px;border:1px solid rgba(148,163,184,.25);border-radius:12px"><strong>'+esc(x.subject)+' — '+esc(x.topic)+' (Lesson '+Number(x.lesson_number)+')</strong><p>'+(x.published?'PUBLISHED':'DRAFT')+'</p><video controls playsinline preload="metadata" src="'+safeUrl(x.video_url)+'" style="width:100%;max-width:560px;max-height:300px;background:#000;border-radius:9px"></video><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" class="add-part-btn" data-vd-publish="'+esc(x.id)+'">'+(x.published?'Unpublish':'Publish')+'</button><button type="button" class="mini-btn" style="padding:10px 14px;font-size:12px" data-vd-delete="'+esc(x.id)+'"><i class="fa-solid fa-trash"></i> Delete lesson</button></div></article>').join('');
- box.querySelectorAll('[data-vd-publish]').forEach(btn=>btn.addEventListener('click',async()=>{const x=rows.find(v=>String(v.id)===btn.getAttribute('data-vd-publish'));if(!x)return;btn.disabled=true;await window.crestVideoPublish(x.id,x.subject,x.topic,x.lesson_number,x.video_url,x.video_public_id,!x.published);btn.disabled=false;}));
+ box.querySelectorAll('[data-vd-publish]').forEach(btn=>btn.addEventListener('click',async()=>{const x=rows.find(v=>String(v.id)===btn.getAttribute('data-vd-publish'));if(!x)return;btn.disabled=true;await window.crestVideoPublish(x.id,x.subject,x.topic,x.lesson_number,x.video_url,x.video_public_id,!x.published,x.video_storage_bucket,x.video_storage_path,x.video_file_name);btn.disabled=false;}));
  box.querySelectorAll('[data-vd-delete]').forEach(btn=>btn.addEventListener('click',async()=>{btn.disabled=true;await window.crestVideoDelete(btn.getAttribute('data-vd-delete'));btn.disabled=false;}));
  }catch(e){box.textContent='Could not load video lessons: '+e.message;}
 };
