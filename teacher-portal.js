@@ -26,13 +26,11 @@
     node.textContent=message || ""; node.style.color=error ? "#fca5a5" : "#6ee7b7";
   }
   async function upload(file) {
-    const form = new FormData(); form.append("file",file,file.name || "crest-lesson");
-    form.append("upload_preset",CLOUD_PRESET);
-    const response=await fetch(CLOUD_URL,{method:"POST",body:form});
-    if(!response.ok) throw new Error("File upload failed ("+response.status+").");
-    const data=await response.json();
-    if(!data.secure_url) throw new Error("Cloud storage did not return a secure file link.");
-    return data.secure_url;
+    const form=new FormData();form.append("role","teacher");form.append("session_token",getSession()?.token||"");form.append("action","upload");form.append("bucket","crest-lesson-media");form.append("file",file,file.name||"crest-lesson");
+    const response=await fetch(URL+"/functions/v1/crest-file-storage",{method:"POST",headers:{apikey:KEY},body:form});
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok||!data.path)throw new Error(data.error||"Secure file upload failed ("+response.status+").");
+    return {bucket:data.bucket,path:data.path,name:file.name,type:file.type||"application/octet-stream",size:file.size};
   }
 
   const loginForm=$("teacherLoginForm");
@@ -150,7 +148,7 @@
     try{
       const fd=new FormData(form);let file=fd.get("file"),url=String(fd.get("file_url")||"").trim(),name="",type="",size=null;
       if(recordedBlob && (!file || !file.size)){file=new File([recordedBlob],"recorded-lesson-"+Date.now()+".webm",{type:recordedBlob.type || "audio/webm"});}
-      if(file && file.size){url=await upload(file);name=file.name;type=file.type || "application/octet-stream";size=file.size;}
+      let stored=null;if(file && file.size){stored=await upload(file);name=stored.name;type=stored.type;size=stored.size;}
       if(!safeUrl(url))throw new Error("Choose a lesson file, record audio, or enter a secure HTTPS link.");
       const selectedType=String(fd.get("material_type")||"lesson");
       const itemType=(recordedBlob && (!file || !file.size)) || (file && file.size && String(file.type||"").startsWith("audio/")) ? "voice_lesson" : (file && file.size && String(file.type||"").startsWith("video/")) ? "video_lesson" : selectedType;
@@ -159,7 +157,8 @@
         title:String(fd.get("title")||"").trim(),subject:String(fd.get("subject")||"").trim(),
         form:String(fd.get("form")||""),level:["Form 1","Form 2"].includes(String(fd.get("form")||""))?"Junior":"Senior",topic:String(fd.get("topic")||"").trim(),
         file_url:url,file_name:name || url.split("/").pop() || "Lesson material",
-        file_type:type || "application/octet-stream",file_size:size
+        file_type:type || "application/octet-stream",file_size:size,
+        storage_bucket:stored?.bucket||null,storage_path:stored?.path||null
       }});
       form.reset();recordedBlob=null;setMessage("recordStatus","");setMessage("lessonMessage","Lesson published for "+String(fd.get("form")||"your class")+".",false);await refreshDashboard();
     }catch(error){setMessage("lessonMessage",error.message,true);}
