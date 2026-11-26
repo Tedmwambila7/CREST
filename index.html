@@ -2688,6 +2688,13 @@ document.addEventListener('DOMContentLoaded',()=>{const b=el('videoLessonCountBa
 <script>
 (function(){
   const $ = id => document.getElementById(id);
+  const STORAGE_ENDPOINT=SUPABASE_URL.replace(/\\/+$/,'')+'/functions/v1/crest-file-storage';
+  async function studentStorageUrl(bucket,path){
+    const response=await fetch(STORAGE_ENDPOINT,{method:'POST',headers:{apikey:SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify({role:'student',session_token:studentSession.token,action:'signed-url',bucket,path})});
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok||!data.signedUrl)throw new Error(data.error||'Could not open this learning file.');
+    return data.signedUrl;
+  }
   let selectedLevel = '';
   const originalShowMainView = window.showMainView;
   window.showMainView = function(viewName){
@@ -2715,11 +2722,12 @@ document.addEventListener('DOMContentLoaded',()=>{const b=el('videoLessonCountBa
         list.innerHTML = '<p style="color:#94a3b8">No ' + level + ' notes or slides have been published yet.</p>';
         return;
       }
-      list.innerHTML = rows.map(x => {
-        const url = safeUrl(x.file_url);
+      const cards=await Promise.all(rows.map(async x => {
+        let url=safeUrl(x.file_url);
+        if(x.storage_bucket&&x.storage_path)url=await studentStorageUrl(x.storage_bucket,x.storage_path);
         const kind = (x.file_type || '').includes('pdf') ? 'fa-file-pdf' :
-          (x.file_type || '').includes('presentation') || /\.pptx?$/i.test(x.file_name || '') ? 'fa-file-powerpoint' :
-          (x.file_type || '').includes('word') || /\.docx?$/i.test(x.file_name || '') ? 'fa-file-word' :
+          (x.file_type || '').includes('presentation') || /\\.pptx?$/i.test(x.file_name || '') ? 'fa-file-powerpoint' :
+          (x.file_type || '').includes('word') || /\\.docx?$/i.test(x.file_name || '') ? 'fa-file-word' :
           (x.file_type || '').startsWith('image/') ? 'fa-file-image' : 'fa-file-lines';
         return '<article style="padding:16px;border:1px solid rgba(52,211,153,.2);border-radius:14px;background:rgba(15,23,42,.5)">' +
           '<div style="display:flex;gap:12px;align-items:flex-start"><i class="fas ' + kind + '" style="font-size:24px;color:#6ee7b7;margin-top:3px"></i>' +
@@ -2729,7 +2737,8 @@ document.addEventListener('DOMContentLoaded',()=>{const b=el('videoLessonCountBa
           '<small style="color:#64748b">' + esc(x.file_name || 'Learning resource') + '</small></div></div>' +
           (url ? '<a href="' + esc(url) + '" target="_blank" rel="noopener" style="display:inline-flex;margin-top:13px;padding:9px 14px;border-radius:9px;background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3);color:#6ee7b7;text-decoration:none;font-size:12px;font-weight:800"><i class="fas fa-arrow-up-right-from-square" style="margin-right:7px"></i> Open resource</a>' : '<small style="color:#fca5a5">This file link is unavailable.</small>') +
           '</article>';
-      }).join('');
+      }));
+      list.innerHTML=cards.join('');
     } catch (e) {
       list.innerHTML = '<p style="color:#fca5a5">Could not load materials: ' + esc(e.message) + '</p>';
     }
