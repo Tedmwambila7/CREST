@@ -26,7 +26,7 @@
 <div class="status" id="globalStatus"></div></main>
 <script>
 (()=>{'use strict';
-const URL='https://otjybdiyoqnsynjbofuj.supabase.co',KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJvdGp5YmRpeW9xbnN5bmpib2Z1aiIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzkyNDg5NTk4LCJleHAiOjIxMDgwNjU1OTh9.itwB7UrJNSNIGj2VN82PniqX9fccquf0d9fBwGB05Jc';
+const URL='https://otjybdiyoqnsynjbofuj.supabase.co',KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJvdGp5YmRpeW9xbnN5bmpib2Z1aiIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzkyNDg5NTk4LCJleHAiOjIxMDgwNjU1OTh9.itwB7UrJNSNIGj2VN82PniqX9fccquf0d9fBwGB05Jc';
 const $=id=>document.getElementById(id), key=sessionStorage.getItem('crestAdminKey')||'';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 async function rpc(name,args){const r=await fetch(URL+'/rest/v1/rpc/'+name,{method:'POST',headers:{'Content-Type':'application/json',apikey:KEY,Authorization:'Bearer '+KEY},body:JSON.stringify(args)});const t=await r.text();let d;try{d=t?JSON.parse(t):null}catch{}if(!r.ok)throw new Error(d?.message||d?.details||'Request failed ('+r.status+')');return d}
