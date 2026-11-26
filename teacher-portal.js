@@ -178,12 +178,12 @@
     event.preventDefault();const form=event.currentTarget,button=form.querySelector('button[type="submit"]');button.disabled=true;
     setMessage("assignmentMessage","Preparing assignment for administrator review…",false);
     try{
-      const fd=new FormData(form);let file=fd.get("file"),fileUrl="",fileName="",fileType="",fileSize=null;
-      if(file && file.size){fileUrl=await uploadAssignmentLegacy(file);fileName=file.name;fileType=file.type || "application/octet-stream";fileSize=file.size;}
+      const fd=new FormData(form);let file=fd.get("file"),fileUrl="",fileName="",fileType="",fileSize=null,stored=null;
+      if(file && file.size){stored=await upload(file);fileName=file.name;fileType=file.type || "application/octet-stream";fileSize=file.size;}
       await rpc("teacher_submit_material",{p_token:token,p_item_type:"assignment",p_payload:{
         title:String(fd.get("title")||"").trim(),subject:String(fd.get("subject")||"").trim(),
         description:String(fd.get("description")||"").trim(),form:String(fd.get("form")||""),due:String(fd.get("due")||""),
-        fileUrl:fileUrl,fileName:fileName,fileType:fileType,fileSize:fileSize,to:"all"
+        fileUrl:fileUrl,fileName:fileName,fileType:fileType,fileSize:fileSize,storage_bucket:stored?.bucket||null,storage_path:stored?.path||null,to:"all"
       }});
       form.reset();setMessage("assignmentMessage","Assignment published for "+String(fd.get("form")||"your class")+".",false);await refreshDashboard();
     }catch(error){setMessage("assignmentMessage",error.message,true);}
