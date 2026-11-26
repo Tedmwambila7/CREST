@@ -6,7 +6,7 @@ body{margin:0;background:#071326;color:#eef6ff;font:15px Inter,Arial,sans-serif}
 <div class="top"><div><div class="brand">CREST ACADEMY · LIVE LEARNING</div><h1>Virtual Classroom</h1><div class="muted" id="identity">Checking your CREST account…</div></div><a class="back" href="index.html">Back to CREST</a></div>
 <section class="panel" id="joinPanel"><h2>Join a Zoom lesson</h2><p class="muted">Enter the meeting number and passcode shared by your teacher. The Zoom meeting will open within this CREST page.</p>
 <div class="grid"><div><label>Zoom meeting number</label><input id="meetingNumber" inputmode="numeric" autocomplete="off" placeholder="e.g. 123 456 789"></div><div><label>Meeting passcode</label><input id="meetingPassword" autocomplete="off" placeholder="Meeting passcode"></div><div><label>Your display name</label><input id="displayName" maxlength="80" placeholder="Your name"></div></div>
-<p><button id="joinBtn">Join live class</button></p><div id="status" class="status">Zoom credentials are securely generated on the CREST server. Your Zoom secret is never sent to this page.</div></section>
+<p><button id="joinBtn">Join live class</button> <button id="hostBtn" style="display:none;background:linear-gradient(120deg,#16a34a,#86efac)">Start / host class</button></p><div id="status" class="status">Zoom credentials are securely generated on the CREST server. Your Zoom secret is never sent to this page.</div></section>
 <div id="meeting"></div>
 </div>
 <script src="https://source.zoom.us/6.10.0/lib/vendor/react.min.js"></script><script src="https://source.zoom.us/6.10.0/lib/vendor/react-dom.min.js"></script><script src="https://source.zoom.us/6.10.0/lib/vendor/redux.min.js"></script><script src="https://source.zoom.us/6.10.0/lib/vendor/redux-thunk.min.js"></script><script src="https://source.zoom.us/6.10.0/lib/vendor/react-redux.min.js"></script><script src="https://source.zoom.us/6.10.0/lib/vendor/lodash.min.js"></script><script src="https://source.zoom.us/zoom-meeting-6.10.0.min.js"></script>
@@ -15,13 +15,26 @@ body{margin:0;background:#071326;color:#eef6ff;font:15px Inter,Arial,sans-serif}
 function detect(){adminKey=sessionStorage.getItem('crestAdminKey')||'';if(sessionStorage.getItem('crestAdminOK')==='1'&&adminKey){role='admin';name='CREST Administrator';return}
 try{const t=JSON.parse(localStorage.getItem('crestTeacherSession')||'null');if(t?.token){role='teacher';token=t.token;name=t.teacher?.full_name||t.full_name||t.name||'CREST Teacher';return}}catch{}
 try{const s=JSON.parse(localStorage.getItem('crestStudentSession')||sessionStorage.getItem('crestStudentSession')||'null');if(s?.token){role='student';token=s.token;name=s.name||'CREST Student';return}}catch{}role='';}
-detect();$('identity').textContent=role?'Signed in as '+role+' · '+name:'Please sign in to CREST before joining a class.';$('displayName').value=name;$('joinBtn').disabled=!role;
-$('joinBtn').onclick=async()=>{const meeting=$('meetingNumber').value.trim(),password=$('meetingPassword').value.trim(),display=$('displayName').value.trim()||name;if(!role){$('status').textContent='Sign in through CREST first.';return}if(!/^\d[\d\s-]{7,15}$/.test(meeting)){$('status').textContent='Enter a valid Zoom meeting number.';return}
-$('joinBtn').disabled=true;$('status').textContent='Verifying your CREST account and preparing a secure Zoom session…';
-try{const res=await fetch(END,{method:'POST',headers:{'Content-Type':'application/json',apikey:KEY},body:JSON.stringify({role,session_token:token,admin_key:adminKey,meeting_number:meeting})});const data=await res.json();if(!res.ok)throw new Error(data.error||'Could not connect to Zoom.');
+detect();$('identity').textContent=role?'Signed in as '+role+' · '+name:'Please sign in to CREST before joining a class.';$('displayName').value=name;$('joinBtn').disabled=!role;if(role==='admin'||role==='teacher')$('hostBtn').style.display='inline-block';
+async function launchClass(action){
+const meeting=$('meetingNumber').value.trim(),password=$('meetingPassword').value.trim(),display=$('displayName').value.trim()||name;
+if(!role){$('status').textContent='Sign in through CREST first.';return}
+if(action==='host'&&role==='student'){$('status').textContent='Students cannot host classes.';return}
+if(!/^\\d[\\d\\s-]{7,15}$/.test(meeting)){$('status').textContent='Enter a valid Zoom meeting number.';return}
+$('joinBtn').disabled=true;$('hostBtn').disabled=true;
+$('status').textContent=action==='host'?'Verifying your CREST teacher/admin account and preparing host access…':'Verifying your CREST account and preparing a secure Zoom session…';
+try{
+const res=await fetch(END,{method:'POST',headers:{'Content-Type':'application/json',apikey:KEY},body:JSON.stringify({role,action,session_token:token,admin_key:adminKey,meeting_number:meeting})});
+const data=await res.json();if(!res.ok)throw new Error(data.error||'Could not connect to Zoom.');
 if(!window.ZoomMtg)throw new Error('Zoom Meeting SDK did not load. Refresh the page and try again.');
 ZoomMtg.setZoomJSLib('https://source.zoom.us/6.10.0/lib','/av');ZoomMtg.preLoadWasm();ZoomMtg.prepareWebSDK();
-$('meeting').style.display='block';$('joinPanel').style.display='none';ZoomMtg.init({leaveUrl:location.origin+location.pathname,patchJsMedia:true,success:()=>ZoomMtg.join({signature:data.signature,meetingNumber:data.meetingNumber,passWord:password,userName:display,success:()=>{$('status').textContent='Connected to your CREST live class.'},error:e=>{$('meeting').style.display='none';$('joinPanel').style.display='block';$('status').textContent='Zoom could not join: '+(e.message||JSON.stringify(e));$('joinBtn').disabled=false}}),error:e=>{throw new Error(e.message||'Zoom initialization failed.')}});
-}catch(e){$('status').textContent=e.message;$('joinBtn').disabled=false}}
+$('meeting').style.display='block';$('joinPanel').style.display='none';
+const joinOptions={signature:data.signature,meetingNumber:data.meetingNumber,passWord:password,userName:display,success:()=>{$('status').textContent=action==='host'?'You are hosting the CREST live class.':'Connected to your CREST live class.'},error:e=>{$('meeting').style.display='none';$('joinPanel').style.display='block';$('status').textContent='Zoom could not '+(action==='host'?'start':'join')+': '+(e.message||JSON.stringify(e));$('joinBtn').disabled=false;$('hostBtn').disabled=false}};
+if(action==='host'){if(!data.zak)throw new Error('Zoom did not return host access.');joinOptions.zak=data.zak;}
+ZoomMtg.init({leaveUrl:location.origin+location.pathname,patchJsMedia:true,success:()=>ZoomMtg.join(joinOptions),error:e=>{$('meeting').style.display='none';$('joinPanel').style.display='block';$('status').textContent='Zoom initialization failed: '+(e.message||'Unknown error');$('joinBtn').disabled=false;$('hostBtn').disabled=false}});
+}catch(e){$('status').textContent=e.message;$('joinBtn').disabled=false;$('hostBtn').disabled=false}
+}
+$('joinBtn').onclick=()=>launchClass('join');
+$('hostBtn').onclick=()=>launchClass('host');
 })();
 </script></body></html>
