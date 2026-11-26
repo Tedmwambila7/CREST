@@ -2749,7 +2749,7 @@ document.addEventListener('DOMContentLoaded',()=>{if(sessionStorage.getItem('cre
   <div style="margin:12px 0">
     <label for="crFile" style="display:block;margin-bottom:7px;font-weight:700">Choose file</label>
     <input id="crFile" type="file" accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.txt,.rtf,.jpg,.jpeg,.png,.webp" style="width:100%;padding:10px;border:1px solid var(--border-color);border-radius:10px">
-    <small id="crFileName" style="display:block;color:var(--text-muted);margin-top:6px">PDF, PowerPoint, Word, text or image files · Maximum 100 MB.</small>
+    <small id="crFileName" style="display:block;color:var(--text-muted);margin-top:6px">PDF, PowerPoint, Word, text or image files · Maximum 50 MB.</small>
   </div>
   <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0">
     <button class="add-part-btn" type="button" onclick="crestResourceSave(false)">Save as draft</button>
@@ -2781,20 +2781,20 @@ document.addEventListener('DOMContentLoaded',()=>{if(sessionStorage.getItem('cre
   function status(s,ok){$('crStatus').textContent=s;$('crStatus').style.color=ok?'#10b981':'#fb7185';}
   $('crFile').addEventListener('change',()=>{
     const f=$('crFile').files[0];
-    $('crFileName').textContent=f?('Selected: '+f.name+' ('+(f.size/1048576).toFixed(2)+' MB)'):'PDF, PowerPoint, Word, text or image files · Maximum 100 MB.';
+    $('crFileName').textContent=f?('Selected: '+f.name+' ('+(f.size/1048576).toFixed(2)+' MB)'):'PDF, PowerPoint, Word, text or image files · Maximum 50 MB.';
     if(f&&!$('crTitle').value.trim()) $('crTitle').value=f.name.replace(/\.[^/.]+$/,'');
   });
   window.crestResourceSave=async function(published){
     const file=$('crFile').files[0], level=$('crLevel').value, subject=$('crSubject').value.trim(), topic=$('crTopic').value.trim(), title=$('crTitle').value.trim();
     if(!file)return status('Choose a file first.',false);
-    if(file.size>100*1024*1024)return status('The selected file is larger than 100 MB.',false);
+    if(file.size>50*1024*1024)return status('The selected file is larger than 50 MB.',false);
     if(!subject||!title)return status('Enter the subject and resource title.',false);
     status('Uploading '+file.name+' to secure file storage… keep this page open.',true);
     try{
       const stored=await storageUpload(file);
       const resource={id:'resource-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7),title,subject,topic,level,file_url:'',storage_bucket:stored.bucket,storage_path:stored.path,file_name:file.name,file_type:file.type||'application/octet-stream',file_size:file.size,published};
       await rpc('crest_resource_admin_save',{p_key:adminKey(),p_resource:resource});
-      $('crFile').value='';$('crFileName').textContent='PDF, PowerPoint, Word, text or image files · Maximum 100 MB.';
+      $('crFile').value='';$('crFileName').textContent='PDF, PowerPoint, Word, text or image files · Maximum 50 MB.';
       status(published?'Resource uploaded and published for '+level+' students.':'Resource uploaded as a draft.',true);
       await window.crestResourceAdminLoad();
     }catch(e){status('Could not save resource: '+e.message,false);}
