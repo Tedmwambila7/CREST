@@ -102,6 +102,10 @@
       card.appendChild(body);
       const files=attachmentLinks(p);
       files.forEach(f=>{const a=document.createElement("a");a.className="filelink";a.href=f.url;a.target="_blank";a.rel="noopener";a.textContent="↗ "+f.name;card.appendChild(a);});
+      (Array.isArray(p.attachments)?p.attachments:[]).filter(f=>f&&f.storageBucket&&f.storagePath).forEach(f=>{
+        fetch(URL+"/functions/v1/crest-file-storage",{method:"POST",headers:{apikey:KEY,"Content-Type":"application/json"},body:JSON.stringify({role:"teacher",session_token:token,action:"signed-url",bucket:f.storageBucket,path:f.storagePath})})
+        .then(r=>r.json()).then(d=>{if(d.signedUrl){const a=document.createElement("a");a.className="filelink";a.href=d.signedUrl;a.target="_blank";a.rel="noopener";a.textContent="↗ "+(f.fileName||"Student attachment");card.appendChild(a);}}).catch(console.warn);
+      });
       const phone=document.createElement("div");phone.className="meta";phone.style.marginTop="10px";phone.textContent="Student: "+(p.name || "Student")+" · "+(item.submitter_phone || "Phone not available");card.appendChild(phone);
       const form=document.createElement("form");form.dataset.parentId=item.id;form.style.marginTop="12px";
       if(item.item_type==="question"){
