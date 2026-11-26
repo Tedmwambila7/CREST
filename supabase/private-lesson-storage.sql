@@ -62,3 +62,27 @@ grant execute on function public.admin_approval_set_storage_path(text,uuid,text,
 -- The live admin_approval_action() was updated to accept published storage_bucket/storage_path
 -- for lesson, voice_lesson and video_lesson items and copy those references into the
 -- corresponding crest_resources / crest_voice_lessons / crest_video_lessons records.
+
+
+-- Allow teachers to submit private files from their own pending folder.
+create or replace function public.teacher_submit_material(p_token text,p_item_type text,p_payload jsonb)
+returns uuid language plpgsql security definer set search_path to 'public','extensions'
+as $function$
+declare v_teacher uuid;v_id uuid;v_title text;v_subject text;v_url text;v_bucket text;v_path text;
+begin
+ select t.id into v_teacher from public.crest_teacher_sessions s join public.crest_teacher_accounts t on t.id=s.teacher_id where s.token=p_token and t.is_active=true;
+ if v_teacher is null then raise exception 'Teacher session expired. Please sign in again.'; end if;
+ if p_item_type not in ('lesson','assignment','voice_lesson','video_lesson') then raise exception 'Unsupported submission type.'; end if;
+ if length(coalesce(p_payload::text,''))>50000 then raise exception 'Submission is too large.'; end if;
+ v_title:=trim(coalesce(p_payload->>'title',''));v_subject:=trim(coalesce(p_payload->>'subject',''));
+ if v_title='' or v_subject='' then raise exception 'Enter a title and subject.'; end if;
+ if p_item_type='lesson' and coalesce(p_payload->>'level','') not in ('Junior','Senior') then raise exception 'Choose Junior or Senior level.'; end if;
+ v_url:=coalesce(p_payload->>'file_url','');v_bucket:=coalesce(p_payload->>'storage_bucket','');v_path:=coalesce(p_payload->>'storage_path','');
+ if p_item_type in ('lesson','voice_lesson','video_lesson') and v_url !~ '^https://' and not (v_bucket='crest-lesson-media' and v_path like 'pending/teachers/'||v_teacher::text||'/%') then raise exception 'Upload a lesson file or provide a secure HTTPS link.'; end if;
+ if p_item_type in ('voice_lesson','video_lesson') and trim(coalesce(p_payload->>'topic',''))='' then raise exception 'Enter the lesson topic.'; end if;
+ insert into public.crest_approval_items(submitter_role,submitter_teacher_id,item_type,status,title,subject,payload)
+ values('teacher',v_teacher,p_item_type,'pending_admin',v_title,v_subject,coalesce(p_payload,'{}'::jsonb)) returning id into v_id;
+ insert into public.crest_approval_events(item_id,actor_role,actor_label,action)
+ select v_id,'teacher',t.full_name,'submitted' from public.crest_teacher_accounts t where t.id=v_teacher;
+ return v_id;
+end $function$;
