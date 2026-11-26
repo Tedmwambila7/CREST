@@ -2094,8 +2094,8 @@
   /* ---------- 3. lists: multi-attachment submissions + returned status ---------- */
   function submissionFiles(item) {
     var list = Array.isArray(item && item.attachments) ? item.attachments : [];
-    list = list.filter(function (f) { return f && safeUrl(f.fileUrl); });
-    if (!list.length && item && safeUrl(item.fileUrl)) list = [{ fileUrl: item.fileUrl, fileName: item.fileName || 'Submission' }];
+    list = list.filter(function (f) { return f && (safeUrl(f.fileUrl) || (f.storageBucket && f.storagePath)); });
+    if (!list.length && item && (safeUrl(item.fileUrl) || (item.storageBucket && item.storagePath))) list = [{ fileUrl: item.fileUrl || '', fileName: item.fileName || 'Submission', storageBucket:item.storageBucket, storagePath:item.storagePath }];
     return list;
   }
   function itemHasMarkableFiles(item) {
@@ -2114,6 +2114,17 @@
   window.refreshWork = async function () {
     if (!cloudReady) return;
     try { adminWork = await aItems('work'); } catch (e) { console.error(e); }
+    for (const item of adminWork) {
+      const attachments=Array.isArray(item.attachments)?item.attachments:[];
+      for (const file of attachments) {
+        if(file&&file.storageBucket&&file.storagePath&&!safeUrl(file.fileUrl)){
+          try{file.fileUrl=await window.crestAdminStorageUrl(file.storageBucket,file.storagePath);}catch(err){console.warn('Could not open student submission attachment',err);}
+        }
+      }
+      if(item.storageBucket&&item.storagePath&&!safeUrl(item.fileUrl)){
+        try{item.fileUrl=await window.crestAdminStorageUrl(item.storageBucket,item.storagePath);}catch(err){console.warn('Could not open student submission file',err);}
+      }
+    }
     var box = document.getElementById('workLists');
     var posted = adminWork.filter(function (x) { return x.kind !== 'submission' && x.kind !== 'marked'; }).sort(function (a, b) { return b.ts - a.ts; });
     var subs = adminWork.filter(function (x) { return x.kind === 'submission'; }).sort(function (a, b) { return b.ts - a.ts; });
