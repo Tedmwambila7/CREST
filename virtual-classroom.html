@@ -17,10 +17,10 @@ try{const t=JSON.parse(localStorage.getItem('crestTeacherSession')||'null');if(t
 try{const s=JSON.parse(localStorage.getItem('crestStudentSession')||sessionStorage.getItem('crestStudentSession')||'null');if(s?.token){role='student';token=s.token;name=s.name||'CREST Student';return}}catch{}role='';}
 detect();$('identity').textContent=role?'Signed in as '+role+' · '+name:'Please sign in to CREST before joining a class.';$('displayName').value=name;$('joinBtn').disabled=!role;if(role==='admin'||role==='teacher')$('hostBtn').style.display='inline-block';
 async function launchClass(action){
-const meeting=$('meetingNumber').value.trim(),password=$('meetingPassword').value.trim(),display=$('displayName').value.trim()||name;
+const meeting=$('meetingNumber').value.replace(/[\s-]/g,'').trim(),password=$('meetingPassword').value.trim(),display=$('displayName').value.trim()||name;
 if(!role){$('status').textContent='Sign in through CREST first.';return}
 if(action==='host'&&role==='student'){$('status').textContent='Students cannot host classes.';return}
-if(!/^\\d[\\d\\s-]{7,15}$/.test(meeting)){$('status').textContent='Enter a valid Zoom meeting number.';return}
+if(!/^\d{9,11}$/.test(meeting)){$('status').textContent='Enter a valid Zoom meeting number (9–11 digits).';return}
 $('joinBtn').disabled=true;$('hostBtn').disabled=true;
 $('status').textContent=action==='host'?'Verifying your CREST teacher/admin account and preparing host access…':'Verifying your CREST account and preparing a secure Zoom session…';
 try{
