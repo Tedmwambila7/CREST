@@ -31,6 +31,11 @@
     const data=await response.json().catch(()=>({}));
     if(!response.ok||!data.path)throw new Error(data.error||"Secure file upload failed ("+response.status+").");
     return {bucket:data.bucket,path:data.path,name:file.name,type:file.type||"application/octet-stream",size:file.size};
+  } 
+  async function uploadAssignmentLegacy(file){
+    const form=new FormData();form.append("file",file,file.name||"crest-assignment");form.append("upload_preset",CLOUD_PRESET);
+    const response=await fetch(CLOUD_URL,{method:"POST",body:form});if(!response.ok)throw new Error("Assignment file upload failed ("+response.status+").");
+    const data=await response.json();if(!data.secure_url)throw new Error("Assignment upload did not return a secure link.");return data.secure_url;
   }
 
   const loginForm=$("teacherLoginForm");
@@ -170,7 +175,7 @@
     setMessage("assignmentMessage","Preparing assignment for administrator review…",false);
     try{
       const fd=new FormData(form);let file=fd.get("file"),fileUrl="",fileName="",fileType="",fileSize=null;
-      if(file && file.size){fileUrl=await upload(file);fileName=file.name;fileType=file.type || "application/octet-stream";fileSize=file.size;}
+      if(file && file.size){fileUrl=await uploadAssignmentLegacy(file);fileName=file.name;fileType=file.type || "application/octet-stream";fileSize=file.size;}
       await rpc("teacher_submit_material",{p_token:token,p_item_type:"assignment",p_payload:{
         title:String(fd.get("title")||"").trim(),subject:String(fd.get("subject")||"").trim(),
         description:String(fd.get("description")||"").trim(),form:String(fd.get("form")||""),due:String(fd.get("due")||""),
