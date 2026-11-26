@@ -50,7 +50,7 @@ Deno.serve(async(req:Request)=>{
    if(!file)return json({error:"Choose a file first."},400);
    if(role==="teacher"&&!["crest-learning-materials","crest-lesson-media"].includes(bucket))return json({error:"Teachers can upload learning materials and lesson media only."},403);
    if(role==="student"&&bucket!=="crest-student-submissions")return json({error:"Students can upload their own submissions only."},403);
-   const folder=admin?"admin":role==="teacher"?"pending/teachers/"+teacherId:"students/"+phone;
+   const folder=admin?((["crest-learning-materials","crest-lesson-media"].includes(bucket))?"published":"admin"):role==="teacher"?"pending/teachers/"+teacherId:"students/"+phone;
    const path=folder+"/"+crypto.randomUUID()+"-"+clean(file.name||"upload");
    const {data,error}=await db.storage.from(bucket).upload(path,file,{contentType:file.type||"application/octet-stream",upsert:false});
    if(error)return json({error:error.message},400);
@@ -65,7 +65,7 @@ Deno.serve(async(req:Request)=>{
     if(["crest-learning-materials","crest-lesson-media"].includes(bucket))prefixes.push("pending/teachers/"+teacherId,"published");
     if(bucket==="crest-student-submissions"){const {data}=await db.from("crest_students").select("phone").in("form",forms);for(const s of data||[])prefixes.push("students/"+s.phone);}
    }
-   const files:unknown[]=[];for(const p of prefixes){const {data}=await db.storage.from(bucket).list(p,{limit:100,sortBy:{column:"created_at",order:"desc"});if(data)files.push(...data.map(x=>({...x,folder:p})));}
+   const files:unknown[]=[];for(const p of prefixes){const {data}=await db.storage.from(bucket).list(p,{limit:100,sortBy:{column:"created_at",order:"desc"}});if(data)files.push(...data.map(x=>({...x,folder:p})));}
    return json({ok:true,files});
   }
   if(action==="signed-url"){
