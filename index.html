@@ -657,25 +657,15 @@
         </div>
       </div>
 
-      <div style="padding: 14px; background: #040714; border-top: 1px solid rgba(255,255,255,0.05); display: flex; gap: 8px; align-items: center;">
-        <button id="micBtn" onclick="handleMicToggle()" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; width: 42px; height: 42px; border-radius: 12px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0;">
-          <i class="fas fa-microphone" id="micIcon"></i>
-        </button>
-
-        <button id="cameraBtn" onclick="openCameraCapture()" title="Take a photo or video" style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); color: #a855f7; width: 42px; height: 42px; border-radius: 12px; cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0;">
-          <i class="fas fa-camera" id="cameraIcon"></i>
-        </button>
-
-        <button id="attachBtn" onclick="document.getElementById('chatFileInput').click()" title="Attach photo, video or file" style="background: rgba(234, 179, 8, 0.1); border: 1px solid rgba(234, 179, 8, 0.3); color: #eab308; width: 42px; height: 42px; border-radius: 12px; cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0;">
-          <i class="fas fa-paperclip"></i>
-        </button>
-        <input type="file" id="chatFileInput" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt" style="display:none;" onchange="handleChatFilePick(this)" />
-
-        <input type="text" id="chatInputField" placeholder="Type a message or record voice notes..." onkeydown="if(event.key === 'Enter') dispatchChatMessage()" style="flex: 1; padding: 12px 14px; background: #0f172a; border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; color: #fff; font-size: 12px; outline: none;" />
-        
-        <button onclick="dispatchChatMessage()" style="background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); color: #38bdf8; width: 42px; height: 42px; border-radius: 12px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0;">
-          <i class="fas fa-paper-plane"></i>
-        </button>
+      <div style="padding: 12px; background: #040714; border-top: 1px solid rgba(255,255,255,0.05); display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+        <div style="display:flex; gap:8px; align-items:center; flex:1 1 100%; min-width:0;">
+          <button id="micBtn" onclick="handleMicToggle()" title="Record voice note" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; width: 42px; height: 42px; border-radius: 12px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i class="fas fa-microphone" id="micIcon"></i></button>
+          <button id="cameraBtn" onclick="openCameraCapture()" title="Take a photo or video" style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); color: #a855f7; width: 42px; height: 42px; border-radius: 12px; cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i class="fas fa-camera" id="cameraIcon"></i></button>
+          <button id="attachBtn" onclick="document.getElementById('chatFileInput').click()" title="Attach photo, video or file" style="background: rgba(234, 179, 8, 0.1); border: 1px solid rgba(234, 179, 8, 0.3); color: #eab308; width: 42px; height: 42px; border-radius: 12px; cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i class="fas fa-paperclip"></i></button>
+          <input type="file" id="chatFileInput" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt" style="display:none;" onchange="handleChatFilePick(this)" />
+          <input type="text" id="chatInputField" placeholder="Write your message..." onkeydown="if(event.key === 'Enter') dispatchChatMessage()" style="flex:1 1 80px; min-width:0; width:0; padding:12px 14px; background:#0f172a; border:1px solid rgba(255,255,255,0.08); border-radius:12px; color:#fff; font-size:13px; outline:none;" />
+        </div>
+        <button id="chatSendBtn" onclick="dispatchChatMessage()" style="background:linear-gradient(135deg,#0288d1,#38bdf8); border:1px solid #38bdf8; color:#04111f; width:100%; min-height:44px; border-radius:12px; cursor:pointer; font-size:14px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:9px; flex:1 1 100%;"><i class="fas fa-paper-plane"></i><span>Send</span></button>
       </div>
     </div>
   </div>
